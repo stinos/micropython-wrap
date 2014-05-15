@@ -65,11 +65,21 @@ namespace upywrap
       DefImpl< name, Ret, decltype( f ), A... >( f );
     }
 
+    void DefExit( void( T::*f ) () )
+    {
+      ExitImpl< FixedFuncNames::Exit, decltype( f ) >( f );
+    }
+
     mp_obj_base_t base; //must always be the first member!
     T* obj;
     static function_ptrs functionPointers;
 
   private:
+    struct FixedFuncNames
+    {
+      func_name_def( Exit )
+    };
+
     static void OneTimeInit( const char* name, mp_obj_dict_t* dict )
     {
       locals = (mp_obj_dict_t*) mp_obj_new_dict( 0 );
@@ -91,13 +101,18 @@ namespace upywrap
       return o;
     }
 
-    static void AddFunctionToTable( const char* name, mp_obj_t fun )
+    static void AddFunctionToTable( const qstr name, mp_obj_t fun )
     {
-      const mp_map_elem_t elem = { MP_OBJ_NEW_QSTR( qstr_from_str( name ) ), fun };
+      const mp_map_elem_t elem = { MP_OBJ_NEW_QSTR( name ), fun };
       localsTable.push_back( elem );
       locals->map.table = (mp_map_elem_t*) this_type::localsTable.data();
       ++locals->map.used;
       ++locals->map.alloc;
+    }
+
+    static void AddFunctionToTable( const char* name, mp_obj_t fun )
+    {
+      AddFunctionToTable( qstr_from_str( name ), fun );
     }
 
     template< index_type name, class Ret, class Fun, class... A >
@@ -106,6 +121,15 @@ namespace upywrap
       typedef NativeMemberCall< name, Ret, A... > call_type;
       functionPointers[ (void*) name ] = call_type::CreateCaller( f );
       AddFunctionToTable( name(), mp_make_function_n( 1 + sizeof...( A ), (void*) call_type::Call ) );
+    }
+
+    template< index_type name, class Fun >
+    static void ExitImpl( Fun f )
+    {
+      typedef NativeMemberCall< name, void > call_type;
+      functionPointers[ (void*) name ] = call_type::CreateCaller( f );
+      AddFunctionToTable( MP_QSTR___enter__, (mp_obj_t) &mp_identity_obj );
+      AddFunctionToTable( MP_QSTR___exit__, mp_make_function_var_between( 4, 4, call_type::CallVar ) );
     }
 
     //wrap native call in function with uPy compatible mp_obj_t( mp_obj_t self, mp_obj_t.... ) signature
@@ -131,6 +155,14 @@ namespace upywrap
         auto self = (this_type*) self_in;
         auto f = (call_type*) this_type::functionPointers[ (void*) index ];
         return CallReturn< Ret, A... >::Call( f, self->obj, args... );
+      }
+
+      static mp_obj_t CallVar( uint n_args, const mp_obj_t* args )
+      {
+        static_assert( sizeof...( A ) == 0, "TODO expand args array if you want this with multiple arguments" );
+        auto self = (this_type*) args[ 0 ];
+        auto f = (call_type*) this_type::functionPointers[ (void*) index ];
+        return CallReturn< Ret, A... >::Call( f, self->obj );
       }
     };
 
