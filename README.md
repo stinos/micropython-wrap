@@ -2,7 +2,8 @@ Easy wrapping of C and C++ functions and classes so they can be called from
 Micro Python (http://github.com/micropython/micropython).
 
 This is mainly proof-of-concept at the moment, todos include:
-- implementing mechanism so 'with' can be used and class destructor gets called
+- add more types (tuple, map)
+- allow passing native pointers around
 - refactor uPy specifics away from main code, so we can reuse this for eg CPython
 - check if it would be needed to pass certain mutable py types (list etc) by reference
 
@@ -34,6 +35,20 @@ Usage
       }
     };
 
+    class ContextManager
+    {
+    public:
+      ContextManager( int a )
+      {
+        std::cout << "ContextManager " << a << std::endl;
+      }
+
+      void Dispose()
+      {
+        std::cout << "__exit__ called" << std::endl;
+      }
+    };
+
     void Func( SomeClass* p, const std::string& a, int n )
     {
       p->Foo( a, n );
@@ -60,9 +75,14 @@ Usage
         auto mod = upywrap::CreateModule( "mod" );
 
         upywrap::ClassWrapper< SomeClass > wrapclass( "SomeClass", mod->globals );
+        wrapclass.DefInit<>();
         wrapclass.Def< Funcs::Foo >( &SomeClass::Foo );
         wrapclass.Def< Funcs::Bar >( &SomeClass::Bar );
         wrapclass.Def< Funcs::Foo2 >( Func );
+
+        upywrap::ClassWrapper< ContextManager > wrapcman( "ContextManager", mod->globals );
+        wrapcman.DefInit< int >();
+        wrapcman.DefExit( &ContextManager::Dispose );
 
         upywrap::FunctionWrapper wrapfunc( mod->globals );
         wrapfunc.Def< Funcs::SomeFunc >( OtherFunc );
@@ -81,6 +101,9 @@ module mod can be used in Python like this:
 
     print( mod.SomeFunc( [ 'a', 'b' ] ) )
 
+    with mod.ContextManager( 1 ) as p :
+      pass
+
 And the output is:
 
     ctor
@@ -90,3 +113,5 @@ And the output is:
     abc1
     None
     ['a', 'b', 'abcdef']
+    ContextManager 1
+    __exit__ called

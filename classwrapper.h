@@ -65,6 +65,18 @@ namespace upywrap
       DefImpl< name, Ret, decltype( f ), A... >( f );
     }
 
+    template< class... A >
+    void DefInit()
+    {
+      DefInit( ConstructorFactoryFunc< T, A... > );
+    }
+
+    template< class... A >
+    void DefInit( T*( *f ) ( A... ) )
+    {
+      InitImpl< FixedFuncNames::Init, decltype( f ), A... >( f );
+    }
+
     void DefExit( void( T::*f ) () )
     {
       ExitImpl< FixedFuncNames::Exit, decltype( f ) >( f );
@@ -77,6 +89,7 @@ namespace upywrap
   private:
     struct FixedFuncNames
     {
+      func_name_def( Init )
       func_name_def( Exit )
     };
 
@@ -88,17 +101,9 @@ namespace upywrap
       type.base.type = &mp_type_type;
       type.name = qname;
       type.locals_dict = locals;
-      type.make_new = MakeNew;
+      type.make_new = nullptr;
 
       mp_obj_dict_store( dict, MP_OBJ_NEW_QSTR( qname ), &type );
-    }
-
-    static mp_obj_t MakeNew( mp_obj_t type_in, uint n_args, uint n_kw, const mp_obj_t *args )
-    {
-      this_type* o = m_new_obj( this_type );
-      o->base.type = &o->type;
-      o->obj = new T();
-      return o;
     }
 
     static void AddFunctionToTable( const qstr name, mp_obj_t fun )
@@ -123,6 +128,14 @@ namespace upywrap
       AddFunctionToTable( name(), mp_make_function_n( 1 + sizeof...( A ), (void*) call_type::Call ) );
     }
 
+    template< index_type name, class Fun, class... A >
+    static void InitImpl( Fun f )
+    {
+      typedef NativeMemberCall< name, T*, A... > call_type;
+      functionPointers[ (void*) name ] = call_type::CreateCaller( f );
+      type.make_new = call_type::MakeNew;
+    }
+
     template< index_type name, class Fun >
     static void ExitImpl( Fun f )
     {
@@ -137,8 +150,10 @@ namespace upywrap
     struct NativeMemberCall
     {
       typedef InstanceFunctionCall< T, Ret, A... > call_type;
+      typedef FunctionCall< T*, A... > init_call_type;
       typedef typename call_type::func_type func_type;
       typedef typename call_type::mem_func_type mem_func_type;
+      typedef typename init_call_type::func_type init_func_type;
 
       static call_type* CreateCaller( func_type f )
       {
@@ -148,6 +163,11 @@ namespace upywrap
       static call_type* CreateCaller( mem_func_type f )
       {
         return new MemberFunctionCall< T, Ret, A... >( f );
+      }
+
+      static init_call_type* CreateCaller( init_func_type f )
+      {
+        return new init_call_type( f );
       }
 
       static mp_obj_t Call( mp_obj_t self_in, typename project2nd< A, mp_obj_t >::type... args )
@@ -163,6 +183,24 @@ namespace upywrap
         auto self = (this_type*) args[ 0 ];
         auto f = (call_type*) this_type::functionPointers[ (void*) index ];
         return CallReturn< Ret, A... >::Call( f, self->obj );
+      }
+
+      static mp_obj_t MakeNew( mp_obj_t type_in, uint n_args, uint n_kw, const mp_obj_t *args )
+      {
+        if( n_args != sizeof...( A ) )
+          RaiseTypeException( "Wrong number of arguments for constructor" );
+        this_type* o = m_new_obj( this_type );
+        o->base.type = &o->type;
+        auto f = (init_call_type*) this_type::functionPointers[ (void*) index ];
+        o->obj = apply( f, args, typename make_indices< A... >::type() );
+        return o;
+      }
+
+    private:
+      template< size_t... Indices >
+      static T* apply( init_call_type* f, const mp_obj_t* args, index_tuple< Indices... > )
+      {
+        return f->Call( FromPyObj< typename remove_all< A >::type >::Convert( args[ Indices ] )... );
       }
     };
 
