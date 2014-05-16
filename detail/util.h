@@ -27,23 +27,23 @@ namespace upywrap
   }
 
   //Placeholder form compile-time indices array
-  template< size_t... >
+  template< std::size_t... >
   struct index_tuple
   {
   };
 
   namespace detail
   {
-    template< size_t N, class IndexTuple, class... Types >
+    template< std::size_t N, class IndexTuple, class... Types >
     struct make_indices_impl;
 
-    template< size_t N, size_t... Indices, class T, class... Types>
+    template< std::size_t N, std::size_t... Indices, class T, class... Types>
     struct make_indices_impl< N, index_tuple< Indices... >, T, Types...>
     {
       typedef typename make_indices_impl< N + 1, index_tuple< Indices..., N >, Types... >::type type;
     };
 
-    template< size_t N, size_t... Indices >
+    template< std::size_t N, std::size_t... Indices >
     struct make_indices_impl< N, index_tuple< Indices... > >
     {
       typedef index_tuple< Indices... > type;

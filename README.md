@@ -3,7 +3,6 @@ Micro Python (http://github.com/micropython/micropython).
 
 This is mainly proof-of-concept at the moment, todos include:
 - add more types (tuple, map)
-- allow passing native pointers around
 - refactor uPy specifics away from main code, so we can reuse this for eg CPython
 - check if it would be needed to pass certain mutable py types (list etc) by reference
 
@@ -19,7 +18,12 @@ Usage
     public:
       SomeClass()
       {
-        std::cout << "ctor" << std::endl;
+        std::cout << "ctor: " << this << std::endl;
+      }
+
+      static SomeClass* Factory()
+      {
+        return new SomeClass();
       }
 
       std::string Foo( const std::string& a, int n )
@@ -30,8 +34,13 @@ Usage
 
       void Bar( const std::vector< double >& vec )
       {
-        std::for_each( cbegin( vec ), cend( vec ), [] ( double a ) { std::cout << a; } );
+        std::for_each( vec.cbegin(), vec.cend(), [] ( double a ) { std::cout << a; } );
         std::cout << std::endl;
+      }
+
+      void Use( SomeClass* p )
+      {
+        std::cout << "inst: " << p << std::endl;
       }
     };
 
@@ -60,32 +69,37 @@ Usage
       return i;
     }
 
+    struct Funcs
+    {
+      func_name_def( Foo )
+      func_name_def( Bar )
+      func_name_def( Use )
+      func_name_def( Factory )
+      func_name_def( OtherFunc )
+      func_name_def( Func )
+    };
+
     extern "C"
     {
       void RegisterMyModule()
       {
-        struct Funcs
-        {
-          func_name_def( Foo )
-          func_name_def( Bar )
-          func_name_def( Foo2 )
-          func_name_def( SomeFunc )
-        };
-
         auto mod = upywrap::CreateModule( "mod" );
 
         upywrap::ClassWrapper< SomeClass > wrapclass( "SomeClass", mod->globals );
         wrapclass.DefInit<>();
         wrapclass.Def< Funcs::Foo >( &SomeClass::Foo );
         wrapclass.Def< Funcs::Bar >( &SomeClass::Bar );
-        wrapclass.Def< Funcs::Foo2 >( Func );
+        wrapclass.Def< Funcs::Use >( &SomeClass::Use );
+        wrapclass.Def< Funcs::Func >( Func );
 
         upywrap::ClassWrapper< ContextManager > wrapcman( "ContextManager", mod->globals );
         wrapcman.DefInit< int >();
         wrapcman.DefExit( &ContextManager::Dispose );
 
         upywrap::FunctionWrapper wrapfunc( mod->globals );
-        wrapfunc.Def< Funcs::SomeFunc >( OtherFunc );
+        wrapfunc.Def< Funcs::OtherFunc >( OtherFunc );
+        wrapfunc.Def< Funcs::Func >( Func );
+        wrapfunc.Def< Funcs::Factory >( SomeClass::Factory );
       }
     }
 
@@ -97,21 +111,25 @@ module mod can be used in Python like this:
     x = mod.SomeClass()
     x.Bar( [ 0.0, 1.0, 2.0 ] )
     print( x.Foo( 'abc', 1 ) )
-    print( x.Foo2( 'abc', 1 ) )
+    x.Func( 'abc', 1 )
+    x.Use( mod.Factory() )
 
-    print( mod.SomeFunc( [ 'a', 'b' ] ) )
+    print( mod.OtherFunc( [ 'a', 'b' ] ) )
+    mod.Func( x, 'glob', 2 )
 
     with mod.ContextManager( 1 ) as p :
       pass
 
 And the output is:
 
-    ctor
+    ctor: 007DDA50
     012
     abc1
     hello
     abc1
-    None
+    ctor: 007DF380
+    inst: 007DF380
     ['a', 'b', 'abcdef']
+    glob2
     ContextManager 1
     __exit__ called

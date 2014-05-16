@@ -6,6 +6,7 @@
 #include "detail/functioncall.h"
 #include "detail/callreturn.h"
 #include <vector>
+#include <cstdint>
 
 namespace upywrap
 {
@@ -82,9 +83,20 @@ namespace upywrap
       ExitImpl< FixedFuncNames::Exit, decltype( f ) >( f );
     }
 
+    static mp_obj_t AsPyObj( T* p )
+    {
+      auto o = m_new_obj( this_type );
+      o->base.type = &type;
+      o->cookie = defCookie;
+      o->obj = p;
+      return o;
+    }
+
     mp_obj_base_t base; //must always be the first member!
+    std::int64_t cookie; //we'll use this to check if a pointer really points to a ClassWrapper
     T* obj;
     static function_ptrs functionPointers;
+    static const std::int64_t defCookie;
 
   private:
     struct FixedFuncNames
@@ -189,11 +201,8 @@ namespace upywrap
       {
         if( n_args != sizeof...( A ) )
           RaiseTypeException( "Wrong number of arguments for constructor" );
-        this_type* o = m_new_obj( this_type );
-        o->base.type = &o->type;
         auto f = (init_call_type*) this_type::functionPointers[ (void*) index ];
-        o->obj = apply( f, args, typename make_indices< A... >::type() );
-        return o;
+        return AsPyObj( apply( f, args, typename make_indices< A... >::type() ) );
       }
 
     private:
@@ -223,6 +232,35 @@ namespace upywrap
 
   template< class T >
   function_ptrs ClassWrapper< T >::functionPointers;
+
+  template< class T >
+  const std::int64_t ClassWrapper< T >::defCookie = 0x12345678908765;
+
+
+  //Get intance pointer out of mp_obj_t
+  template< class T >
+  struct FromPyObj< T* >
+  {
+    typedef ClassWrapper< T > wrap_type;
+
+    static T* Convert( mp_obj_t arg )
+    {
+      auto native = (wrap_type*) arg;
+      if( native->cookie != wrap_type::defCookie )
+        RaiseTypeException( "Cannot convert this object to a native class instance" );
+      return native->obj;
+    }
+  };
+
+  //Wrap instance in a new mp_obj_t
+  template< class T >
+  struct ToPyObj< T* >
+  {
+    static mp_obj_t Convert( T* p )
+    {
+      return ClassWrapper< T >::AsPyObj( p );
+    }
+  };
 }
 
 #endif
