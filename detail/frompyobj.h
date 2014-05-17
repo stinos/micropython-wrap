@@ -3,11 +3,7 @@
 
 #include "micropython.h"
 #include "topyobj.h"
-#include <string>
-#include <vector>
-#include <algorithm>
 #include <functional>
-#include <limits>
 
 namespace upywrap
 {
@@ -58,14 +54,57 @@ namespace upywrap
   template< class T >
   struct FromPyObj< std::vector< T > >
   {
-    static std::vector< T > Convert( mp_obj_t arg )
+    typedef std::vector< T > vec_type;
+
+    static vec_type Convert( mp_obj_t arg )
     {
       uint len;
       mp_obj_t* items;
       mp_obj_get_array( arg, &len, &items ); //works for list and tuple
-      std::vector< T > ret( safe_integer_cast< size_t >( len ) );
+      vec_type ret( safe_integer_cast< size_t >( len ) );
       std::transform( items, items + len, ret.begin(), FromPyObj< T >::Convert );
       return ret;
+    }
+  };
+
+  template< class K, class V >
+  struct FromPyObj< std::map< K, V > >
+  {
+    typedef std::map< K, V > map_type;
+
+    static map_type Convert( mp_obj_t arg )
+    {
+      map_type ret;
+      auto dict_iter = mp_obj_new_dict_iterator( (mp_obj_dict_t*) arg, 0 );
+      mp_map_elem_t* next = nullptr;
+      while( ( next = dict_it_iternext_elem( dict_iter ) ) != MP_OBJ_STOP_ITERATION )
+      {
+        ret.insert( typename map_type::value_type( FromPyObj< K >::Convert( next->key ),
+                                                   FromPyObj< V >::Convert( next->value ) ) );
+      }
+      return ret;
+    }
+  };
+
+  template< class... A >
+  struct FromPyObj< std::tuple< A... > >
+  {
+    typedef std::tuple< A... > tuple_type;
+
+    static tuple_type Convert( mp_obj_t arg )
+    {
+      uint len;
+      mp_obj_t* items;
+      mp_obj_get_array( arg, &len, &items );
+      if( len != safe_integer_cast< uint >( sizeof...( A ) ) )
+        RaiseTypeException( "Not enough tuple elements" );
+      return make_it( items, make_index_sequence< sizeof...( A ) >() );
+    }
+
+    template< size_t... Indices >
+    static tuple_type make_it( const mp_obj_t* args, index_sequence< Indices... > )
+    {
+      return std::make_tuple( FromPyObj< A >::Convert( args[ Indices ] )... );
     }
   };
 

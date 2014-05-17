@@ -202,12 +202,12 @@ namespace upywrap
         if( n_args != sizeof...( A ) )
           RaiseTypeException( "Wrong number of arguments for constructor" );
         auto f = (init_call_type*) this_type::functionPointers[ (void*) index ];
-        return AsPyObj( apply( f, args, typename make_indices< A... >::type() ) );
+        return AsPyObj( apply( f, args, make_index_sequence< sizeof...( A ) >() ) );
       }
 
     private:
       template< size_t... Indices >
-      static T* apply( init_call_type* f, const mp_obj_t* args, index_tuple< Indices... > )
+      static T* apply( init_call_type* f, const mp_obj_t* args, index_sequence< Indices... > )
       {
         return f->Call( FromPyObj< typename remove_all< A >::type >::Convert( args[ Indices ] )... );
       }

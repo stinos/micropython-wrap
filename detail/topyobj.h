@@ -4,6 +4,8 @@
 #include "micropython.h"
 #include <string>
 #include <vector>
+#include <map>
+#include <tuple>
 #include <algorithm>
 
 namespace upywrap
@@ -59,6 +61,46 @@ namespace upywrap
       std::vector< mp_obj_t > items( numItems );
       std::transform( a.cbegin(), a.cend(), items.begin(), ToPyObj< T >::Convert );
       return mp_obj_new_list( safe_integer_cast< uint >( numItems ), items.data() );
+    }
+  };
+
+  template< class K, class V >
+  struct ToPyObj< std::map< K, V > >
+  {
+    static mp_obj_t Convert( const std::map< K, V >& a )
+    {
+      const auto numItems = a.size();
+      auto dict = mp_obj_new_dict( safe_integer_cast< uint >( numItems ) );
+      std::for_each( a.cbegin(), a.cend(), [&dict] ( decltype( *a.cbegin() )& p )
+      {
+        mp_obj_dict_store( dict, ToPyObj< K >::Convert( p.first ), ToPyObj< K >::Convert( p.second ) );
+      } );
+      return dict;
+    }
+  };
+
+  template< class... A >
+  struct ToPyObj< std::tuple< A... > >
+  {
+    typedef std::tuple< A... > tuple_type;
+
+    struct AddConvertedToVec
+    {
+      std::vector< mp_obj_t > items;
+
+      template< class T >
+      void operator ()( const T& a )
+      {
+        items.push_back( ToPyObj< T >::Convert( a ) );
+      }
+    };
+
+    static mp_obj_t Convert( const tuple_type& a )
+    {
+      const auto numItems = sizeof...( A );
+      AddConvertedToVec addtoVec;
+      apply( addtoVec, a );
+      return mp_obj_new_tuple( safe_integer_cast< uint >( numItems ), addtoVec.items.data() );
     }
   };
 }

@@ -1,10 +1,19 @@
-Easy wrapping of C and C++ functions and classes so they can be called from
+Provide convenient wrapping of C and C++ functions and classes so they can be called from
 Micro Python (http://github.com/micropython/micropython).
 
-This is mainly proof-of-concept at the moment, todos include:
-- add more types (tuple, map)
+Though fully operational (example below tested on 32/64 bit unix/windows ports)
+the code should still be considered beta and todos include:
 - refactor uPy specifics away from main code, so we can reuse this for eg CPython
 - check if it would be needed to pass certain mutable py types (list etc) by reference
+  (which would translate to converting uPy argument to native type, call native function,
+  then convert back to uPy type)
+- check with real-life code if there are any performance problems that can be solved
+  (for instance see which arguments can be rvalue references)
+- write some tests to verify functionality; easiest would be to use the code below,
+  run it and check output.
+  Ideally that requires a working dynamic import system for Micro Python,
+  though we can get away with a custom main and modifications to makefiles since
+  they only compile C code now.
 
 Usage
 -----
@@ -63,10 +72,24 @@ Usage
       p->Foo( a, n );
     }
 
-    std::vector< std::string > OtherFunc( std::vector< std::string > i )
+    std::vector< std::string > List( std::vector< std::string > i )
     {
       i.push_back( "abcdef" );
       return i;
+    }
+
+    std::map< int, int > Dict( std::map< int, int > arg )
+    {
+      arg[ 0 ] = 1;
+      arg[ 1 ] = 2;
+      return arg;
+    }
+
+    std::tuple< int, std::string > Tuple( std::tuple< int, std::string > arg )
+    {
+      std::get< 0 >( arg ) += 35;
+      std::get< 1 >( arg ) = std::get< 1 >( arg ) + "tuple";
+      return arg;
     }
 
     struct Funcs
@@ -75,8 +98,10 @@ Usage
       func_name_def( Bar )
       func_name_def( Use )
       func_name_def( Factory )
-      func_name_def( OtherFunc )
       func_name_def( Func )
+      func_name_def( List )
+      func_name_def( Dict )
+      func_name_def( Tuple )
     };
 
     extern "C"
@@ -97,9 +122,11 @@ Usage
         wrapcman.DefExit( &ContextManager::Dispose );
 
         upywrap::FunctionWrapper wrapfunc( mod->globals );
-        wrapfunc.Def< Funcs::OtherFunc >( OtherFunc );
         wrapfunc.Def< Funcs::Func >( Func );
         wrapfunc.Def< Funcs::Factory >( SomeClass::Factory );
+        wrapfunc.Def< Funcs::List >( List );
+        wrapfunc.Def< Funcs::Dict >( Dict );
+        wrapfunc.Def< Funcs::Tuple >( Tuple );
       }
     }
 
@@ -112,24 +139,28 @@ module mod can be used in Python like this:
     x.Bar( [ 0.0, 1.0, 2.0 ] )
     print( x.Foo( 'abc', 1 ) )
     x.Func( 'abc', 1 )
-    x.Use( mod.Factory() )
-
-    print( mod.OtherFunc( [ 'a', 'b' ] ) )
     mod.Func( x, 'glob', 2 )
+    x.Use( mod.Factory() )
 
     with mod.ContextManager( 1 ) as p :
       pass
 
-And the output is:
+    print( mod.List( [ 'a', 'b' ] ) )
+    print( mod.Dict( { 3: 4 } ) )
+    print( mod.Tuple( [ 0, 'upy' ] ) )
 
-    ctor: 007DDA50
+And the output is something like:
+
+    ctor: 004FDDD0
     012
     abc1
     hello
     abc1
-    ctor: 007DF380
-    inst: 007DF380
-    ['a', 'b', 'abcdef']
     glob2
+    ctor: 004FF1F8
+    inst: 004FF1F8
     ContextManager 1
     __exit__ called
+    ['a', 'b', 'abcdef']
+    {0: 1, 1: 2, 3: 4}
+    (35, 'upytuple')

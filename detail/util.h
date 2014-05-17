@@ -2,6 +2,7 @@
 #define MICROPYTHONMODULE_UTIL_H
 
 #include <type_traits>
+#include <tuple>
 
 namespace upywrap
 {
@@ -26,35 +27,45 @@ namespace upywrap
     return new T( args... );
   }
 
-  //Placeholder form compile-time indices array
+  //Compile-time generated sequence of size_t (will be in C++14)
   template< std::size_t... >
-  struct index_tuple
+  struct index_sequence { };
+
+  //Generator of index_sequence< Is >
+  template< std::size_t N, std::size_t... Is >
+  struct make_index_sequence : make_index_sequence< N - 1, N - 1, Is... > { };
+
+  template< std::size_t... Is> 
+  struct make_index_sequence< 0, Is... > : index_sequence< Is... > { };
+
+  //Recursive helper for apply
+  template< std::size_t N, class... Args >
+  struct apply_tuple
   {
+    template< class Fun >
+    static void apply( Fun&& f, const std::tuple< Args... >& args )
+    {
+      apply_tuple< N - 1, Args... >::apply( f, args );
+      f( std::get< N >( args ) );
+    }
   };
 
-  namespace detail
+  template< class... Args >
+  struct apply_tuple< 0, Args... >
   {
-    template< std::size_t N, class IndexTuple, class... Types >
-    struct make_indices_impl;
-
-    template< std::size_t N, std::size_t... Indices, class T, class... Types>
-    struct make_indices_impl< N, index_tuple< Indices... >, T, Types...>
+    template< class Fun >
+    static void apply( Fun&& f, const std::tuple< Args... >& args )
     {
-      typedef typename make_indices_impl< N + 1, index_tuple< Indices..., N >, Types... >::type type;
-    };
+      f( std::get< 0 >( args ) );
+    }
+  };
 
-    template< std::size_t N, std::size_t... Indices >
-    struct make_indices_impl< N, index_tuple< Indices... > >
-    {
-      typedef index_tuple< Indices... > type;
-    };
+  //Recursively apply each element of a tuple to the given function
+  template< class Fun, class... Args >
+  void apply( Fun&& f, const std::tuple< Args... >& args )
+  {
+    apply_tuple< std::tuple_size< std::tuple< Args... > >::value - 1, Args... >::apply( f, args );
   }
-
-  //Create compile-time array with indices
-  template< class... Types >
-  struct make_indices : public detail::make_indices_impl< 0, index_tuple<>, Types... >
-  {
-  };
 }
 
 #endif
