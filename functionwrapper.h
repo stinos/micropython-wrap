@@ -36,6 +36,11 @@ namespace upywrap
   class FunctionWrapper
   {
   public:
+    FunctionWrapper( mp_obj_module_t* mod ) :
+      FunctionWrapper( mod->globals )
+    {
+    }
+
     FunctionWrapper( mp_obj_dict_t* globals ) :
       globals( globals )
     {

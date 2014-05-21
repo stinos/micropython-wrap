@@ -44,6 +44,11 @@ namespace upywrap
   class ClassWrapper
   {
   public:
+    ClassWrapper( const char* name, mp_obj_module_t* mod ) :
+      ClassWrapper( name, mod->globals )
+    {
+    }
+
     ClassWrapper( const char* name, mp_obj_dict_t* dict )
     {
       static bool init = false;
@@ -197,7 +202,7 @@ namespace upywrap
         return CallReturn< Ret, A... >::Call( f, self->obj );
       }
 
-      static mp_obj_t MakeNew( mp_obj_t type_in, uint n_args, uint n_kw, const mp_obj_t *args )
+      static mp_obj_t MakeNew( mp_obj_t, uint n_args, uint, const mp_obj_t *args )
       {
         if( n_args != sizeof...( A ) )
           RaiseTypeException( "Wrong number of arguments for constructor" );
@@ -209,6 +214,7 @@ namespace upywrap
       template< size_t... Indices >
       static T* apply( init_call_type* f, const mp_obj_t* args, index_sequence< Indices... > )
       {
+        (void) args;
         return f->Call( FromPyObj< typename remove_all< A >::type >::Convert( args[ Indices ] )... );
       }
     };

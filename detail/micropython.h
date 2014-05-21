@@ -8,7 +8,13 @@ extern "C"
   #include <micropython/py/qstr.h>
   #include <micropython/py/nlr.h>
   #include <micropython/py/obj.h>
+#ifdef _MSC_VER
+#pragma warning ( disable : 4200 )
+#endif
   #include <micropython/py/objfun.h>
+#ifdef _MSC_VER
+#pragma warning ( default : 4200 )
+#endif
   #include <micropython/py/objmodule.h>
   #include <micropython/py/runtime.h>
 }
