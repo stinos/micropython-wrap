@@ -71,6 +71,12 @@ namespace upywrap
       DefImpl< name, Ret, decltype( f ), A... >( f );
     }
 
+    template< index_type name, class Ret, class... A >
+    void Def( Ret( T::*f ) ( A... ) const )
+    {
+      DefImpl< name, Ret, decltype( f ), A... >( f );
+    }
+
     template< class... A >
     void DefInit()
     {
@@ -170,6 +176,7 @@ namespace upywrap
       typedef FunctionCall< T*, A... > init_call_type;
       typedef typename call_type::func_type func_type;
       typedef typename call_type::mem_func_type mem_func_type;
+      typedef typename call_type::const_mem_func_type const_mem_func_type;
       typedef typename init_call_type::func_type init_func_type;
 
       static call_type* CreateCaller( func_type f )
@@ -180,6 +187,11 @@ namespace upywrap
       static call_type* CreateCaller( mem_func_type f )
       {
         return new MemberFunctionCall< T, Ret, A... >( f );
+      }
+
+      static call_type* CreateCaller( const_mem_func_type f )
+      {
+        return new ConstMemberFunctionCall< T, Ret, A... >( f );
       }
 
       static init_call_type* CreateCaller( init_func_type f )

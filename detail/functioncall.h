@@ -9,6 +9,7 @@ namespace upywrap
   {
     typedef Ret( *func_type )( T*, A... );
     typedef Ret( T::*mem_func_type )( A... );
+    typedef Ret( T::*const_mem_func_type )( A... ) const;
     virtual ~InstanceFunctionCall() {}
     virtual Ret Call( T* p, A... ) = 0;
   };
@@ -20,6 +21,16 @@ namespace upywrap
     typedef typename InstanceFunctionCall< T, Ret, A... >::mem_func_type mem_func_type;
     mem_func_type func;
     MemberFunctionCall( mem_func_type func ) : func( func ) {}
+    virtual Ret Call( T* p, A... a ) { return ( p->*func )( a... ); }
+  };
+
+  //Normal const member function call (const is ignored btw)
+  template< class T, class Ret, class... A >
+  struct ConstMemberFunctionCall : public InstanceFunctionCall< T, Ret, A... >
+  {
+    typedef typename InstanceFunctionCall< T, Ret, A... >::const_mem_func_type const_mem_func_type;
+    const_mem_func_type func;
+    ConstMemberFunctionCall( const_mem_func_type func ) : func( func ) {}
     virtual Ret Call( T* p, A... a ) { return ( p->*func )( a... ); }
   };
 
