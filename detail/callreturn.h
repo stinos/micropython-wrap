@@ -30,14 +30,14 @@ namespace upywrap
     static mp_obj_t Call( Fun f, typename project2nd< A, mp_obj_t >::type... args )
     {
       f->Call( FromPyObj< typename remove_all< A >::type >::Convert( args )... );
-      return mp_const_none;
+      return ToPyObj< void >::Convert();
     }
 
     template< class Fun, class Self >
     static mp_obj_t Call( Fun f, Self self, typename project2nd< A, mp_obj_t >::type... args )
     {
       f->Call( self, FromPyObj< typename remove_all< A >::type >::Convert( args )... );
-      return mp_const_none;
+      return ToPyObj< void >::Convert();
     }
   };
 }

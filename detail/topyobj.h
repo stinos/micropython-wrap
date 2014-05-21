@@ -15,6 +15,15 @@ namespace upywrap
   struct ToPyObj;
 
   template<>
+  struct ToPyObj< void >
+  {
+    static mp_obj_t Convert()
+    {
+      return mp_const_none;
+    }
+  };
+
+  template<>
   struct ToPyObj< machine_int_t >
   {
     static mp_obj_t Convert( machine_int_t a )
