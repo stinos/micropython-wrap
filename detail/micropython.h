@@ -18,11 +18,12 @@ extern "C"
 
 namespace upywrap
 {
-  inline mp_obj_module_t* CreateModule( const char* name )
+  inline mp_obj_module_t* CreateModule( const char* name, bool doRegister = true )
   {
     const qstr qname = qstr_from_str( name );
     mp_obj_module_t* mod = (mp_obj_module_t*) mp_obj_new_module( qname );
-    mp_module_register( qname, mod );
+    if( doRegister )
+      mp_module_register( qname, mod );
     return mod;
   }
 
