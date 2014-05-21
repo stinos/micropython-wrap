@@ -20,6 +20,15 @@ namespace upywrap
     }
   };
 
+  template<>
+  struct FromPyObj< bool >
+  {
+    static bool Convert( mp_obj_t arg )
+    {
+      return mp_obj_is_true( arg ) ? true : false;
+    }
+  };
+
 #if defined( __LP64__ ) || defined( _WIN64 )
   template<>
   struct FromPyObj< int >

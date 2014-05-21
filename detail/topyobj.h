@@ -23,6 +23,15 @@ namespace upywrap
     }
   };
 
+  template<>
+  struct ToPyObj< bool >
+  {
+    static mp_obj_t Convert( bool a )
+    {
+      return a ? mp_const_true : mp_const_false;
+    }
+  };
+
 #if defined( __LP64__ ) || defined( _WIN64 )
   template<>
   struct ToPyObj< int >
