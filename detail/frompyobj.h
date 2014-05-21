@@ -117,10 +117,69 @@ namespace upywrap
     }
   };
 
+  namespace detail
+  {
+    template< class R, class... Args >
+    struct MakeStdFun
+    {
+      typedef typename std::function< R( Args... ) > std_fun_type;
+      typedef mp_obj_t( *py_fun_type )( typename project2nd< Args, mp_obj_t >::type... );
+
+      static std_fun_type Native( const mp_obj_fun_native_t* nativeFun )
+      {
+        const auto pyFun = (py_fun_type) nativeFun->fun;
+        return std_fun_type(
+          [pyFun] ( Args... args ) -> R
+          {
+            return FromPyObj< R >::Convert( pyFun( ToPyObj< Args >::Convert( args )... ) );
+          } );
+      }
+
+      static std_fun_type PythonFun( mp_obj_t fun )
+      {
+        return std_fun_type(
+          [fun] ( Args... args ) -> R
+          {
+            //+1 to avoid zero-sized array which is illegal for msvc
+            mp_obj_t objs[ sizeof...( Args ) + 1 ] = { ToPyObj< Args >::Convert( args )... };
+            return FromPyObj< R >::Convert( mp_call_function_n_kw( fun, sizeof...( Args ), 0, objs ) );
+          } );
+      }
+    };
+
+    template< class... Args >
+    struct MakeStdFun< void, Args... >
+    {
+      typedef typename std::function< void( Args... ) > std_fun_type;
+      typedef mp_obj_t( *py_fun_type )( typename project2nd< Args, mp_obj_t >::type... );
+
+      static std_fun_type Native( const mp_obj_fun_native_t* nativeFun )
+      {
+        const auto pyFun = (py_fun_type) nativeFun->fun;
+        return std_fun_type(
+          [pyFun] ( Args... args )
+          {
+            pyFun( ToPyObj< Args >::Convert( args )... );
+          } );
+      }
+
+      static std_fun_type PythonFun( mp_obj_t fun )
+      {
+        return std_fun_type(
+          [fun] ( Args... args )
+          {
+            mp_obj_t objs[ sizeof...( Args ) + 1 ] = { ToPyObj< Args >::Convert( args )... };
+            mp_call_function_n_kw( fun, sizeof...( Args ), 0, objs );
+          } );
+      }
+    };
+  }
+
   template< class R, class... Args >
   struct FromPyObj< std::function< R( Args... ) > >
   {
-    typedef typename std::function< R( Args... ) > std_fun_type;
+    typedef typename detail::MakeStdFun< R, Args... > make_fun;
+    typedef typename make_fun::std_fun_type std_fun_type;
 
     static std_fun_type Convert( mp_obj_t arg )
     {
@@ -128,30 +187,12 @@ namespace upywrap
       {
         //TODO if nativeFun actually points to NativeCall::Call or NativeMemberCall::Call, and we can
         //figure that out somehow, we do not have to go through the double conversion native->mp_obj_t->native
-        typedef mp_obj_t( *py_fun_type )( typename project2nd< Args, mp_obj_t >::type... );
-
-        const mp_obj_fun_native_t* nativeFun = (mp_obj_fun_native_t*) arg;
-        const py_fun_type pyFun = (py_fun_type) nativeFun->fun;
-        return std_fun_type(
-          [pyFun] ( Args... args ) -> R
-          {
-            return FromPyObj< R >::Convert( pyFun( ToPyObj< Args >::Convert( args )... ) );
-          } );
-      }
-      else if( MP_OBJ_IS_TYPE( arg, &mp_type_fun_bc ) )
-      {
-        mp_obj_fun_bc_t* fun = (mp_obj_fun_bc_t*) arg;
-        return std_fun_type(
-          [fun] ( Args... args ) -> R
-          {
-            mp_obj_t pyArgs[] = { ToPyObj< Args >::Convert( args )... };
-            return FromPyObj< R >::Convert( fun_bc_call( fun, sizeof...( Args ), 0, pyArgs ) );
-          } );
+        const auto nativeFun = (mp_obj_fun_native_t*) arg;
+        return make_fun::Native( nativeFun );
       }
       else
       {
-        RaiseTypeException( "This function cannot be converted to a native function" );
-        return std_fun_type();
+        return make_fun::PythonFun( arg );
       }
     }
   };
