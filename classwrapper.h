@@ -89,6 +89,16 @@ namespace upywrap
       InitImpl< FixedFuncNames::Init, decltype( f ), A... >( f );
     }
 
+    static void DefDel()
+    {
+      DefDel( DestructorFactoryFunc< T > );
+    }
+
+    static void DefDel( void( *f ) ( T* ) )
+    {
+      DefImpl< FixedFuncNames::__del__, void, decltype( f ) >( f );
+    }
+
     void DefExit( void( T::*f ) () )
     {
       ExitImpl< FixedFuncNames::Exit, decltype( f ) >( f );
@@ -96,7 +106,7 @@ namespace upywrap
 
     static mp_obj_t AsPyObj( T* p )
     {
-      auto o = m_new_obj( this_type );
+      auto o = m_new_obj_with_finaliser( this_type );
       o->base.type = &type;
       o->cookie = defCookie;
       o->obj = p;
@@ -114,6 +124,7 @@ namespace upywrap
     {
       func_name_def( Init )
       func_name_def( Exit )
+      func_name_def( __del__ )
     };
 
     static void OneTimeInit( const char* name, mp_obj_dict_t* dict )
@@ -208,6 +219,7 @@ namespace upywrap
 
       static mp_obj_t CallVar( uint n_args, const mp_obj_t* args )
       {
+        (void) n_args;
         static_assert( sizeof...( A ) == 0, "TODO expand args array if you want this with multiple arguments" );
         auto self = (this_type*) args[ 0 ];
         auto f = (call_type*) this_type::functionPointers[ (void*) index ];

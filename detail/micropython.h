@@ -3,8 +3,8 @@
 
 extern "C"
 {
-  #include <micropython/py/misc.h>
   #include <micropython/py/mpconfig.h>
+  #include <micropython/py/misc.h>
   #include <micropython/py/qstr.h>
   #include <micropython/py/nlr.h>
   #include <micropython/py/obj.h>
