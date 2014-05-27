@@ -66,7 +66,7 @@ namespace upywrap
   {
     static mp_obj_t Convert( const std::string& a )
     {
-      return mp_obj_new_str( reinterpret_cast< const byte* >( a.data() ), safe_integer_cast< uint >( a.length() ), false );
+      return mp_obj_new_str( reinterpret_cast< const char* >( a.data() ), safe_integer_cast< uint >( a.length() ), false );
     }
   };
 
