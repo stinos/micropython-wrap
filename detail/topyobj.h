@@ -91,7 +91,7 @@ namespace upywrap
       auto dict = mp_obj_new_dict( safe_integer_cast< uint >( numItems ) );
       std::for_each( a.cbegin(), a.cend(), [&dict] ( decltype( *a.cbegin() )& p )
       {
-        mp_obj_dict_store( dict, ToPyObj< K >::Convert( p.first ), ToPyObj< K >::Convert( p.second ) );
+        mp_obj_dict_store( dict, ToPyObj< K >::Convert( p.first ), ToPyObj< V >::Convert( p.second ) );
       } );
       return dict;
     }
