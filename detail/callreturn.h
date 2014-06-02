@@ -13,13 +13,13 @@ namespace upywrap
     template< class Fun >
     static mp_obj_t Call( Fun f, typename project2nd< A, mp_obj_t >::type... args )
     {
-      return ToPyObj< Ret >::Convert( f->Call( FromPyObj< typename remove_all< A >::type >::Convert( args )... ) );
+      return SelectToPyObj< Ret >::type::Convert( f->Call( SelectFromPyObj< A >::type::Convert( args )... ) );
     }
 
     template< class Fun, class Self >
     static mp_obj_t Call( Fun f, Self self, typename project2nd< A, mp_obj_t >::type... args )
     {
-      return ToPyObj< Ret >::Convert( f->Call( self, FromPyObj< typename remove_all< A >::type >::Convert( args )... ) );
+      return SelectToPyObj< Ret >::type::Convert( f->Call( self, SelectFromPyObj< A >::type::Convert( args )... ) );
     }
   };
 
@@ -29,14 +29,14 @@ namespace upywrap
     template< class Fun >
     static mp_obj_t Call( Fun f, typename project2nd< A, mp_obj_t >::type... args )
     {
-      f->Call( FromPyObj< typename remove_all< A >::type >::Convert( args )... );
+      f->Call( SelectFromPyObj< A >::type::Convert( args )... );
       return ToPyObj< void >::Convert();
     }
 
     template< class Fun, class Self >
     static mp_obj_t Call( Fun f, Self self, typename project2nd< A, mp_obj_t >::type... args )
     {
-      f->Call( self, FromPyObj< typename remove_all< A >::type >::Convert( args )... );
+      f->Call( self, SelectFromPyObj< A >::type::Convert( args )... );
       return ToPyObj< void >::Convert();
     }
   };

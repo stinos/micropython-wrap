@@ -1,7 +1,31 @@
 Provide convenient wrapping of C and C++ functions and classes so they can be called from
 Micro Python (http://github.com/micropython/micropython).
 
-Though fully operational (example below tested on 32/64 bit unix/windows ports)
+Currently supports these conversions for function arguments and return values:
+
+    uPy double <-> double
+    uPy int <-> int
+    uPy bool <-> bool
+    uPy str <-> std::string
+    uPy tuple <-> std::tuple
+    uPy array <-> std::vector
+    uPy dict <-> std::map
+    uPy callable -> std::function
+
+    uPy type <-> T (if T is registered with ClassWrapper, see Usage)
+
+For the latter, native functions accepting pointers, values and references are allowed,
+and pointers and referenecs can be returned.
+For the 'builtin' types, the native function must take the argument by value, const value or const reference,
+and only values can be returned.
+
+Some typical Python concepts are supported for class types:
+
+    uPy __init__ = native class constructor or factory function of choice
+    uPy __del__ = native class destructor
+    uPy __exit__ = can be registered to call a void() method
+
+Though fully operational (all tests are ok on 32/64 bit unix/windows ports)
 the code should still be considered beta and todos include:
 - refactor uPy specifics away from main code, so we can reuse this for eg CPython
 - check if it would be needed to pass certain mutable py types (list etc) by reference
@@ -9,14 +33,13 @@ the code should still be considered beta and todos include:
   then convert back to uPy type)
 - check with real-life code if there are any performance problems that can be solved
   (for instance see which arguments can be rvalue references)
-- write some tests to verify functionality; easiest would be to use the code below,
-  run it and check output.
-  Ideally that requires a working dynamic import system for Micro Python,
-  though we can get away with a custom main and modifications to makefiles since
-  they only compile C code now.
+- the tests require a native module to be registered with uPy;
+  Ideally that requires a working dynamic import system for Micro Python, but as long as
+  that is not available, we manually build with tests/module.cpp included as source and
+  call InitUpyWrapTest() in main()..
 
-Usage
------
+Usage Sample
+------------
 
     #include <micropython-wrap/classwrapper.h>
     #include <micropython-wrap/functionwrapper.h>
@@ -25,72 +48,32 @@ Usage
     class SomeClass
     {
     public:
-      SomeClass()
-      {
-        std::cout << "ctor: " << this << std::endl;
-      }
+      SomeClass();
 
-      static SomeClass* Factory()
-      {
-        return new SomeClass();
-      }
+      static SomeClass* Factory();
 
-      std::string Foo( const std::string& a, int n )
-      {
-        std::cout << a << n << std::endl;
-        return "hello";
-      }
+      std::string Foo( const std::string& a, int n );
 
-      void Bar( const std::vector< double >& vec )
-      {
-        std::for_each( vec.cbegin(), vec.cend(), [] ( double a ) { std::cout << a; } );
-        std::cout << std::endl;
-      }
+      void Bar( const std::vector< double >& vec );
 
-      void Use( SomeClass* p )
-      {
-        std::cout << "inst: " << p << std::endl;
-      }
+      void Use( SomeClass* p );
     };
 
     class ContextManager
     {
     public:
-      ContextManager( int a )
-      {
-        std::cout << "ContextManager " << a << std::endl;
-      }
+      ContextManager( int a );
 
-      void Dispose()
-      {
-        std::cout << "__exit__ called" << std::endl;
-      }
+      void Dispose();
     };
 
-    void Func( SomeClass* p, const std::string& a, int n )
-    {
-      p->Foo( a, n );
-    }
+    void Func( SomeClass* p, const std::string& a, int n );
 
-    std::vector< std::string > List( std::vector< std::string > i )
-    {
-      i.push_back( "abcdef" );
-      return i;
-    }
+    std::vector< std::string > List( std::vector< std::string > i );
 
-    std::map< int, int > Dict( std::map< int, int > arg )
-    {
-      arg[ 0 ] = 1;
-      arg[ 1 ] = 2;
-      return arg;
-    }
+    std::map< int, int > Dict( std::map< int, int > arg );
 
-    std::tuple< int, std::string > Tuple( std::tuple< int, std::string > arg )
-    {
-      std::get< 0 >( arg ) += 35;
-      std::get< 1 >( arg ) = std::get< 1 >( arg ) + "tuple";
-      return arg;
-    }
+    std::tuple< int, std::string > Tuple( std::tuple< int, std::string > arg );
 
     struct Funcs
     {
@@ -110,18 +93,18 @@ Usage
       {
         auto mod = upywrap::CreateModule( "mod" );
 
-        upywrap::ClassWrapper< SomeClass > wrapclass( "SomeClass", mod->globals );
+        upywrap::ClassWrapper< SomeClass > wrapclass( "SomeClass", mod );
         wrapclass.DefInit<>();
         wrapclass.Def< Funcs::Foo >( &SomeClass::Foo );
         wrapclass.Def< Funcs::Bar >( &SomeClass::Bar );
         wrapclass.Def< Funcs::Use >( &SomeClass::Use );
         wrapclass.Def< Funcs::Func >( Func );
 
-        upywrap::ClassWrapper< ContextManager > wrapcman( "ContextManager", mod->globals );
+        upywrap::ClassWrapper< ContextManager > wrapcman( "ContextManager", mod );
         wrapcman.DefInit< int >();
         wrapcman.DefExit( &ContextManager::Dispose );
 
-        upywrap::FunctionWrapper wrapfunc( mod->globals );
+        upywrap::FunctionWrapper wrapfunc( mod );
         wrapfunc.Def< Funcs::Func >( Func );
         wrapfunc.Def< Funcs::Factory >( SomeClass::Factory );
         wrapfunc.Def< Funcs::List >( List );
@@ -148,19 +131,3 @@ module mod can be used in Python like this:
     print( mod.List( [ 'a', 'b' ] ) )
     print( mod.Dict( { 3: 4 } ) )
     print( mod.Tuple( [ 0, 'upy' ] ) )
-
-And the output is something like:
-
-    ctor: 004FDDD0
-    012
-    abc1
-    hello
-    abc1
-    glob2
-    ctor: 004FF1F8
-    inst: 004FF1F8
-    ContextManager 1
-    __exit__ called
-    ['a', 'b', 'abcdef']
-    {0: 1, 1: 2, 3: 4}
-    (35, 'upytuple')

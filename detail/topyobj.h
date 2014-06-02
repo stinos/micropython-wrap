@@ -12,10 +12,12 @@ namespace upywrap
 {
   //Create mp_obj_t from Ret
   template< class Ret >
-  struct ToPyObj;
+  struct ToPyObj : std::false_type
+  {
+  };
 
   template<>
-  struct ToPyObj< void >
+  struct ToPyObj< void > : std::true_type
   {
     static mp_obj_t Convert()
     {
@@ -24,7 +26,7 @@ namespace upywrap
   };
 
   template<>
-  struct ToPyObj< machine_int_t >
+  struct ToPyObj< machine_int_t > : std::true_type
   {
     static mp_obj_t Convert( machine_int_t a )
     {
@@ -33,7 +35,7 @@ namespace upywrap
   };
 
   template<>
-  struct ToPyObj< bool >
+  struct ToPyObj< bool > : std::true_type
   {
     static mp_obj_t Convert( bool a )
     {
@@ -43,7 +45,7 @@ namespace upywrap
 
 #if defined( __LP64__ ) || defined( _WIN64 )
   template<>
-  struct ToPyObj< int >
+  struct ToPyObj< int > : std::true_type
   {
     static mp_obj_t Convert( int arg )
     {
@@ -53,7 +55,7 @@ namespace upywrap
 #endif
 
   template<>
-  struct ToPyObj< mp_float_t >
+  struct ToPyObj< mp_float_t > : std::true_type
   {
     static mp_obj_t Convert( mp_float_t a )
     {
@@ -62,7 +64,7 @@ namespace upywrap
   };
 
   template<>
-  struct ToPyObj< std::string >
+  struct ToPyObj< std::string > : std::true_type
   {
     static mp_obj_t Convert( const std::string& a )
     {
@@ -71,7 +73,7 @@ namespace upywrap
   };
 
   template< class T >
-  struct ToPyObj< std::vector< T > >
+  struct ToPyObj< std::vector< T > > : std::true_type
   {
     static mp_obj_t Convert( const std::vector< T >& a )
     {
@@ -83,7 +85,7 @@ namespace upywrap
   };
 
   template< class K, class V >
-  struct ToPyObj< std::map< K, V > >
+  struct ToPyObj< std::map< K, V > > : std::true_type
   {
     static mp_obj_t Convert( const std::map< K, V >& a )
     {
@@ -98,7 +100,7 @@ namespace upywrap
   };
 
   template< class... A >
-  struct ToPyObj< std::tuple< A... > >
+  struct ToPyObj< std::tuple< A... > > : std::true_type
   {
     typedef std::tuple< A... > tuple_type;
 
@@ -120,6 +122,31 @@ namespace upywrap
       apply( addtoVec, a );
       return mp_obj_new_tuple( safe_integer_cast< uint >( numItems ), addtoVec.items.data() );
     }
+  };
+
+
+  //Check if a qualifier for one of the supported ToPyObj types is supported -
+  //this is the case only if it's returned by value
+  template< class T >
+  struct IsSupportedToPyObjQualifier : std::is_same< T, typename remove_all< T >::type >
+  {
+  };
+
+  //Store ClassWrapper in mp_obj_t
+  template< class T >
+  struct ClassToPyObj;
+
+  //Select bewteen FromPyObj and ClassFromPyObj
+  template< class T >
+  struct SelectToPyObj
+  {
+    typedef ToPyObj< typename remove_all< T >::type > builtin_type;
+    typedef ClassToPyObj< typename remove_all_const< T >::type > class_type;
+
+    typedef typename std::conditional< builtin_type::value, IsSupportedToPyObjQualifier< T >, std::true_type >::type is_valid_builtinq;
+    static_assert( is_valid_builtinq::value, "Unsupported qualifier for builtin uPy types (must be returned by value)" );
+
+    typedef typename std::conditional< builtin_type::value, builtin_type, class_type >::type type;
   };
 }
 

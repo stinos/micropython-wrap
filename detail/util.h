@@ -6,11 +6,35 @@
 
 namespace upywrap
 {
-  //Remove cv qualifiers and reference
-  template< class T >
-  struct remove_all
+  //Remove const/reference/pointer
+  template< class T, class U = typename std::remove_cv< typename std::remove_pointer< typename std::remove_reference< T >::type >::type >::type >
+  struct remove_all : remove_all< U >
   {
-    typedef typename std::remove_cv< typename std::remove_reference< T >::type >::type type;
+  };
+
+  template< class T >
+  struct remove_all< T, T >
+  {
+    typedef T type;
+  };
+
+  //Remove const qualifier, also from references and pointers
+  template< class T >
+  struct remove_all_const
+  {
+    typedef typename std::remove_const< T >::type type;
+  };
+
+  template< class T >
+  struct remove_all_const< const T& >
+  {
+    typedef T& type;
+  };
+
+  template< class T >
+  struct remove_all_const< const T* >
+  {
+    typedef T* type;
   };
 
   //Take two template arguments and return the second one

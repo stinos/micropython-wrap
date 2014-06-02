@@ -9,10 +9,12 @@ namespace upywrap
 {
   //Extract Arg from mp_obj_t
   template< class Arg >
-  struct FromPyObj;
+  struct FromPyObj : std::false_type
+  {
+  };
 
   template<>
-  struct FromPyObj< machine_int_t >
+  struct FromPyObj< machine_int_t > : std::true_type
   {
     static machine_int_t Convert( mp_obj_t arg )
     {
@@ -21,7 +23,7 @@ namespace upywrap
   };
 
   template<>
-  struct FromPyObj< bool >
+  struct FromPyObj< bool > : std::true_type
   {
     static bool Convert( mp_obj_t arg )
     {
@@ -31,7 +33,7 @@ namespace upywrap
 
 #if defined( __LP64__ ) || defined( _WIN64 )
   template<>
-  struct FromPyObj< int >
+  struct FromPyObj< int > : std::true_type
   {
     static int Convert( mp_obj_t arg )
     {
@@ -41,7 +43,7 @@ namespace upywrap
 #endif
 
   template<>
-  struct FromPyObj< mp_float_t >
+  struct FromPyObj< mp_float_t > : std::true_type
   {
     static mp_float_t Convert( mp_obj_t arg )
     {
@@ -50,7 +52,7 @@ namespace upywrap
   };
 
   template<>
-  struct FromPyObj< std::string >
+  struct FromPyObj< std::string > : std::true_type
   {
     static std::string Convert( mp_obj_t arg )
     {
@@ -61,7 +63,7 @@ namespace upywrap
   };
 
   template< class T >
-  struct FromPyObj< std::vector< T > >
+  struct FromPyObj< std::vector< T > > : std::true_type
   {
     typedef std::vector< T > vec_type;
 
@@ -77,7 +79,7 @@ namespace upywrap
   };
 
   template< class K, class V >
-  struct FromPyObj< std::map< K, V > >
+  struct FromPyObj< std::map< K, V > > : std::true_type
   {
     typedef std::map< K, V > map_type;
 
@@ -96,7 +98,7 @@ namespace upywrap
   };
 
   template< class... A >
-  struct FromPyObj< std::tuple< A... > >
+  struct FromPyObj< std::tuple< A... > > : std::true_type
   {
     typedef std::tuple< A... > tuple_type;
 
@@ -131,7 +133,7 @@ namespace upywrap
         return std_fun_type(
           [pyFun] ( Args... args ) -> R
           {
-            return FromPyObj< R >::Convert( pyFun( ToPyObj< Args >::Convert( args )... ) );
+            return FromPyObj< R >::Convert( pyFun( SelectToPyObj< Args >::type::Convert( args )... ) );
           } );
       }
 
@@ -141,7 +143,7 @@ namespace upywrap
           [fun] ( Args... args ) -> R
           {
             //+1 to avoid zero-sized array which is illegal for msvc
-            mp_obj_t objs[ sizeof...( Args ) + 1 ] = { ToPyObj< Args >::Convert( args )... };
+            mp_obj_t objs[ sizeof...( Args ) + 1 ] = { SelectToPyObj< Args >::type::Convert( args )... };
             return FromPyObj< R >::Convert( mp_call_function_n_kw( fun, sizeof...( Args ), 0, objs ) );
           } );
       }
@@ -159,7 +161,7 @@ namespace upywrap
         return std_fun_type(
           [pyFun] ( Args... args )
           {
-            pyFun( ToPyObj< Args >::Convert( args )... );
+            pyFun( SelectToPyObj< Args >::type::Convert( args )... );
           } );
       }
 
@@ -168,7 +170,7 @@ namespace upywrap
         return std_fun_type(
           [fun] ( Args... args )
           {
-            mp_obj_t objs[ sizeof...( Args ) + 1 ] = { ToPyObj< Args >::Convert( args )... };
+            mp_obj_t objs[ sizeof...( Args ) + 1 ] = { SelectToPyObj< Args >::type::Convert( args )... };
             mp_call_function_n_kw( fun, sizeof...( Args ), 0, objs );
           } );
       }
@@ -176,7 +178,7 @@ namespace upywrap
   }
 
   template< class R, class... Args >
-  struct FromPyObj< std::function< R( Args... ) > >
+  struct FromPyObj< std::function< R( Args... ) > > : std::true_type
   {
     typedef typename detail::MakeStdFun< R, Args... > make_fun;
     typedef typename make_fun::std_fun_type std_fun_type;
@@ -195,6 +197,42 @@ namespace upywrap
         return make_fun::PythonFun( arg );
       }
     }
+  };
+
+
+  //Check if a qualifier for one of the supported FromPyObj types is supported -
+  //this is the case if it's passed without being modified, i.e. by value, by const value of by const reference.
+  //Note this only check qualifiers, whether actual type is supported is told by FromPyObj< T >::value.
+  template< class T >
+  struct IsSupportedFromPyObjQualifier : std::is_same< T, typename remove_all< T >::type >
+  {
+  };
+
+  template< class T >
+  struct IsSupportedFromPyObjQualifier< const T > : std::true_type
+  {
+  };
+
+  template< class T >
+  struct IsSupportedFromPyObjQualifier< const T& > : std::true_type
+  {
+  };
+
+  //Retrieve ClassWrapper from mp_obj_t
+  template< class T >
+  struct ClassFromPyObj;
+
+  //Select bewteen FromPyObj and ClassFromPyObj
+  template< class T >
+  struct SelectFromPyObj
+  {
+    typedef FromPyObj< typename remove_all< T >::type > builtin_type;
+    typedef ClassFromPyObj< typename remove_all_const< T >::type > class_type;
+
+    typedef typename std::conditional< builtin_type::value, IsSupportedFromPyObjQualifier< T >, std::true_type >::type is_valid_builtinq;
+    static_assert( is_valid_builtinq::value, "Unsupported qualifier for builtin uPy types (must be passed by value or const reference)" );
+
+    typedef typename std::conditional< builtin_type::value, builtin_type, class_type >::type type;
   };
 }
 

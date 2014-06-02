@@ -239,7 +239,7 @@ namespace upywrap
       static T* apply( init_call_type* f, const mp_obj_t* args, index_sequence< Indices... > )
       {
         (void) args;
-        return f->Call( FromPyObj< typename remove_all< A >::type >::Convert( args[ Indices ] )... );
+        return f->Call( SelectFromPyObj< A >::type::Convert( args[ Indices ] )... );
       }
     };
 
@@ -269,7 +269,7 @@ namespace upywrap
 
   //Get intance pointer out of mp_obj_t
   template< class T >
-  struct FromPyObj< T* >
+  struct ClassFromPyObj< T* >
   {
     typedef ClassWrapper< T > wrap_type;
 
@@ -282,13 +282,40 @@ namespace upywrap
     }
   };
 
+  template< class T >
+  struct ClassFromPyObj< T& >
+  {
+    static T& Convert( mp_obj_t arg )
+    {
+      return *ClassFromPyObj< T* >::Convert( arg );
+    }
+  };
+
+  template< class T >
+  struct ClassFromPyObj
+  {
+    static T Convert( mp_obj_t arg )
+    {
+      return *ClassFromPyObj< T* >::Convert( arg );
+    }
+  };
+
   //Wrap instance in a new mp_obj_t
   template< class T >
-  struct ToPyObj< T* >
+  struct ClassToPyObj< T* >
   {
     static mp_obj_t Convert( T* p )
     {
       return ClassWrapper< T >::AsPyObj( p );
+    }
+  };
+
+  template< class T >
+  struct ClassToPyObj< T& >
+  {
+    static mp_obj_t Convert( T& p )
+    {
+      return ClassToPyObj< T* >::Convert( &p );
     }
   };
 }
