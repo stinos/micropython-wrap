@@ -53,6 +53,16 @@
     <ClInclude Include="detail\topyobj.h" />
     <ClInclude Include="detail\util.h" />
     <ClInclude Include="functionwrapper.h" />
+    <ClInclude Include="tests\class.h" />
+    <ClInclude Include="tests\context.h" />
+    <ClInclude Include="tests\function.h" />
+    <ClInclude Include="tests\map.h" />
+    <ClInclude Include="tests\qualifier.h" />
+    <ClInclude Include="tests\tuple.h" />
+    <ClInclude Include="tests\vector.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="tests\module.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
