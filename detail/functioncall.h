@@ -11,7 +11,7 @@ namespace upywrap
     typedef Ret( T::*mem_func_type )( A... );
     typedef Ret( T::*const_mem_func_type )( A... ) const;
     virtual ~InstanceFunctionCall() {}
-    virtual Ret Call( T* p, A... ) = 0;
+    virtual Ret Call( T* p, A&&... ) = 0;
   };
 
   //Normal member function call
@@ -21,7 +21,7 @@ namespace upywrap
     typedef typename InstanceFunctionCall< T, Ret, A... >::mem_func_type mem_func_type;
     mem_func_type func;
     MemberFunctionCall( mem_func_type func ) : func( func ) {}
-    virtual Ret Call( T* p, A... a ) { return ( p->*func )( a... ); }
+    virtual Ret Call( T* p, A&&... a ) { return ( p->*func )( std::forward< A >( a )... ); }
   };
 
   //Normal const member function call (const is ignored btw)
@@ -31,7 +31,7 @@ namespace upywrap
     typedef typename InstanceFunctionCall< T, Ret, A... >::const_mem_func_type const_mem_func_type;
     const_mem_func_type func;
     ConstMemberFunctionCall( const_mem_func_type func ) : func( func ) {}
-    virtual Ret Call( T* p, A... a ) { return ( p->*func )( a... ); }
+    virtual Ret Call( T* p, A&&... a ) { return ( p->*func )( std::forward< A >( a )... ); }
   };
 
   //Non-member function taking T* as first argument
@@ -41,7 +41,7 @@ namespace upywrap
     typedef typename InstanceFunctionCall< T, Ret, A... >::func_type func_type;
     func_type func;
     NonMemberFunctionCall( func_type func ) : func( func ) {}
-    virtual Ret Call( T* p, A... a ) { return func( p, a... ); }
+    virtual Ret Call( T* p, A&&... a ) { return func( p, std::forward< A >( a )... ); }
   };
 
   //Standard function call object
@@ -51,7 +51,7 @@ namespace upywrap
     typedef Ret( *func_type )( A... );
     func_type func;
     FunctionCall( func_type func ) : func( func ) {}
-    virtual Ret Call( A... a ) { return func( a... ); }
+    virtual Ret Call( A&&... a ) { return func( std::forward< A >( a )... ); }
   };
 }
 

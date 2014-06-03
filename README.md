@@ -25,18 +25,20 @@ Some typical Python concepts are supported for class types:
     uPy __del__ = native class destructor
     uPy __exit__ = can be registered to call a void() method
 
+The tests cover pretty much everything that is supported so they serve as documentation
+of the possibilities as well.
+
 Though fully operational (all tests are ok on 32/64 bit unix/windows ports)
 the code should still be considered beta and todos include:
-- refactor uPy specifics away from main code, so we can reuse this for eg CPython
 - check if it would be needed to pass certain mutable py types (list etc) by reference
   (which would translate to converting uPy argument to native type, call native function,
   then convert back to uPy type)
 - check with real-life code if there are any performance problems that can be solved
-  (for instance see which arguments can be rvalue references)
 - the tests require a native module to be registered with uPy;
   Ideally that requires a working dynamic import system for Micro Python, but as long as
   that is not available, we manually build with tests/module.cpp included as source and
   call InitUpyWrapTest() in main()..
+- if we refactor uPy specifics away from main code, we can reuse this lib for eg CPython
 
 Usage Sample
 ------------
