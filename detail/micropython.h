@@ -60,6 +60,19 @@ namespace upywrap
   }
 #endif
 
+#if MICROPY_ENABLE_GC && MICROPY_ENABLE_FINALISER
+  bool HasFinaliser()
+  {
+    return true;
+  }
+#else
+  #define UPYWRAP_NOFINALISER
+  bool HasFinaliser()
+  {
+    return false;
+  }
+#endif
+
   //Implement some casts used and check for overflow where trunctaion is needed.
   //Only implemented for signed/unsiged 64bit to corresponding 32bit, rest resolves to static_cast.
   template< class S, class T >

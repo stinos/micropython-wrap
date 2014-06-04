@@ -47,6 +47,7 @@ struct F
   func_name_def( StdString )
   func_name_def( HasCharString )
   func_name_def( CharString )
+  func_name_def( HasFinaliser )
 
   func_name_def( Add )
   func_name_def( Value )
@@ -71,6 +72,7 @@ extern "C"
 
     upywrap::ClassWrapper< Context > wrap2( "Context", mod );
     wrap2.DefInit<>();
+    wrap2.DefDel();
     wrap2.DefExit( &Context::Dispose );
 
     upywrap::ClassWrapper< Q > wrap3( "Q", mod );
@@ -110,6 +112,7 @@ extern "C"
 #ifndef UPYWRAP_NOCHARSTRING
     fn.Def< F::CharString >( CharString );
 #endif
+    fn.Def< F::HasFinaliser >( HasFinaliser );
 
     //these are all not suported so should yield compiler errors
 #ifdef TEST_STATIC_ASSERTS_FOR_UNSUPPORTED_TYPES

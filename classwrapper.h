@@ -106,7 +106,12 @@ namespace upywrap
 
     static mp_obj_t AsPyObj( T* p )
     {
-      auto o = m_new_obj_with_finaliser( this_type );
+#ifdef UPYWRAP_NOFINALISER
+      #define upywrap_new_obj m_new_obj
+#else
+      #define upywrap_new_obj m_new_obj_with_finaliser
+#endif
+      auto o = upywrap_new_obj( this_type );
       o->base.type = &type;
       o->cookie = defCookie;
       o->obj = p;

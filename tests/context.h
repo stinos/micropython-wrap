@@ -13,6 +13,11 @@ namespace upywrap
       std::cout << "__init__" << std::endl;
     }
 
+    ~Context()
+    {
+      std::cout << "__del__" << std::endl;
+    }
+
     void Dispose()
     {
       std::cout << "__exit__" << std::endl;
