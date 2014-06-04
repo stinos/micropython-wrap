@@ -55,6 +55,7 @@
     <ClInclude Include="functionwrapper.h" />
     <ClInclude Include="tests\class.h" />
     <ClInclude Include="tests\context.h" />
+    <ClInclude Include="tests\exception.h" />
     <ClInclude Include="tests\function.h" />
     <ClInclude Include="tests\map.h" />
     <ClInclude Include="tests\qualifier.h" />

@@ -1,5 +1,6 @@
 #include "../classwrapper.h"
 #include "../functionwrapper.h"
+#include "exception.h"
 #include "map.h"
 #include "function.h"
 #include "tuple.h"
@@ -40,6 +41,8 @@ struct F
   func_name_def( ReturnValue )
   func_name_def( Get )
   func_name_def( Address )
+  func_name_def( HasExceptions )
+  func_name_def( Throw )
 
   func_name_def( Add )
   func_name_def( Value )
@@ -94,6 +97,8 @@ extern "C"
     fn.Def< F::ConstReference >( ConstReference );
     fn.Def< F::ReturnPointer >( ReturnPointer );
     fn.Def< F::ReturnReference >( ReturnReference );
+    fn.Def< F::HasExceptions >( HasExceptions );
+    fn.Def< F::Throw >( Throw );
 
     //these are all not suported so should yield compiler errors
 #ifdef TEST_STATIC_ASSERTS_FOR_UNSUPPORTED_TYPES

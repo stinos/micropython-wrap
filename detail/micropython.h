@@ -38,6 +38,28 @@ namespace upywrap
     nlr_raise( mp_obj_new_exception_msg( &mp_type_TypeError, msg ) );
   }
 
+  inline mp_obj_t RaiseRuntimeException( const char* msg )
+  {
+    nlr_raise( mp_obj_new_exception_msg( &mp_type_RuntimeError, msg ) );
+    return nullptr;
+  }
+
+#ifdef UPYWRAP_NOEXCEPTIONS
+  #define UPYWRAP_TRY
+  #define UPYWRAP_CATCH
+  bool HasExceptions()
+  {
+    return false;
+  }
+#else
+  #define UPYWRAP_TRY try {
+  #define UPYWRAP_CATCH } catch( const std::exception& e ) { return RaiseRuntimeException( e.what() ); }
+  bool HasExceptions()
+  {
+    return true;
+  }
+#endif
+
   //Implement some casts used and check for overflow where trunctaion is needed.
   //Only implemented for signed/unsiged 64bit to corresponding 32bit, rest resolves to static_cast.
   template< class S, class T >
