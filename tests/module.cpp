@@ -7,6 +7,7 @@
 #include "vector.h"
 #include "class.h"
 #include "context.h"
+#include "string.h"
 #include "qualifier.h"
 using namespace upywrap;
 
@@ -43,6 +44,9 @@ struct F
   func_name_def( Address )
   func_name_def( HasExceptions )
   func_name_def( Throw )
+  func_name_def( StdString )
+  func_name_def( HasCharString )
+  func_name_def( CharString )
 
   func_name_def( Add )
   func_name_def( Value )
@@ -98,7 +102,14 @@ extern "C"
     fn.Def< F::ReturnPointer >( ReturnPointer );
     fn.Def< F::ReturnReference >( ReturnReference );
     fn.Def< F::HasExceptions >( HasExceptions );
+#ifndef UPYWRAP_NOEXCEPTIONS
     fn.Def< F::Throw >( Throw );
+#endif
+    fn.Def< F::StdString >( StdString );
+    fn.Def< F::HasCharString >( HasCharString );
+#ifndef UPYWRAP_NOCHARSTRING
+    fn.Def< F::CharString >( CharString );
+#endif
 
     //these are all not suported so should yield compiler errors
 #ifdef TEST_STATIC_ASSERTS_FOR_UNSUPPORTED_TYPES

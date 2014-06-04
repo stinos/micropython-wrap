@@ -7,6 +7,7 @@
 #include <map>
 #include <tuple>
 #include <algorithm>
+#include <cstring>
 
 namespace upywrap
 {
@@ -69,6 +70,15 @@ namespace upywrap
     static mp_obj_t Convert( const std::string& a )
     {
       return mp_obj_new_str( reinterpret_cast< const char* >( a.data() ), safe_integer_cast< uint >( a.length() ), false );
+    }
+  };
+
+  template<>
+  struct ToPyObj< const char* > : std::true_type
+  {
+    static mp_obj_t Convert( const char* a )
+    {
+      return mp_obj_new_str( a, safe_integer_cast< uint >( ::strlen( a ) ), false );
     }
   };
 
@@ -148,6 +158,14 @@ namespace upywrap
 
     typedef typename std::conditional< builtin_type::value, builtin_type, class_type >::type type;
   };
+
+#ifndef UPYWRAP_NOCHARSTRING
+  template<>
+  struct SelectToPyObj< const char* >
+  {
+    typedef ToPyObj< const char* > type;
+  };
+#endif
 }
 
 #endif

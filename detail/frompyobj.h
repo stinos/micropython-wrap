@@ -62,6 +62,15 @@ namespace upywrap
     }
   };
 
+  template<>
+  struct FromPyObj< const char* > : std::true_type
+  {
+    static const char* Convert( mp_obj_t arg )
+    {
+      return mp_obj_str_get_str( arg );
+    }
+  };
+
   template< class T >
   struct FromPyObj< std::vector< T > > : std::true_type
   {
@@ -234,6 +243,25 @@ namespace upywrap
 
     typedef typename std::conditional< builtin_type::value, builtin_type, class_type >::type type;
   };
+
+#ifndef UPYWRAP_NOCHARSTRING
+  //we don't know yet where uPy is going with unicode support etc, so make this an option
+  template<>
+  struct SelectFromPyObj< const char* >
+  {
+    typedef FromPyObj< const char* > type;
+  };
+
+  bool HasCharString()
+  {
+    return true;
+  }
+#else
+  bool HasCharString()
+  {
+    return false;
+  }
+#endif
 }
 
 #endif

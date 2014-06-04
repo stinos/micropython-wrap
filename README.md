@@ -7,6 +7,7 @@ Currently supports these conversions for function arguments and return values:
     uPy int <-> int
     uPy bool <-> bool
     uPy str <-> std::string
+    uPy str <-> const char* (optional)
     uPy tuple <-> std::tuple
     uPy array <-> std::vector
     uPy dict <-> std::map
@@ -24,6 +25,9 @@ Some typical Python concepts are supported for class types:
     uPy __init__ = native class constructor or factory function of choice
     uPy __del__ = native class destructor
     uPy __exit__ = can be registered to call a void() method
+
+Furthermore there is optional support for wrapping each native call in a try/catch for std::exception,
+and re-raise it as a uPy RuntimeError
 
 The tests cover pretty much everything that is supported so they serve as documentation
 of the possibilities as well.
