@@ -3,20 +3,20 @@
 
 extern "C"
 {
-  #include <micropython/py/mpconfig.h>
-  #include <micropython/py/misc.h>
-  #include <micropython/py/qstr.h>
-  #include <micropython/py/nlr.h>
-  #include <micropython/py/obj.h>
+  #include <py/mpconfig.h>
+  #include <py/misc.h>
+  #include <py/qstr.h>
+  #include <py/nlr.h>
+  #include <py/obj.h>
 #ifdef _MSC_VER
 #pragma warning ( disable : 4200 )
 #endif
-  #include <micropython/py/objfun.h>
+  #include <py/objfun.h>
 #ifdef _MSC_VER
 #pragma warning ( default : 4200 )
 #endif
-  #include <micropython/py/objmodule.h>
-  #include <micropython/py/runtime.h>
+  #include <py/objmodule.h>
+  #include <py/runtime.h>
 }
 
 #include <limits>
@@ -24,7 +24,7 @@ extern "C"
 
 namespace upywrap
 {
-  inline mp_obj_module_t* CreateModule( const char* name, bool doRegister = true )
+  inline mp_obj_module_t* CreateModule( const char* name, bool doRegister = false )
   {
     const qstr qname = qstr_from_str( name );
     mp_obj_module_t* mod = (mp_obj_module_t*) mp_obj_new_module( qname );
@@ -41,7 +41,6 @@ namespace upywrap
   inline mp_obj_t RaiseRuntimeException( const char* msg )
   {
     nlr_raise( mp_obj_new_exception_msg( &mp_type_RuntimeError, msg ) );
-    return nullptr;
   }
 
 #ifdef UPYWRAP_NOEXCEPTIONS

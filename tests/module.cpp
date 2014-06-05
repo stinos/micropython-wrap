@@ -59,9 +59,12 @@ struct F
 
 extern "C"
 {
-  void InitUpyWrapTest()
+#ifdef _MSC_VER
+  _declspec( dllexport )
+#endif
+  mp_obj_module_t* initupywraptest()
   {
-    auto mod = upywrap::CreateModule( "upywraptest", true );
+    auto mod = upywrap::CreateModule( "upywraptest", false );
 
     upywrap::ClassWrapper< Simple > wrap1( "Simple", mod );
     wrap1.DefInit< int >();
@@ -123,5 +126,7 @@ extern "C"
     fn.Def< F::ReturnBuiltinReference >( ReturnBuiltinReference );
     fn.Def< F::ReturnValue >( ReturnValue );
 #endif
+
+    return mod;
   }
 }
