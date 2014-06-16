@@ -89,12 +89,12 @@ namespace upywrap
       InitImpl< FixedFuncNames::Init, decltype( f ), A... >( f );
     }
 
-    static void DefDel()
+    void DefDel()
     {
       DefDel( DestructorFactoryFunc< T > );
     }
 
-    static void DefDel( void( *f ) ( T* ) )
+    void DefDel( void( *f ) ( T* ) )
     {
       DefImpl< FixedFuncNames::__del__, void, decltype( f ) >( f );
     }
@@ -132,35 +132,32 @@ namespace upywrap
       func_name_def( __del__ )
     };
 
-    static void OneTimeInit( const char* name, mp_obj_dict_t* dict )
+    void OneTimeInit( std::string name, mp_obj_dict_t* dict )
     {
-      locals = (mp_obj_dict_t*) mp_obj_new_dict( 0 );
-
-      const auto qname = qstr_from_str( name );
+      const auto qname = qstr_from_str( name.data() );
       type.base.type = &mp_type_type;
       type.name = qname;
-      type.locals_dict = locals;
+      type.locals_dict = (mp_obj_dict_t*) mp_obj_new_dict( 0 );
       type.make_new = nullptr;
 
       mp_obj_dict_store( dict, MP_OBJ_NEW_QSTR( qname ), &type );
+      //store our dict in the module's dict so it's reachable by the GC mark phase,
+      //or in other words: prevent the GC from sweeping it!!
+      mp_obj_dict_store( dict, MP_OBJ_NEW_QSTR( qstr_from_str( ( name + "_locals" ).data() ) ), type.locals_dict );
     }
 
-    static void AddFunctionToTable( const qstr name, mp_obj_t fun )
+    void AddFunctionToTable( const qstr name, mp_obj_t fun )
     {
-      const mp_map_elem_t elem = { MP_OBJ_NEW_QSTR( name ), fun };
-      localsTable.push_back( elem );
-      locals->map.table = (mp_map_elem_t*) this_type::localsTable.data();
-      ++locals->map.used;
-      ++locals->map.alloc;
+      mp_obj_dict_store( type.locals_dict, MP_OBJ_NEW_QSTR( name ), fun );
     }
 
-    static void AddFunctionToTable( const char* name, mp_obj_t fun )
+    void AddFunctionToTable( const char* name, mp_obj_t fun )
     {
       AddFunctionToTable( qstr_from_str( name ), fun );
     }
 
     template< index_type name, class Ret, class Fun, class... A >
-    static void DefImpl( Fun f )
+    void DefImpl( Fun f )
     {
       typedef NativeMemberCall< name, Ret, A... > call_type;
       functionPointers[ (void*) name ] = call_type::CreateCaller( f );
@@ -168,7 +165,7 @@ namespace upywrap
     }
 
     template< index_type name, class Fun, class... A >
-    static void InitImpl( Fun f )
+    void InitImpl( Fun f )
     {
       typedef NativeMemberCall< name, T*, A... > call_type;
       functionPointers[ (void*) name ] = call_type::CreateCaller( f );
@@ -176,7 +173,7 @@ namespace upywrap
     }
 
     template< index_type name, class Fun >
-    static void ExitImpl( Fun f )
+    void ExitImpl( Fun f )
     {
       typedef NativeMemberCall< name, void > call_type;
       functionPointers[ (void*) name ] = call_type::CreateCaller( f );
@@ -249,21 +246,12 @@ namespace upywrap
     };
 
     typedef ClassWrapper< T > this_type;
-    typedef std::vector< mp_map_elem_t > map_type;
 
     static mp_obj_type_t type;
-    static mp_obj_dict_t* locals;
-    static map_type localsTable;
   };
 
   template< class T >
   mp_obj_type_t ClassWrapper< T >::type;
-
-  template< class T >
-  mp_obj_dict_t* ClassWrapper< T >::locals;
-
-  template< class T >
-  typename ClassWrapper< T >::map_type ClassWrapper< T >::localsTable;
 
   template< class T >
   function_ptrs ClassWrapper< T >::functionPointers;
