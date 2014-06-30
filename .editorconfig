@@ -1,6 +1,6 @@
 root = true
 
-[*]
+[{*.h,*.cpp}]
 end_of_line = LF
 indent_style = space
 indent_size = 2
