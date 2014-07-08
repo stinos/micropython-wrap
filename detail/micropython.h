@@ -85,9 +85,9 @@ namespace upywrap
 
 #if defined( __LP64__ ) || defined( _WIN64 )
   template<>
-  struct safe_integer_caster< machine_int_t, int >
+  struct safe_integer_caster< mp_int_t, int >
   {
-    static int Convert( machine_int_t src )
+    static int Convert( mp_int_t src )
     {
       if( std::abs( src ) > std::numeric_limits< int >::max() )
         RaiseTypeException( "Argument does not fit in 32bit integer" );

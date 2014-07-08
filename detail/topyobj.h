@@ -27,9 +27,9 @@ namespace upywrap
   };
 
   template<>
-  struct ToPyObj< machine_int_t > : std::true_type
+  struct ToPyObj< mp_int_t > : std::true_type
   {
-    static mp_obj_t Convert( machine_int_t a )
+    static mp_obj_t Convert( mp_int_t a )
     {
       return mp_obj_new_int( a );
     }
@@ -50,7 +50,7 @@ namespace upywrap
   {
     static mp_obj_t Convert( int arg )
     {
-      return ToPyObj< machine_int_t >::Convert( safe_integer_cast< machine_int_t >( arg ) );
+      return ToPyObj< mp_int_t >::Convert( safe_integer_cast< mp_int_t >( arg ) );
     }
   };
 #endif

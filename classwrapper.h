@@ -77,6 +77,11 @@ namespace upywrap
       DefImpl< name, Ret, decltype( f ), A... >( f );
     }
 
+    void DefInit()
+    {
+      DefInit<>();
+    }
+
     template< class... A >
     void DefInit()
     {

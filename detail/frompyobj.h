@@ -14,9 +14,9 @@ namespace upywrap
   };
 
   template<>
-  struct FromPyObj< machine_int_t > : std::true_type
+  struct FromPyObj< mp_int_t > : std::true_type
   {
-    static machine_int_t Convert( mp_obj_t arg )
+    static mp_int_t Convert( mp_obj_t arg )
     {
       return mp_obj_get_int( arg );
     }
@@ -37,7 +37,7 @@ namespace upywrap
   {
     static int Convert( mp_obj_t arg )
     {
-      return safe_integer_cast< int >( FromPyObj< machine_int_t >::Convert( arg ) );
+      return safe_integer_cast< int >( FromPyObj< mp_int_t >::Convert( arg ) );
     }
   };
 #endif
