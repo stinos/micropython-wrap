@@ -9,6 +9,7 @@
 #include "context.h"
 #include "string.h"
 #include "qualifier.h"
+#include "nargs.h"
 using namespace upywrap;
 
 struct F
@@ -48,6 +49,9 @@ struct F
   func_name_def( HasCharString )
   func_name_def( CharString )
   func_name_def( HasFinaliser )
+  func_name_def( Three )
+  func_name_def( Four )
+  func_name_def( Eight )
 
   func_name_def( Add )
   func_name_def( Value )
@@ -83,6 +87,11 @@ extern "C"
     wrap3.Def< F::Get >( &Q::Get );
     wrap3.Def< F::Address >( &Q::Address );
 
+    upywrap::ClassWrapper< NargsTest > nargs( "NargsTest", mod );
+    nargs.DefInit();
+    nargs.Def< F::Three >( &NargsTest::Three );
+    nargs.Def< F::Four >( &NargsTest::Four );
+
     upywrap::FunctionWrapper fn( mod );
     fn.Def< F::Tuple1 >( Tuple1 );
     fn.Def< F::Tuple2 >( Tuple2 );
@@ -116,6 +125,8 @@ extern "C"
     fn.Def< F::CharString >( CharString );
 #endif
     fn.Def< F::HasFinaliser >( HasFinaliser );
+    fn.Def< F::Four >( Four );
+    fn.Def< F::Eight >( Eight );
 
     //these are all not suported so should yield compiler errors
 #ifdef TEST_STATIC_ASSERTS_FOR_UNSUPPORTED_TYPES

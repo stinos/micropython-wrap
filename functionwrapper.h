@@ -52,7 +52,8 @@ namespace upywrap
       typedef NativeCall< name, Ret, A... > call_type;
 
       functionPointers[ (void*) name ] = call_type::CreateCaller( f );
-      mp_obj_dict_store( globals, MP_OBJ_NEW_QSTR( qstr_from_str( name() ) ), mp_make_function_n( sizeof...( A ), (void*) call_type::Call ) );
+      auto call = sizeof...( A ) > UPYWRAP_MAX_NATIVE_ARGS ? (void*) call_type::CallN : (void*) call_type::Call;
+      mp_obj_dict_store( globals, MP_OBJ_NEW_QSTR( qstr_from_str( name() ) ), mp_make_function_n( sizeof...( A ), call ) );
     }
 
     static function_ptrs functionPointers;
@@ -74,6 +75,21 @@ namespace upywrap
       {
         auto f = (call_type*) FunctionWrapper::functionPointers[ (void*) index ];
         return CallReturn< Ret, A... >::Call( f, args... );
+      }
+
+      static mp_obj_t CallN( uint nargs, const mp_obj_t* args )
+      {
+        if( nargs != sizeof...( A ) )
+          RaiseTypeException( "Wrong number of arguments" );
+        auto f = (call_type*) FunctionWrapper::functionPointers[ (void*) index ];
+        return callvar( f, args, make_index_sequence< sizeof...( A ) >() );
+      }
+
+    private:
+      template< size_t... Indices >
+      static mp_obj_t callvar( call_type* f, const mp_obj_t* args, index_sequence< Indices... > )
+      {
+        return CallReturn< Ret, A... >::Call( f, args[ Indices ]... );
       }
     };
 

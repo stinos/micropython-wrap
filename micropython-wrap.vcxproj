@@ -112,6 +112,7 @@
     <ClInclude Include="tests\exception.h" />
     <ClInclude Include="tests\function.h" />
     <ClInclude Include="tests\map.h" />
+    <ClInclude Include="tests\nargs.h" />
     <ClInclude Include="tests\qualifier.h" />
     <ClInclude Include="tests\string.h" />
     <ClInclude Include="tests\tuple.h" />

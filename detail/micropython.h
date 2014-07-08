@@ -43,6 +43,8 @@ namespace upywrap
     nlr_raise( mp_obj_new_exception_msg( &mp_type_RuntimeError, msg ) );
   }
 
+  #define UPYWRAP_MAX_NATIVE_ARGS 3
+
 #ifdef UPYWRAP_NOEXCEPTIONS
   #define UPYWRAP_TRY
   #define UPYWRAP_CATCH

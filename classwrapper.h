@@ -166,7 +166,8 @@ namespace upywrap
     {
       typedef NativeMemberCall< name, Ret, A... > call_type;
       functionPointers[ (void*) name ] = call_type::CreateCaller( f );
-      AddFunctionToTable( name(), mp_make_function_n( 1 + sizeof...( A ), (void*) call_type::Call ) );
+      auto call = sizeof...( A ) + 1 > UPYWRAP_MAX_NATIVE_ARGS ? (void*) call_type::CallN : (void*) call_type::Call;
+      AddFunctionToTable( name(), mp_make_function_n( 1 + sizeof...( A ), call ) );
     }
 
     template< index_type name, class Fun, class... A >
@@ -183,7 +184,7 @@ namespace upywrap
       typedef NativeMemberCall< name, void > call_type;
       functionPointers[ (void*) name ] = call_type::CreateCaller( f );
       AddFunctionToTable( MP_QSTR___enter__, (mp_obj_t) &mp_identity_obj );
-      AddFunctionToTable( MP_QSTR___exit__, mp_make_function_var_between( 4, 4, call_type::CallVar ) );
+      AddFunctionToTable( MP_QSTR___exit__, mp_make_function_n( 4, (void*) call_type::CallDiscard ) );
     }
 
     //wrap native call in function with uPy compatible mp_obj_t( mp_obj_t self, mp_obj_t.... ) signature
@@ -224,10 +225,20 @@ namespace upywrap
         return CallReturn< Ret, A... >::Call( f, self->obj, args... );
       }
 
-      static mp_obj_t CallVar( uint n_args, const mp_obj_t* args )
+      static mp_obj_t CallN( uint n_args, const mp_obj_t* args )
+      {
+        if( n_args != sizeof...( A ) + 1 )
+          RaiseTypeException( "Wrong number of arguments" );
+        auto self = (this_type*) args[ 0 ];
+        auto firstArg = &args[ 1 ];
+        auto f = (call_type*) this_type::functionPointers[ (void*) index ];
+        return callvar( f, self->obj, firstArg, make_index_sequence< sizeof...( A ) >() );
+      }
+
+      static mp_obj_t CallDiscard( uint n_args, const mp_obj_t* args )
       {
         (void) n_args;
-        static_assert( sizeof...( A ) == 0, "TODO expand args array if you want this with multiple arguments" );
+        static_assert( sizeof...( A ) == 0, "Arguments must be discarded" );
         auto self = (this_type*) args[ 0 ];
         auto f = (call_type*) this_type::functionPointers[ (void*) index ];
         return CallReturn< Ret, A... >::Call( f, self->obj );
@@ -247,6 +258,12 @@ namespace upywrap
       {
         (void) args;
         return f->Call( SelectFromPyObj< A >::type::Convert( args[ Indices ] )... );
+      }
+
+      template< size_t... Indices >
+      static mp_obj_t callvar( call_type* f, T* self, const mp_obj_t* args, index_sequence< Indices... > )
+      {
+        return CallReturn< Ret, A... >::Call( f, self, args[ Indices ]... );
       }
     };
 
