@@ -263,6 +263,7 @@ namespace upywrap
       template< size_t... Indices >
       static mp_obj_t callvar( call_type* f, T* self, const mp_obj_t* args, index_sequence< Indices... > )
       {
+        (void) args;
         return CallReturn< Ret, A... >::Call( f, self, args[ Indices ]... );
       }
     };
