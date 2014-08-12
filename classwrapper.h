@@ -116,11 +116,21 @@ namespace upywrap
 #else
       #define upywrap_new_obj m_new_obj_with_finaliser
 #endif
+      if( type.base.type == nullptr )
+        RaiseTypeException( "Native type has not been registered" );
       auto o = upywrap_new_obj( this_type );
       o->base.type = &type;
       o->cookie = defCookie;
       o->obj = p;
       return o;
+    }
+
+    static T* AsNativePtr( mp_obj_t arg )
+    {
+      auto native = (this_type*) arg;
+      if( native->cookie != defCookie )
+        RaiseTypeException( "Cannot convert this object to a native class instance" );
+      return native->obj.get();
     }
 
     mp_obj_base_t base; //must always be the first member!
@@ -274,7 +284,7 @@ namespace upywrap
   };
 
   template< class T >
-  mp_obj_type_t ClassWrapper< T >::type;
+  mp_obj_type_t ClassWrapper< T >::type = { nullptr };
 
   template< class T >
   function_ptrs ClassWrapper< T >::functionPointers;
@@ -287,14 +297,9 @@ namespace upywrap
   template< class T >
   struct ClassFromPyObj< T* >
   {
-    typedef ClassWrapper< T > wrap_type;
-
     static T* Convert( mp_obj_t arg )
     {
-      auto native = (wrap_type*) arg;
-      if( native->cookie != wrap_type::defCookie )
-        RaiseTypeException( "Cannot convert this object to a native class instance" );
-      return native->obj;
+      return ClassWrapper< T >::AsNativePtr( arg );
     }
   };
 
