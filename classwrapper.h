@@ -60,21 +60,21 @@ namespace upywrap
     }
 
     template< index_type name, class Ret, class... A >
-    void Def( Ret( *f ) ( T*, A... ) )
+    void Def( Ret( *f ) ( T*, A... ), typename SelectRetvalConverter< Ret >::type conv = nullptr )
     {
-      DefImpl< name, Ret, decltype( f ), A... >( f );
+      DefImpl< name, Ret, decltype( f ), A... >( f, conv );
     }
 
     template< index_type name, class Ret, class... A >
-    void Def( Ret( T::*f ) ( A... ) )
+    void Def( Ret( T::*f ) ( A... ), typename SelectRetvalConverter< Ret >::type conv = nullptr )
     {
-      DefImpl< name, Ret, decltype( f ), A... >( f );
+      DefImpl< name, Ret, decltype( f ), A... >( f, conv );
     }
 
     template< index_type name, class Ret, class... A >
-    void Def( Ret( T::*f ) ( A... ) const )
+    void Def( Ret( T::*f ) ( A... ) const, typename SelectRetvalConverter< Ret >::type conv = nullptr )
     {
-      DefImpl< name, Ret, decltype( f ), A... >( f );
+      DefImpl< name, Ret, decltype( f ), A... >( f, conv );
     }
 
     void DefInit()
@@ -101,7 +101,7 @@ namespace upywrap
 
     void DefDel( void( *f ) ( T* ) )
     {
-      DefImpl< FixedFuncNames::__del__, void, decltype( f ) >( f );
+      Def< FixedFuncNames::__del__ >( f );
     }
 
     void DefExit( void( T::*f ) () )
@@ -130,7 +130,7 @@ namespace upywrap
       auto native = (this_type*) arg;
       if( native->cookie != defCookie )
         RaiseTypeException( "Cannot convert this object to a native class instance" );
-      return native->obj.get();
+      return native->obj;
     }
 
     mp_obj_base_t base; //must always be the first member!
@@ -172,10 +172,13 @@ namespace upywrap
     }
 
     template< index_type name, class Ret, class Fun, class... A >
-    void DefImpl( Fun f )
+    void DefImpl( Fun f, typename SelectRetvalConverter< Ret >::type conv )
     {
       typedef NativeMemberCall< name, Ret, A... > call_type;
-      functionPointers[ (void*) name ] = call_type::CreateCaller( f );
+      auto callerObject = call_type::CreateCaller( f );
+      if( conv )
+        callerObject->convert_retval = conv;
+      functionPointers[ (void*) name ] = callerObject;
       auto call = sizeof...( A ) + 1 > UPYWRAP_MAX_NATIVE_ARGS ? (void*) call_type::CallN : (void*) call_type::Call;
       AddFunctionToTable( name(), mp_make_function_n( 1 + sizeof...( A ), call ) );
     }
@@ -293,7 +296,7 @@ namespace upywrap
   const std::int64_t ClassWrapper< T >::defCookie = 0x12345678908765;
 
 
-  //Get intance pointer out of mp_obj_t
+  //Get instance pointer out of mp_obj_t
   template< class T >
   struct ClassFromPyObj< T* >
   {

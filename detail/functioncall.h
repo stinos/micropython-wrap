@@ -10,8 +10,19 @@ namespace upywrap
     typedef Ret( *func_type )( T*, A... );
     typedef Ret( T::*mem_func_type )( A... );
     typedef Ret( T::*const_mem_func_type )( A... ) const;
+    InstanceFunctionCall() : convert_retval( nullptr ) {}
     virtual ~InstanceFunctionCall() {}
     virtual Ret Call( T* p, A&&... ) = 0;
+
+    //Storage for return value converter. Only used to enable converting
+    //to native /types which are defined in other modules,
+    //but if we don't keep this here we'd need an extra map for each type.
+    //Also this makes the calling code much cleaner since we don't have to duplicate lots of code
+    //for each function type (one which does take a converter and one which doesn't): now there's
+    //just a single pointe to set the convertor (see ClassWrapper/FunctionWrapper)
+    //and a single point to use it (see CallReturn)
+    typedef void*( *convert_retval_type )( Ret );
+    convert_retval_type convert_retval;
   };
 
   //Normal member function call
@@ -50,8 +61,11 @@ namespace upywrap
   {
     typedef Ret( *func_type )( A... );
     func_type func;
-    FunctionCall( func_type func ) : func( func ) {}
+    FunctionCall( func_type func ) : func( func ), convert_retval( nullptr ) {}
     virtual Ret Call( A&&... a ) { return func( std::forward< A >( a )... ); }
+
+    typedef void*( *convert_retval_type )( Ret );
+    convert_retval_type convert_retval;
   };
 }
 

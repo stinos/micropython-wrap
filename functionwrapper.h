@@ -47,11 +47,14 @@ namespace upywrap
     }
 
     template< index_type name, class Ret, class... A >
-    void Def( Ret( *f ) ( A... ) )
+    void Def( Ret( *f ) ( A... ), typename SelectRetvalConverter< Ret >::type conv = nullptr )
     {
       typedef NativeCall< name, Ret, A... > call_type;
 
-      functionPointers[ (void*) name ] = call_type::CreateCaller( f );
+      auto callerObject = call_type::CreateCaller( f );
+      if( conv )
+        callerObject->convert_retval = conv;
+      functionPointers[ (void*) name ] = callerObject;
       auto call = sizeof...( A ) > UPYWRAP_MAX_NATIVE_ARGS ? (void*) call_type::CallN : (void*) call_type::Call;
       mp_obj_dict_store( globals, MP_OBJ_NEW_QSTR( qstr_from_str( name() ) ), mp_make_function_n( sizeof...( A ), call ) );
     }
