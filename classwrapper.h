@@ -1,12 +1,39 @@
 #ifndef MICROPYTHONMODULE_CLASSWRAPPER
 #define MICROPYTHONMODULE_CLASSWRAPPER
 
+//This flags enables the use of shared_ptr instead of raw pointers
+//for the actual storage of all native types.
+//Per default this is on since passing around raw pointers quickly
+//leads to undefined behavior when garbage collection comes into play.
+//For example, consider this, where X and Y are both created With ClassWrapper,
+//and Y::Store() takes an X* or X& and keeps a pointer to it internally:
+//
+//  y = Y()
+//  y.Store( X() )
+//  gc.collect()
+//
+//The last line will get rid of the ClassWrapper instance for the X object
+//(since gc can't find a corresponding py object anymore as that was not stored;
+//with actual py objects this wouldn't happen), so now y has a pointer to a deleted X.
+//The only proper way around is using shared_ptr instead: if ClassWrapper has a
+//shared_ptr< X >, Store takes a shared_ptr< X > (which it should do after all
+//if it's planning to keep the argument longer then the function scope) and
+//we pass a copy of ClassWrapper's object to Store, all is fine: when deleting
+//the garbage collected object, shared_ptr's destructor is called but the object
+//is not deleted unless there are no references anymore.
+#ifndef UPYWRAP_SHAREDPTROBJ
+  #define UPYWRAP_SHAREDPTROBJ 1
+#endif
+
 #include "detail/index.h"
 #include "detail/util.h"
 #include "detail/functioncall.h"
 #include "detail/callreturn.h"
 #include <vector>
 #include <cstdint>
+#if UPYWRAP_SHAREDPTROBJ
+  #include <memory>
+#endif
 
 namespace upywrap
 {
@@ -44,7 +71,11 @@ namespace upywrap
   class ClassWrapper
   {
   public:
+#if UPYWRAP_SHAREDPTROBJ
+    using native_obj_t = std::shared_ptr< T >;
+#else
     using native_obj_t = T*;
+#endif
 
     ClassWrapper( const char* name, mp_obj_module_t* mod ) :
       ClassWrapper( name, mod->globals )
@@ -101,7 +132,20 @@ namespace upywrap
       ExitImpl< FixedFuncNames::Exit, decltype( f ) >( f );
     }
 
-    static mp_obj_t AsPyObj( T* p )
+#if UPYWRAP_SHAREDPTROBJ
+    static mp_obj_t AsPyObj( T* p, bool own )
+    {
+      if( own )
+        return AsPyObj( native_obj_t( p ) );
+      return AsPyObj( native_obj_t( p, NoDelete ) );
+    }
+#else
+    static mp_obj_t AsPyObj( T* p, bool )
+    {
+      return AsPyObj( p );
+    }
+#endif
+
     static mp_obj_t AsPyObj( native_obj_t p )
     {
 #ifdef UPYWRAP_NOFINALISER
@@ -114,11 +158,23 @@ namespace upywrap
       auto o = upywrap_new_obj( this_type );
       o->base.type = &type;
       o->cookie = defCookie;
+#if UPYWRAP_SHAREDPTROBJ
+      new( &o->obj ) native_obj_t( std::move( p ) );
+#else
       o->obj = p;
+#endif
       return o;
     }
 
     static T* AsNativePtr( mp_obj_t arg )
+    {
+      auto native = (this_type*) arg;
+      if( native->cookie != defCookie )
+        RaiseTypeException( "Cannot convert this object to a native class instance" );
+      return native->GetPtr();
+    }
+
+    static native_obj_t AsNativeObj( mp_obj_t arg )
     {
       auto native = (this_type*) arg;
       if( native->cookie != defCookie )
@@ -142,8 +198,18 @@ namespace upywrap
 
     T* GetPtr()
     {
+#if UPYWRAP_SHAREDPTROBJ
+      return obj.get();
+#else
       return obj;
+#endif
     }
+
+#if UPYWRAP_SHAREDPTROBJ
+    static void NoDelete( T* )
+    {
+    }
+#endif
 
     void OneTimeInit( std::string name, mp_obj_dict_t* dict )
     {
@@ -269,13 +335,17 @@ namespace upywrap
         if( n_args != sizeof...( A ) )
           RaiseTypeException( "Wrong number of arguments for constructor" );
         auto f = (init_call_type*) this_type::functionPointers[ (void*) index ];
-        return AsPyObj( apply( f, args, make_index_sequence< sizeof...( A ) >() ) );
+        return AsPyObj( apply( f, args, make_index_sequence< sizeof...( A ) >() ), true );
       }
 
       static mp_obj_t Delete( mp_obj_t self_in )
       {
         auto self = (this_type*) self_in;
+#if UPYWRAP_SHAREDPTROBJ
+        self->obj.~shared_ptr< T >();
+#else
         delete self->obj;
+#endif
         return ToPyObj< void >::Convert();
       }
 
@@ -320,6 +390,17 @@ namespace upywrap
     }
   };
 
+#if UPYWRAP_SHAREDPTROBJ
+  template< class T >
+  struct ClassFromPyObj< std::shared_ptr< T > >
+  {
+    static std::shared_ptr< T > Convert( mp_obj_t arg )
+    {
+      return ClassWrapper< T >::AsNativeObj( arg );
+    }
+  };
+#endif
+
   template< class T >
   struct ClassFromPyObj< T& >
   {
@@ -344,9 +425,20 @@ namespace upywrap
   {
     static mp_obj_t Convert( T* p )
     {
+      return ClassWrapper< T >::AsPyObj( p, false );
+    }
+  };
+
+#if UPYWRAP_SHAREDPTROBJ
+  template< class T >
+  struct ClassToPyObj< std::shared_ptr< T > >
+  {
+    static mp_obj_t Convert( std::shared_ptr< T > p )
+    {
       return ClassWrapper< T >::AsPyObj( p );
     }
   };
+#endif
 
   template< class T >
   struct ClassToPyObj< T& >
