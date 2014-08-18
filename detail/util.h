@@ -48,7 +48,7 @@ namespace upywrap
   template< class T, class... Args >
   T* ConstructorFactoryFunc( Args... args )
   {
-    return new T( args... );
+    return new T( std::forward< Args >( args )... );
   }
 
   //Generic destructor/delete caller

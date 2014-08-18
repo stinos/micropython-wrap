@@ -79,7 +79,6 @@ extern "C"
 
     upywrap::ClassWrapper< Context > wrap2( "Context", mod );
     wrap2.DefInit<>();
-    wrap2.DefDel();
     wrap2.DefExit( &Context::Dispose );
 
     upywrap::ClassWrapper< Q > wrap3( "Q", mod );

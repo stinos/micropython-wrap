@@ -94,16 +94,6 @@ namespace upywrap
       InitImpl< FixedFuncNames::Init, decltype( f ), A... >( f );
     }
 
-    void DefDel()
-    {
-      DefDel( DestructorFactoryFunc< T > );
-    }
-
-    void DefDel( void( *f ) ( T* ) )
-    {
-      Def< FixedFuncNames::__del__ >( f );
-    }
-
     void DefExit( void( T::*f ) () )
     {
       ExitImpl< FixedFuncNames::Exit, decltype( f ) >( f );
@@ -159,6 +149,8 @@ namespace upywrap
       //store our dict in the module's dict so it's reachable by the GC mark phase,
       //or in other words: prevent the GC from sweeping it!!
       mp_obj_dict_store( dict, MP_OBJ_NEW_QSTR( qstr_from_str( ( name + "_locals" ).data() ) ), type.locals_dict );
+
+      DelImpl();
     }
 
     void AddFunctionToTable( const qstr name, mp_obj_t fun )
@@ -181,6 +173,13 @@ namespace upywrap
       functionPointers[ (void*) name ] = callerObject;
       auto call = sizeof...( A ) + 1 > UPYWRAP_MAX_NATIVE_ARGS ? (void*) call_type::CallN : (void*) call_type::Call;
       AddFunctionToTable( name(), mp_make_function_n( 1 + sizeof...( A ), call ) );
+    }
+
+    void DelImpl()
+    {
+      typedef NativeMemberCall< FixedFuncNames::__del__, void, T* > call_type;
+      auto call = (void*) call_type::Delete;
+      AddFunctionToTable( FixedFuncNames::__del__(), mp_make_function_n( 1, call ) );
     }
 
     template< index_type name, class Fun, class... A >
@@ -263,6 +262,13 @@ namespace upywrap
           RaiseTypeException( "Wrong number of arguments for constructor" );
         auto f = (init_call_type*) this_type::functionPointers[ (void*) index ];
         return AsPyObj( apply( f, args, make_index_sequence< sizeof...( A ) >() ) );
+      }
+
+      static mp_obj_t Delete( mp_obj_t self_in )
+      {
+        auto self = (this_type*) self_in;
+        delete self->obj;
+        return ToPyObj< void >::Convert();
       }
 
     private:
