@@ -173,6 +173,7 @@
     <ClInclude Include="tests\qualifier.h" />
     <ClInclude Include="tests\string.h" />
     <ClInclude Include="tests\tuple.h" />
+    <ClInclude Include="tests\numeric.h" />
     <ClInclude Include="tests\vector.h" />
   </ItemGroup>
   <ItemGroup>

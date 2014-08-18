@@ -36,6 +36,15 @@ namespace upywrap
   };
 
   template<>
+  struct ToPyObj< mp_uint_t > : std::true_type
+  {
+    static mp_obj_t Convert( mp_uint_t a )
+    {
+      return mp_obj_new_int_from_uint( a );
+    }
+  };
+
+  template<>
   struct ToPyObj< bool > : std::true_type
   {
     static mp_obj_t Convert( bool a )
@@ -53,14 +62,32 @@ namespace upywrap
       return ToPyObj< mp_int_t >::Convert( safe_integer_cast< mp_int_t >( arg ) );
     }
   };
+
+  template<>
+  struct ToPyObj< unsigned > : std::true_type
+  {
+    static mp_obj_t Convert( unsigned arg )
+    {
+      return ToPyObj< mp_int_t >::Convert( safe_integer_cast< mp_uint_t >( arg ) );
+    }
+  };
 #endif
 
   template<>
-  struct ToPyObj< mp_float_t > : std::true_type
+  struct ToPyObj< double > : std::true_type
   {
-    static mp_obj_t Convert( mp_float_t a )
+    static mp_obj_t Convert( double a )
     {
       return mp_obj_new_float( a );
+    }
+  };
+
+  template<>
+  struct ToPyObj< float > : std::true_type
+  {
+    static mp_obj_t Convert( float a )
+    {
+      return mp_obj_new_float( static_cast< double >( a ) );
     }
   };
 

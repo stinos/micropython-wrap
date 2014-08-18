@@ -10,6 +10,7 @@
 #include "string.h"
 #include "qualifier.h"
 #include "nargs.h"
+#include "numeric.h"
 using namespace upywrap;
 
 struct F
@@ -52,6 +53,10 @@ struct F
   func_name_def( Three )
   func_name_def( Four )
   func_name_def( Eight )
+  func_name_def( Int )
+  func_name_def( Unsigned )
+  func_name_def( Double )
+  func_name_def( Float )
 
   func_name_def( Add )
   func_name_def( Value )
@@ -126,6 +131,10 @@ extern "C"
     fn.Def< F::HasFinaliser >( HasFinaliser );
     fn.Def< F::Four >( Four );
     fn.Def< F::Eight >( Eight );
+    fn.Def< F::Int >( Int );
+    fn.Def< F::Unsigned >( Unsigned );
+    fn.Def< F::Float >( Float );
+    fn.Def< F::Double >( Double );
 
     //these are all not suported so should yield compiler errors
 #ifdef TEST_STATIC_ASSERTS_FOR_UNSUPPORTED_TYPES

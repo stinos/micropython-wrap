@@ -23,6 +23,15 @@ namespace upywrap
   };
 
   template<>
+  struct FromPyObj< mp_uint_t > : std::true_type
+  {
+    static mp_uint_t Convert( mp_obj_t arg )
+    {
+      return safe_integer_cast< mp_uint_t >( mp_obj_get_int( arg ) );
+    }
+  };
+
+  template<>
   struct FromPyObj< bool > : std::true_type
   {
     static bool Convert( mp_obj_t arg )
@@ -40,14 +49,32 @@ namespace upywrap
       return safe_integer_cast< int >( FromPyObj< mp_int_t >::Convert( arg ) );
     }
   };
+
+  template<>
+  struct FromPyObj< unsigned > : std::true_type
+  {
+    static int Convert( mp_obj_t arg )
+    {
+      return safe_integer_cast< unsigned >( FromPyObj< mp_uint_t >::Convert( arg ) );
+    }
+  };
 #endif
 
   template<>
-  struct FromPyObj< mp_float_t > : std::true_type
+  struct FromPyObj< double > : std::true_type
   {
-    static mp_float_t Convert( mp_obj_t arg )
+    static double Convert( mp_obj_t arg )
     {
       return mp_obj_get_float( arg );
+    }
+  };
+
+  template<>
+  struct FromPyObj< float > : std::true_type
+  {
+    static float Convert( mp_obj_t arg )
+    {
+      return static_cast< float >( mp_obj_get_float( arg ) );
     }
   };
 
