@@ -44,6 +44,8 @@ namespace upywrap
   class ClassWrapper
   {
   public:
+    using native_obj_t = T*;
+
     ClassWrapper( const char* name, mp_obj_module_t* mod ) :
       ClassWrapper( name, mod->globals )
     {
@@ -100,6 +102,7 @@ namespace upywrap
     }
 
     static mp_obj_t AsPyObj( T* p )
+    static mp_obj_t AsPyObj( native_obj_t p )
     {
 #ifdef UPYWRAP_NOFINALISER
       #define upywrap_new_obj m_new_obj
@@ -125,7 +128,7 @@ namespace upywrap
 
     mp_obj_base_t base; //must always be the first member!
     std::int64_t cookie; //we'll use this to check if a pointer really points to a ClassWrapper
-    T* obj;
+    native_obj_t obj;
     static function_ptrs functionPointers;
     static const std::int64_t defCookie;
 
@@ -136,6 +139,11 @@ namespace upywrap
       func_name_def( Exit )
       func_name_def( __del__ )
     };
+
+    T* GetPtr()
+    {
+      return obj;
+    }
 
     void OneTimeInit( std::string name, mp_obj_dict_t* dict )
     {
@@ -234,7 +242,7 @@ namespace upywrap
       {
         auto self = (this_type*) self_in;
         auto f = (call_type*) this_type::functionPointers[ (void*) index ];
-        return CallReturn< Ret, A... >::Call( f, self->obj, args... );
+        return CallReturn< Ret, A... >::Call( f, self->GetPtr(), args... );
       }
 
       static mp_obj_t CallN( uint n_args, const mp_obj_t* args )
@@ -244,7 +252,7 @@ namespace upywrap
         auto self = (this_type*) args[ 0 ];
         auto firstArg = &args[ 1 ];
         auto f = (call_type*) this_type::functionPointers[ (void*) index ];
-        return callvar( f, self->obj, firstArg, make_index_sequence< sizeof...( A ) >() );
+        return callvar( f, self->GetPtr(), firstArg, make_index_sequence< sizeof...( A ) >() );
       }
 
       static mp_obj_t CallDiscard( uint n_args, const mp_obj_t* args )
@@ -253,7 +261,7 @@ namespace upywrap
         static_assert( sizeof...( A ) == 0, "Arguments must be discarded" );
         auto self = (this_type*) args[ 0 ];
         auto f = (call_type*) this_type::functionPointers[ (void*) index ];
-        return CallReturn< Ret, A... >::Call( f, self->obj );
+        return CallReturn< Ret, A... >::Call( f, self->GetPtr() );
       }
 
       static mp_obj_t MakeNew( mp_obj_t, uint n_args, uint, const mp_obj_t *args )
