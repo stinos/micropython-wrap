@@ -335,7 +335,9 @@ namespace upywrap
         if( n_args != sizeof...( A ) )
           RaiseTypeException( "Wrong number of arguments for constructor" );
         auto f = (init_call_type*) this_type::functionPointers[ (void*) index ];
+        UPYWRAP_TRY
         return AsPyObj( apply( f, args, make_index_sequence< sizeof...( A ) >() ), true );
+        UPYWRAP_CATCH
       }
 
       static mp_obj_t Delete( mp_obj_t self_in )
