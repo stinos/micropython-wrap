@@ -163,7 +163,7 @@ namespace upywrap
       typedef typename std::function< R( Args... ) > std_fun_type;
       typedef mp_obj_t( *py_fun_type )( typename project2nd< Args, mp_obj_t >::type... );
 
-      static std_fun_type Native( const mp_obj_fun_native_t* nativeFun )
+      static std_fun_type Native( const mp_obj_fun_builtin_t* nativeFun )
       {
         const auto pyFun = (py_fun_type) nativeFun->fun;
         return std_fun_type(
@@ -191,7 +191,7 @@ namespace upywrap
       typedef typename std::function< void( Args... ) > std_fun_type;
       typedef mp_obj_t( *py_fun_type )( typename project2nd< Args, mp_obj_t >::type... );
 
-      static std_fun_type Native( const mp_obj_fun_native_t* nativeFun )
+      static std_fun_type Native( const mp_obj_fun_builtin_t* nativeFun )
       {
         const auto pyFun = (py_fun_type) nativeFun->fun;
         return std_fun_type(
@@ -221,11 +221,11 @@ namespace upywrap
 
     static std_fun_type Convert( mp_obj_t arg )
     {
-      if( MP_OBJ_IS_TYPE( arg, &mp_type_fun_native ) )
+      if( MP_OBJ_IS_TYPE( arg, &mp_type_fun_builtin ) )
       {
         //TODO if nativeFun actually points to NativeCall::Call or NativeMemberCall::Call, and we can
         //figure that out somehow, we do not have to go through the double conversion native->mp_obj_t->native
-        const auto nativeFun = (mp_obj_fun_native_t*) arg;
+        const auto nativeFun = (mp_obj_fun_builtin_t*) arg;
         return make_fun::Native( nativeFun );
       }
       else

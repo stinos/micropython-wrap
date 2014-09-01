@@ -24,6 +24,17 @@ extern "C"
 
 namespace upywrap
 {
+  inline mp_obj_t mp_make_function_n( int n_args, void* fun )
+  {
+    auto o = m_new_obj( mp_obj_fun_builtin_t );
+    o->base.type = &mp_type_fun_builtin;
+    o->is_kw = false;
+    o->n_args_min = n_args;
+    o->n_args_max = n_args;
+    o->fun = fun;
+    return o;
+  }
+
   inline mp_obj_module_t* CreateModule( const char* name, bool doRegister = false )
   {
     const qstr qname = qstr_from_str( name );
