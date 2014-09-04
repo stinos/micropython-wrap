@@ -182,12 +182,6 @@ namespace upywrap
       return native->obj;
     }
 
-    mp_obj_base_t base; //must always be the first member!
-    std::int64_t cookie; //we'll use this to check if a pointer really points to a ClassWrapper
-    native_obj_t obj;
-    static function_ptrs functionPointers;
-    static const std::int64_t defCookie;
-
   private:
     struct FixedFuncNames
     {
@@ -369,7 +363,12 @@ namespace upywrap
 
     typedef ClassWrapper< T > this_type;
 
+    mp_obj_base_t base; //must always be the first member!
+    std::int64_t cookie; //we'll use this to check if a pointer really points to a ClassWrapper
+    native_obj_t obj;
     static mp_obj_type_t type;
+    static function_ptrs functionPointers;
+    static const std::int64_t defCookie;
   };
 
   template< class T >
