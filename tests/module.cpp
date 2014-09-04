@@ -81,6 +81,7 @@ extern "C"
     wrap1.Def< F::Value >( &Simple::Value );
     wrap1.Def< F::Plus >( &Simple::Plus );
     wrap1.Def< F::SimpleFunc >( SimpleFunc );
+    wrap1.Property( "val", &Simple::SetValue, &Simple::Value );
 
     upywrap::ClassWrapper< Context > wrap2( "Context", mod );
     wrap2.DefInit<>();

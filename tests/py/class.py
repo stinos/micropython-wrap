@@ -11,3 +11,6 @@ simple1.Plus( simple2 )
 print( simple1.Value() )
 
 print( upywraptest.Simple( 1 ).SimpleFunc( upywraptest.Simple( 3 ) ).Value() )
+
+simple1.val = 5
+print( simple1.val )

@@ -21,6 +21,11 @@ namespace upywrap
       return a;
     }
 
+    void SetValue( int x )
+    {
+      a = x;
+    }
+
     void Plus( Simple* rh )
     {
       a += rh->a;

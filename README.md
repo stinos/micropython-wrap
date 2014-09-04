@@ -13,7 +13,10 @@ Currently supports these conversions for function arguments and return values:
     uPy dict <-> std::map
     uPy callable -> std::function
 
-    uPy type <-> T (if T is registered with ClassWrapper, see Usage)
+    uPy functions <-> C++ free functions
+    uPy type <-> C++ T (if T is registered with ClassWrapper, see Usage)
+    uPy class methods <-> getter/setter methods of T
+    uPy class attributes <-> getter/setter methods of T
 
 For the latter, native functions accepting pointers, values and references are allowed,
 and pointers and referenecs can be returned.
@@ -29,8 +32,8 @@ Some typical Python concepts are supported for class types:
 Furthermore there is optional support for wrapping each native call in a try/catch for std::exception,
 and re-raise it as a uPy RuntimeError
 
-The tests cover pretty much everything that is supported so they serve as documentation
-of the possibilities as well.
+The tests cover pretty much everything that is supported so they serve as
+the main documentationf the possibilities.
 
 Though fully operational (all tests are ok on 32/64 bit unix/windows ports)
 the code should still be considered beta and todos include:
@@ -63,6 +66,10 @@ Usage Sample
       void Bar( const std::vector< double >& vec );
 
       void Use( SomeClass* p );
+
+      int GetValue() const;
+
+      void SetValue();
     };
 
     class ContextManager
@@ -105,6 +112,7 @@ Usage Sample
         wrapclass.Def< Funcs::Bar >( &SomeClass::Bar );
         wrapclass.Def< Funcs::Use >( &SomeClass::Use );
         wrapclass.Def< Funcs::Func >( Func );
+        wrapClass.Property( "value", &SomeClass::SetValue, &SomeClass::GetValue );
 
         upywrap::ClassWrapper< ContextManager > wrapcman( "ContextManager", mod );
         wrapcman.DefInit< int >();
@@ -130,6 +138,8 @@ module mod can be used in Python like this:
     x.Func( 'abc', 1 )
     mod.Func( x, 'glob', 2 )
     x.Use( mod.Factory() )
+    x.value = 0
+    print( x.value )
 
     with mod.ContextManager( 1 ) as p :
       pass

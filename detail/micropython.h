@@ -59,6 +59,11 @@ namespace upywrap
     nlr_raise( mp_obj_new_exception_msg( &mp_type_TypeError, msg ) );
   }
 
+  inline void RaiseAttributeException( qstr name, qstr attr )
+  {
+    nlr_raise( mp_obj_new_exception_msg_varg( &mp_type_AttributeError, "'%s' object has no attribute '%s'", qstr_str( name ), qstr_str( attr ) ) );
+  }
+
   inline mp_obj_t RaiseRuntimeException( const char* msg )
   {
     nlr_raise( mp_obj_new_exception_msg( &mp_type_RuntimeError, msg ) );

@@ -110,6 +110,44 @@ namespace upywrap
       DefImpl< name, Ret, decltype( f ), A... >( f, conv );
     }
 
+    template< class A >
+    void Setter( const char* name, void( *f )( T*, A ) )
+    {
+      SetterImpl< decltype( f ), A >( name, f );
+    }
+
+    template< class A >
+    void Setter( const char* name, void( T::*f )( A ) )
+    {
+      SetterImpl< decltype( f ), A >( name, f );
+    }
+
+    template< class A >
+    void Getter( const char* name, A( *f )( T* ) )
+    {
+      GetterImpl< decltype( f ), A >( name, f );
+    }
+
+    template< class A >
+    void Getter( const char* name, A( T::*f )() const )
+    {
+      GetterImpl< decltype( f ), A >( name, f );
+    }
+
+    template< class A >
+    void Property( const char* name, void( *fset )( T*, A ), A( *fget )( T* ) )
+    {
+      SetterImpl< decltype( fset ), A >( name, fset );
+      GetterImpl< decltype( fget ), A >( name, fget );
+    }
+
+    template< class A >
+    void Property( const char* name, void( T::*fset )( A ), A( T::*fget )() const )
+    {
+      SetterImpl< decltype( fset ), A >( name, fset );
+      GetterImpl< decltype( fget ), A >( name, fget );
+    }
+
     void DefInit()
     {
       DefInit<>();
@@ -205,6 +243,54 @@ namespace upywrap
     }
 #endif
 
+    //native attribute store interface
+    struct NativeSetterCallBase
+    {
+      virtual void Call( mp_obj_t self_in, mp_obj_t value ) = 0;
+    };
+
+    //native attribute load interface
+    struct NativeGetterCallBase
+    {
+      virtual mp_obj_t Call( mp_obj_t self_in ) = 0;
+    };
+
+    template< class T >
+    static typename T::mapped_type FindAttrChecked( T& map, qstr attr )
+    {
+      auto ret = map.find( attr );
+      if( ret == map.end() )
+        RaiseAttributeException( type.name, attr );
+      return ret->second;
+    }
+
+    static bool store_attr( mp_obj_t self_in, qstr attr, mp_obj_t value )
+    {
+      this_type* self = (this_type*) self_in;
+      FindAttrChecked( self->setters, attr )->Call( self, value );
+      return true;
+    }
+
+    static void load_attr( mp_obj_t self_in, qstr attr, mp_obj_t* dest )
+    {
+      //uPy calls load_attr to find methods as well, so we have no choice but to go through them.
+      //However if we find one, it's more performant than uPy's lookup (see mp_load_method_maybe)
+      //because we know we have a proper map with only functions so we don't need x checks
+      auto locals_map = &( (mp_obj_dict_t*) type.locals_dict )->map;
+      auto elem = mp_map_lookup( locals_map, new_qstr( attr ), MP_MAP_LOOKUP );
+      if( elem != nullptr )
+      {
+        //assert( mp_obj_is_callable( elem->value ) )
+        dest[ 0 ] = elem->value;
+        dest[ 1 ] = self_in;
+      }
+      else
+      {
+        this_type* self = (this_type*) self_in;
+        *dest = FindAttrChecked( self->getters, attr )->Call( self );
+      }
+    }
+
     void OneTimeInit( std::string name, mp_obj_dict_t* dict )
     {
       const auto qname = qstr_from_str( name.data() );
@@ -212,6 +298,8 @@ namespace upywrap
       type.name = qname;
       type.locals_dict = (mp_obj_dict_t*) mp_obj_new_dict( 0 );
       type.make_new = nullptr;
+      type.store_attr = store_attr;
+      type.load_attr = load_attr;
 
       mp_obj_dict_store( dict, new_qstr( qname ), &type );
       //store our dict in the module's dict so it's reachable by the GC mark phase,
@@ -243,6 +331,18 @@ namespace upywrap
       AddFunctionToTable( name(), mp_make_function_n( 1 + sizeof...( A ), call ) );
     }
 
+    template< class Fun, class A >
+    void SetterImpl( const char* name, Fun f )
+    {
+      setters[ qstr_from_str( name ) ] = new NativeSetterCall< A >( f );
+    }
+
+    template< class Fun, class A >
+    void GetterImpl( const char* name, Fun f )
+    {
+      getters[ qstr_from_str( name ) ] = new NativeGetterCall< A >( f );
+    }
+
     void DelImpl()
     {
       typedef NativeMemberCall< FixedFuncNames::__del__, void, T* > call_type;
@@ -266,6 +366,58 @@ namespace upywrap
       AddFunctionToTable( MP_QSTR___enter__, (mp_obj_t) &mp_identity_obj );
       AddFunctionToTable( MP_QSTR___exit__, mp_make_function_n( 4, (void*) call_type::CallDiscard ) );
     }
+
+    //wrap native setter in function with uPy store_attr compatible signature
+    template< class A >
+    struct NativeSetterCall : NativeSetterCallBase
+    {
+      typedef InstanceFunctionCall< T, void, A > call_type;
+    
+      NativeSetterCall( typename call_type::func_type f ) :
+        f( new NonMemberFunctionCall< T, void, A >( f ) )
+      {
+      }
+
+      NativeSetterCall( typename call_type::mem_func_type f ) :
+        f( new MemberFunctionCall< T, void, A >( f ) )
+      {
+      }
+
+      void Call( mp_obj_t self_in, mp_obj_t value )
+      {
+        auto self = (this_type*) self_in;
+        CallReturn< void, A >::Call( f, self->GetPtr(), value );
+      }
+
+    private:
+      call_type* f;
+    };
+
+    //wrap native getter in function with uPy load_attr compatible signature
+    template< class A >
+    struct NativeGetterCall : NativeGetterCallBase
+    {
+      typedef InstanceFunctionCall< T, A > call_type;
+    
+      NativeGetterCall( typename call_type::func_type f ) :
+        f( new NonMemberFunctionCall< T, A >( f ) )
+      {
+      }
+
+      NativeGetterCall( typename call_type::const_mem_func_type f ) :
+        f( new ConstMemberFunctionCall< T, A >( f ) )
+      {
+      }
+
+      mp_obj_t Call( mp_obj_t self_in )
+      {
+        auto self = (this_type*) self_in;
+        return CallReturn< A >::Call( f, self->GetPtr() );
+      }
+
+    private:
+      call_type* f;
+    };
 
     //wrap native call in function with uPy compatible mp_obj_t( mp_obj_t self, mp_obj_t.... ) signature
     template< index_type index, class Ret, class... A >
@@ -362,12 +514,16 @@ namespace upywrap
     };
 
     typedef ClassWrapper< T > this_type;
+    using store_attr_map = std::map< qstr, NativeSetterCallBase* >;
+    using load_attr_map = std::map< qstr, NativeGetterCallBase* >;
 
     mp_obj_base_t base; //must always be the first member!
     std::int64_t cookie; //we'll use this to check if a pointer really points to a ClassWrapper
     native_obj_t obj;
     static mp_obj_type_t type;
     static function_ptrs functionPointers;
+    static store_attr_map setters;
+    static load_attr_map getters;
     static const std::int64_t defCookie;
   };
 
@@ -376,6 +532,12 @@ namespace upywrap
 
   template< class T >
   function_ptrs ClassWrapper< T >::functionPointers;
+
+  template< class T >
+  typename ClassWrapper< T >::store_attr_map ClassWrapper< T >::setters;
+
+  template< class T >
+  typename ClassWrapper< T >::load_attr_map ClassWrapper< T >::getters;
 
   template< class T >
   const std::int64_t ClassWrapper< T >::defCookie = 0x12345678908765;
