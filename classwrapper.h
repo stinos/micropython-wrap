@@ -219,17 +219,17 @@ namespace upywrap
       type.locals_dict = (mp_obj_dict_t*) mp_obj_new_dict( 0 );
       type.make_new = nullptr;
 
-      mp_obj_dict_store( dict, MP_OBJ_NEW_QSTR( qname ), &type );
+      mp_obj_dict_store( dict, new_qstr( qname ), &type );
       //store our dict in the module's dict so it's reachable by the GC mark phase,
       //or in other words: prevent the GC from sweeping it!!
-      mp_obj_dict_store( dict, MP_OBJ_NEW_QSTR( qstr_from_str( ( name + "_locals" ).data() ) ), type.locals_dict );
+      mp_obj_dict_store( dict, new_qstr( ( name + "_locals" ).data() ), type.locals_dict );
 
       DelImpl();
     }
 
     void AddFunctionToTable( const qstr name, mp_obj_t fun )
     {
-      mp_obj_dict_store( type.locals_dict, MP_OBJ_NEW_QSTR( name ), fun );
+      mp_obj_dict_store( type.locals_dict, new_qstr( name ), fun );
     }
 
     void AddFunctionToTable( const char* name, mp_obj_t fun )

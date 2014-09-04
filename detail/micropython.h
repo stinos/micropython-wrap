@@ -24,6 +24,16 @@ extern "C"
 
 namespace upywrap
 {
+  inline mp_obj_t new_qstr( qstr what )
+  {
+    return MP_OBJ_NEW_QSTR( what );
+  }
+
+  inline mp_obj_t new_qstr( const char* what )
+  {
+    return new_qstr( qstr_from_str( what ) );
+  }
+
   inline mp_obj_t mp_make_function_n( int n_args, void* fun )
   {
     auto o = m_new_obj( mp_obj_fun_builtin_t );
