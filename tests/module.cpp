@@ -1,5 +1,6 @@
 #include "../classwrapper.h"
 #include "../functionwrapper.h"
+#include "../variable.h"
 #include "exception.h"
 #include "map.h"
 #include "function.h"
@@ -62,7 +63,19 @@ struct F
   func_name_def( Value )
   func_name_def( Plus )
   func_name_def( SimpleFunc )
+
+  func_name_def( TestVariables )
 };
+
+void TestVariables()
+{
+  std::cout << GetVariable< int >( "a" ) << std::endl;
+  SetVariable( 0, "a" );
+  std::cout << GetVariable< int >( "x", "a" ) << std::endl;
+  SetVariable( 2, "x", "a" );
+  std::cout << GetVariable< int >( "x2", "x", "a" ) << std::endl;
+  SetVariable( 4, "x2", "x", "a" );
+}
 
 //#define TEST_STATIC_ASSERTS_FOR_UNSUPPORTED_TYPES
 
@@ -136,6 +149,8 @@ extern "C"
     fn.Def< F::Unsigned >( Unsigned );
     fn.Def< F::Float >( Float );
     fn.Def< F::Double >( Double );
+
+    fn.Def< F::TestVariables >( TestVariables );
 
     //these are all not suported so should yield compiler errors
 #ifdef TEST_STATIC_ASSERTS_FOR_UNSUPPORTED_TYPES

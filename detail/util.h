@@ -97,6 +97,19 @@ namespace upywrap
   {
     apply_tuple< std::tuple_size< std::tuple< Args... > >::value - 1, Args... >::apply( f, args );
   }
+
+  //Get last item of a parameter pack
+  template< class Last >
+  Last split_last( Last t )
+  {
+    return t;
+  }
+  
+  template< class First, class... Rest >
+  First split_last( First, Rest... items )
+  {
+    return split_last( items... );
+  }
 }
 
 #endif
