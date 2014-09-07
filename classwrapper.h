@@ -255,8 +255,8 @@ namespace upywrap
       virtual mp_obj_t Call( mp_obj_t self_in ) = 0;
     };
 
-    template< class T >
-    static typename T::mapped_type FindAttrChecked( T& map, qstr attr )
+    template< class Map >
+    static typename Map::mapped_type FindAttrChecked( Map& map, qstr attr )
     {
       auto ret = map.find( attr );
       if( ret == map.end() )
@@ -457,7 +457,7 @@ namespace upywrap
         return CallReturn< Ret, A... >::Call( f, self->GetPtr(), args... );
       }
 
-      static mp_obj_t CallN( uint n_args, const mp_obj_t* args )
+      static mp_obj_t CallN( mp_uint_t n_args, const mp_obj_t* args )
       {
         if( n_args != sizeof...( A ) + 1 )
           RaiseTypeException( "Wrong number of arguments" );
@@ -467,7 +467,7 @@ namespace upywrap
         return callvar( f, self->GetPtr(), firstArg, make_index_sequence< sizeof...( A ) >() );
       }
 
-      static mp_obj_t CallDiscard( uint n_args, const mp_obj_t* args )
+      static mp_obj_t CallDiscard( mp_uint_t n_args, const mp_obj_t* args )
       {
         (void) n_args;
         static_assert( sizeof...( A ) == 0, "Arguments must be discarded" );
@@ -476,7 +476,7 @@ namespace upywrap
         return CallReturn< Ret, A... >::Call( f, self->GetPtr() );
       }
 
-      static mp_obj_t MakeNew( mp_obj_t, uint n_args, uint, const mp_obj_t *args )
+      static mp_obj_t MakeNew( mp_obj_t, mp_uint_t n_args, mp_uint_t, const mp_obj_t *args )
       {
         if( n_args != sizeof...( A ) )
           RaiseTypeException( "Wrong number of arguments for constructor" );
@@ -490,7 +490,7 @@ namespace upywrap
       {
         auto self = (this_type*) self_in;
 #if UPYWRAP_SHAREDPTROBJ
-        self->obj.~shared_ptr< T >();
+        self->obj.~shared_ptr();
 #else
         delete self->obj;
 #endif
@@ -528,7 +528,12 @@ namespace upywrap
   };
 
   template< class T >
-  mp_obj_type_t ClassWrapper< T >::type = { nullptr };
+  mp_obj_type_t ClassWrapper< T >::type =
+#ifdef __GNUC__
+    { { nullptr } }; //GCC bug 53119
+#else
+    { nullptr };
+#endif
 
   template< class T >
   function_ptrs ClassWrapper< T >::functionPointers;

@@ -83,7 +83,7 @@ namespace upywrap
   {
     static std::string Convert( mp_obj_t arg )
     {
-      uint len;
+      mp_uint_t len;
       auto chars = mp_obj_str_get_data( arg, &len );
       return std::string( chars, safe_integer_cast< size_t >( len ) );
     }
@@ -105,7 +105,7 @@ namespace upywrap
 
     static vec_type Convert( mp_obj_t arg )
     {
-      uint len;
+      mp_uint_t len;
       mp_obj_t* items;
       mp_obj_get_array( arg, &len, &items ); //works for list and tuple
       vec_type ret( safe_integer_cast< size_t >( len ) );
@@ -140,10 +140,10 @@ namespace upywrap
 
     static tuple_type Convert( mp_obj_t arg )
     {
-      uint len;
+      mp_uint_t len;
       mp_obj_t* items;
       mp_obj_get_array( arg, &len, &items );
-      if( len != safe_integer_cast< uint >( sizeof...( A ) ) )
+      if( len != safe_integer_cast< mp_uint_t >( sizeof...( A ) ) )
         RaiseTypeException( "Not enough tuple elements" );
       return make_it( items, make_index_sequence< sizeof...( A ) >() );
     }

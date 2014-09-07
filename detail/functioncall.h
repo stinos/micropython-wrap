@@ -3,6 +3,18 @@
 
 namespace upywrap
 {
+  template< class Ret >
+  struct DefineRetvalConverter
+  {
+    typedef void* (*type)( Ret );
+  };
+
+  template<>
+  struct DefineRetvalConverter< void >
+  {
+    typedef void* (*type)();
+  };
+
   //Base function object for instance function calls
   template< class T, class Ret, class... A >
   struct InstanceFunctionCall
@@ -21,7 +33,7 @@ namespace upywrap
     //for each function type (one which does take a converter and one which doesn't): now there's
     //just a single pointe to set the convertor (see ClassWrapper/FunctionWrapper)
     //and a single point to use it (see CallReturn)
-    typedef void*( *convert_retval_type )( Ret );
+    using convert_retval_type = typename DefineRetvalConverter< Ret >::type;
     convert_retval_type convert_retval;
   };
 
@@ -64,7 +76,7 @@ namespace upywrap
     FunctionCall( func_type func ) : func( func ), convert_retval( nullptr ) {}
     virtual Ret Call( A&&... a ) { return func( std::forward< A >( a )... ); }
 
-    typedef void*( *convert_retval_type )( Ret );
+    using convert_retval_type = typename DefineRetvalConverter< Ret >::type;
     convert_retval_type convert_retval;
   };
 }
