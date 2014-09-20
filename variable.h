@@ -7,17 +7,17 @@ namespace upywrap
 {
   namespace detail
   {
-    mp_obj_t GetVariable( const char* name )
+    inline mp_obj_t GetVariable( const char* name )
     {
       return mp_load_name( qstr_from_str( name ) );
     }
 
-    mp_obj_t GetVariable( mp_obj_t instance, const char* name )
+    inline mp_obj_t GetVariable( mp_obj_t instance, const char* name )
     {
       return mp_load_attr( instance, qstr_from_str( name ) );
     }
 
-    mp_obj_t GetVariable( const char* instance, const char* name )
+    inline mp_obj_t GetVariable( const char* instance, const char* name )
     {
       return GetVariable( GetVariable( instance ), name );
     }
@@ -28,7 +28,7 @@ namespace upywrap
       return GetVariable( GetVariable( instance, name ), names... );
     }
 
-    void SetVariable( mp_obj_t value, const char* name )
+    inline void SetVariable( mp_obj_t value, const char* name )
     {
       mp_store_name( qstr_from_str( name ), value );
     }

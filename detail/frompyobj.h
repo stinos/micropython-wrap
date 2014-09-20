@@ -279,12 +279,12 @@ namespace upywrap
     typedef FromPyObj< const char* > type;
   };
 
-  bool HasCharString()
+  inline bool HasCharString()
   {
     return true;
   }
 #else
-  bool HasCharString()
+  inline bool HasCharString()
   {
     return false;
   }

@@ -74,27 +74,27 @@ namespace upywrap
 #ifdef UPYWRAP_NOEXCEPTIONS
   #define UPYWRAP_TRY
   #define UPYWRAP_CATCH
-  bool HasExceptions()
+  inline bool HasExceptions()
   {
     return false;
   }
 #else
   #define UPYWRAP_TRY try {
   #define UPYWRAP_CATCH } catch( const std::exception& e ) { return RaiseRuntimeException( e.what() ); }
-  bool HasExceptions()
+  inline bool HasExceptions()
   {
     return true;
   }
 #endif
 
 #if MICROPY_ENABLE_GC && MICROPY_ENABLE_FINALISER
-  bool HasFinaliser()
+  inline bool HasFinaliser()
   {
     return true;
   }
 #else
   #define UPYWRAP_NOFINALISER
-  bool HasFinaliser()
+  inline bool HasFinaliser()
   {
     return false;
   }
