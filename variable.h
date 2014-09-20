@@ -5,6 +5,8 @@
 
 namespace upywrap
 {
+  using varname = std::vector< std::string >;
+
   namespace detail
   {
     inline mp_obj_t GetVariable( const char* name )
@@ -28,6 +30,17 @@ namespace upywrap
       return GetVariable( GetVariable( instance, name ), names... );
     }
 
+    inline mp_obj_t GetVariable( const varname& names )
+    {
+      const auto numNames = names.size();
+      if( !numNames )
+        throw std::runtime_error( "cannot get variable without a name" );
+      auto var = GetVariable( names[ 0 ].data() );
+      for( size_t i = 1 ; i < numNames ; ++i )
+        var = GetVariable( var, names[ i ].data() );
+      return var;
+    }
+
     inline void SetVariable( mp_obj_t value, const char* name )
     {
       mp_store_name( qstr_from_str( name ), value );
@@ -45,6 +58,24 @@ namespace upywrap
       //get all arguments, then pass all but the last one to GetVariableHelper
       const auto args = std::make_tuple( instance, names... );
       mp_store_attr( GetVariableHelper( args, make_index_sequence< sizeof...( Names ) >() ), qstr_from_str( split_last( names... ) ), value );
+    }
+
+    inline void SetVariable( mp_obj_t value, const varname& names )
+    {
+      const auto numNames = names.size();
+      if( !numNames )
+        throw std::runtime_error( "cannot get variable without a name" );
+      if( numNames == 1 )
+      {
+        SetVariable( value, names[ 0 ].data() );
+      }
+      else
+      {
+        auto var = GetVariable( names[ 0 ].data() );
+        for( size_t i = 1 ; i < numNames - 1 ; ++i )
+          var = GetVariable( var, names[ i ].data() );
+        mp_store_attr( var, qstr_from_str( names[ numNames - 1 ].data() ), value );
+      }
     }
   }
 
@@ -64,6 +95,12 @@ namespace upywrap
     return SelectFromPyObj< T >::type::Convert( detail::GetVariable( names... ) );
   }
 
+  template< class T >
+  T GetVariable( const varname& names )
+  {
+    return SelectFromPyObj< T >::type::Convert( detail::GetVariable( names ) );
+  }
+
     /**
       * Set the value of any variable in scope, or an (possibly nested) attribute of an object in scope.
       * Adds the variable/attribute if it does not exist, but not nested (so setting a.b.c is an error if a has no member b).
@@ -73,6 +110,12 @@ namespace upywrap
   void SetVariable( const T& value, Names... names )
   {
     detail::SetVariable( SelectToPyObj< T >::type::Convert( value ), names... );
+  }
+
+  template< class T >
+  void SetVariable( const T& value, const varname& names )
+  {
+    detail::SetVariable( SelectToPyObj< T >::type::Convert( value ), names );
   }
 }
 
