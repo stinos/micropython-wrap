@@ -122,9 +122,9 @@ namespace upywrap
     static map_type Convert( mp_obj_t arg )
     {
       map_type ret;
-      auto dict_iter = mp_obj_new_dict_iterator( (mp_obj_dict_t*) arg, 0 );
       mp_map_elem_t* next = nullptr;
-      while( ( next = dict_it_iternext_elem( dict_iter ) ) != MP_OBJ_STOP_ITERATION )
+      mp_uint_t cur = 0;
+      while( ( next = dict_iter_next( (mp_obj_dict_t*) arg, &cur ) ) != nullptr )
       {
         ret.insert( typename map_type::value_type( FromPyObj< K >::Convert( next->key ),
                                                    FromPyObj< V >::Convert( next->value ) ) );
