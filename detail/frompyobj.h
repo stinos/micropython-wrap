@@ -14,6 +14,15 @@ namespace upywrap
   };
 
   template<>
+  struct FromPyObj< mp_obj_t > : std::true_type
+  {
+    static mp_obj_t Convert( mp_obj_t arg )
+    {
+      return arg;
+    }
+  };
+
+  template<>
   struct FromPyObj< mp_int_t > : std::true_type
   {
     static mp_int_t Convert( mp_obj_t arg )
@@ -289,6 +298,12 @@ namespace upywrap
     return false;
   }
 #endif
+
+  template<>
+  struct SelectFromPyObj< mp_obj_t >
+  {
+    typedef FromPyObj< mp_obj_t > type;
+  };
 }
 
 #endif

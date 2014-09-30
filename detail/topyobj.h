@@ -27,6 +27,15 @@ namespace upywrap
   };
 
   template<>
+  struct ToPyObj< mp_obj_t > : std::true_type
+  {
+    static mp_obj_t Convert( mp_obj_t arg )
+    {
+      return arg;
+    }
+  };
+
+  template<>
   struct ToPyObj< mp_int_t > : std::true_type
   {
     static mp_obj_t Convert( mp_int_t a )
@@ -193,6 +202,12 @@ namespace upywrap
     typedef ToPyObj< const char* > type;
   };
 #endif
+
+  template<>
+  struct SelectToPyObj< mp_obj_t >
+  {
+    typedef ToPyObj< mp_obj_t > type;
+  };
 }
 
 #endif
