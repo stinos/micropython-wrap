@@ -12,6 +12,7 @@
 #include "qualifier.h"
 #include "nargs.h"
 #include "numeric.h"
+#include "tmap.h"
 using namespace upywrap;
 
 struct F
@@ -58,6 +59,7 @@ struct F
   func_name_def( Unsigned )
   func_name_def( Double )
   func_name_def( Float )
+  func_name_def( UseTypeMap )
 
   func_name_def( Add )
   func_name_def( Value )
@@ -149,6 +151,7 @@ extern "C"
     fn.Def< F::Unsigned >( Unsigned );
     fn.Def< F::Float >( Float );
     fn.Def< F::Double >( Double );
+    fn.Def< F::UseTypeMap >( UseTypeMap );
 
     fn.Def< F::TestVariables >( TestVariables );
 
