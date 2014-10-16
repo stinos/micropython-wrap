@@ -1,5 +1,5 @@
-#ifndef MICROPYTHONMODULE_CLASSWRAPPER
-#define MICROPYTHONMODULE_CLASSWRAPPER
+#ifndef MICROPYTHON_WRAP_CLASSWRAPPER
+#define MICROPYTHON_WRAP_CLASSWRAPPER
 
 //This flags enables the use of shared_ptr instead of raw pointers
 //for the actual storage of all native types.
@@ -618,4 +618,4 @@ namespace upywrap
   };
 }
 
-#endif
+#endif //#ifndef MICROPYTHON_WRAP_CLASSWRAPPER

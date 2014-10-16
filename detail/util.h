@@ -1,5 +1,5 @@
-#ifndef MICROPYTHONMODULE_UTIL_H
-#define MICROPYTHONMODULE_UTIL_H
+#ifndef MICROPYTHON_WRAP_DETAIL_UTIL_H
+#define MICROPYTHON_WRAP_DETAIL_UTIL_H
 
 #include <type_traits>
 #include <tuple>
@@ -112,4 +112,4 @@ namespace upywrap
   }
 }
 
-#endif
+#endif //#ifndef MICROPYTHON_WRAP_DETAIL_UTIL_H

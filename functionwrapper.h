@@ -1,5 +1,5 @@
-#ifndef MICROPYTHONMODULE_FUNCTIONWRAPPER
-#define MICROPYTHONMODULE_FUNCTIONWRAPPER
+#ifndef MICROPYTHON_WRAP_FUNCTIONWRAPPER
+#define MICROPYTHON_WRAP_FUNCTIONWRAPPER
 
 #include "detail/index.h"
 #include "detail/util.h"
@@ -59,8 +59,6 @@ namespace upywrap
       mp_obj_dict_store( globals, new_qstr( name() ), mp_make_function_n( sizeof...( A ), call ) );
     }
 
-    static function_ptrs functionPointers;
-
   private:
     //wrap native call in function with uPy compatible mp_obj_t( mp_obj_t.... ) signature
     template< index_type index, class Ret, class... A >
@@ -98,10 +96,15 @@ namespace upywrap
     };
 
     mp_obj_dict_t* globals;
+    static function_ptrs functionPointers;
   };
 
+  //we want a header only library but that yields multiply defined symbols when including this file more then once
+  //so as a simple hack: define MMICROPYTHON_WRAP_FUNCTIONWRAPPER_DEFINED in all but one include location
+#ifndef MICROPYTHON_WRAP_FUNCTIONWRAPPER_DEFINED
   function_ptrs FunctionWrapper::functionPointers;
+#endif
 
 }
 
-#endif
+#endif //#ifndef MICROPYTHON_WRAP_FUNCTIONWRAPPER

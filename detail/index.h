@@ -1,5 +1,5 @@
-#ifndef MICROPYTHONMODULE_INDEX_H
-#define MICROPYTHONMODULE_INDEX_H
+#ifndef MICROPYTHON_WRAP_DETAIL_INDEX_H
+#define MICROPYTHON_WRAP_DETAIL_INDEX_H
 
 #include <map>
 
@@ -20,4 +20,4 @@ namespace upywrap
   typedef std::map< void*, void* > function_ptrs;
 }
 
-#endif
+#endif //#ifndef MICROPYTHON_WRAP_DETAIL_INDEX_H

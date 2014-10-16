@@ -1,5 +1,5 @@
-#ifndef MICROPYTHONMODULE_FROMPYOBJ_H
-#define MICROPYTHONMODULE_FROMPYOBJ_H
+#ifndef MICROPYTHON_WRAP_DETAIL_FROMPYOBJ_H
+#define MICROPYTHON_WRAP_DETAIL_FROMPYOBJ_H
 
 #include "micropython.h"
 #include "topyobj.h"
@@ -306,4 +306,4 @@ namespace upywrap
   };
 }
 
-#endif
+#endif //#ifndef MICROPYTHON_WRAP_DETAIL_FROMPYOBJ_H

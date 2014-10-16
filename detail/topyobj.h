@@ -1,5 +1,5 @@
-#ifndef MICROPYTHONMODULE_TOPYOBJ_H
-#define MICROPYTHONMODULE_TOPYOBJ_H
+#ifndef MICROPYTHON_WRAP_DETAIL_TOPYOBJ_H
+#define MICROPYTHON_WRAP_DETAIL_TOPYOBJ_H
 
 #include "micropython.h"
 #include <string>
@@ -210,4 +210,4 @@ namespace upywrap
   };
 }
 
-#endif
+#endif //#ifndef MICROPYTHON_WRAP_DETAIL_TOPYOBJ_H
