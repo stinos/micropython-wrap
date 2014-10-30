@@ -112,6 +112,9 @@ namespace upywrap
   };
 
 #if defined( __LP64__ ) || defined( _WIN64 )
+
+  #undef max
+
   template<>
   struct safe_integer_caster< mp_int_t, int >
   {
