@@ -62,7 +62,7 @@ namespace upywrap
   template<>
   struct FromPyObj< unsigned > : std::true_type
   {
-    static int Convert( mp_obj_t arg )
+    static unsigned Convert( mp_obj_t arg )
     {
       return safe_integer_cast< unsigned >( FromPyObj< mp_uint_t >::Convert( arg ) );
     }
