@@ -2,6 +2,7 @@
 #define MICROPYTHONWRAP_VARIABLE
 
 #include "classwrapper.h"
+#include <stdexcept>
 
 namespace upywrap
 {
