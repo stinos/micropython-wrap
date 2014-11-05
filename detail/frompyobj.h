@@ -7,6 +7,9 @@
 
 namespace upywrap
 {
+  template< class T >
+  struct SelectFromPyObj;
+
   //Extract Arg from mp_obj_t
   template< class Arg >
   struct FromPyObj : std::false_type
@@ -118,7 +121,7 @@ namespace upywrap
       mp_obj_t* items;
       mp_obj_get_array( arg, &len, &items ); //works for list and tuple
       vec_type ret( safe_integer_cast< size_t >( len ) );
-      std::transform( items, items + len, ret.begin(), FromPyObj< T >::Convert );
+      std::transform( items, items + len, ret.begin(), SelectFromPyObj< T >::type::Convert );
       return ret;
     }
   };
@@ -135,8 +138,8 @@ namespace upywrap
       mp_uint_t cur = 0;
       while( ( next = dict_iter_next( (mp_obj_dict_t*) arg, &cur ) ) != nullptr )
       {
-        ret.insert( typename map_type::value_type( FromPyObj< K >::Convert( next->key ),
-                                                   FromPyObj< V >::Convert( next->value ) ) );
+        ret.insert( typename map_type::value_type( SelectFromPyObj< K >::type::Convert( next->key ),
+                                                   SelectFromPyObj< V >::type::Convert( next->value ) ) );
       }
       return ret;
     }
@@ -160,7 +163,7 @@ namespace upywrap
     template< size_t... Indices >
     static tuple_type make_it( const mp_obj_t* args, index_sequence< Indices... > )
     {
-      return std::make_tuple( FromPyObj< A >::Convert( args[ Indices ] )... );
+      return std::make_tuple( SelectFromPyObj< A >::type::Convert( args[ Indices ] )... );
     }
   };
 
@@ -178,7 +181,7 @@ namespace upywrap
         return std_fun_type(
           [pyFun] ( Args... args ) -> R
           {
-            return FromPyObj< R >::Convert( pyFun( SelectToPyObj< Args >::type::Convert( args )... ) );
+            return SelectFromPyObj< R >::type::Convert( pyFun( SelectToPyObj< Args >::type::Convert( args )... ) );
           } );
       }
 
@@ -189,7 +192,7 @@ namespace upywrap
           {
             //+1 to avoid zero-sized array which is illegal for msvc
             mp_obj_t objs[ sizeof...( Args ) + 1 ] = { SelectToPyObj< Args >::type::Convert( args )... };
-            return FromPyObj< R >::Convert( mp_call_function_n_kw( fun, sizeof...( Args ), 0, objs ) );
+            return SelectFromPyObj< R >::type::Convert( mp_call_function_n_kw( fun, sizeof...( Args ), 0, objs ) );
           } );
       }
     };

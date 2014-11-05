@@ -11,6 +11,9 @@
 
 namespace upywrap
 {
+  template< class T >
+  struct SelectToPyObj;
+
   //Create mp_obj_t from Ret
   template< class Ret >
   struct ToPyObj : std::false_type
@@ -125,7 +128,7 @@ namespace upywrap
     {
       const auto numItems = a.size();
       std::vector< mp_obj_t > items( numItems );
-      std::transform( a.cbegin(), a.cend(), items.begin(), ToPyObj< T >::Convert );
+      std::transform( a.cbegin(), a.cend(), items.begin(), SelectToPyObj< T >::type::Convert );
       return mp_obj_new_list( safe_integer_cast< uint >( numItems ), items.data() );
     }
   };
@@ -139,7 +142,7 @@ namespace upywrap
       auto dict = mp_obj_new_dict( safe_integer_cast< uint >( numItems ) );
       std::for_each( a.cbegin(), a.cend(), [&dict] ( decltype( *a.cbegin() )& p )
       {
-        mp_obj_dict_store( dict, ToPyObj< K >::Convert( p.first ), ToPyObj< V >::Convert( p.second ) );
+        mp_obj_dict_store( dict, SelectToPyObj< K >::type::Convert( p.first ), SelectToPyObj< V >::type::Convert( p.second ) );
       } );
       return dict;
     }
@@ -157,7 +160,7 @@ namespace upywrap
       template< class T >
       void operator ()( const T& a )
       {
-        items.push_back( ToPyObj< T >::Convert( a ) );
+        items.push_back( SelectToPyObj< T >::type::Convert( a ) );
       }
     };
 
@@ -182,7 +185,7 @@ namespace upywrap
   template< class T >
   struct ClassToPyObj;
 
-  //Select bewteen FromPyObj and ClassFromPyObj
+  //Select bewteen ToPyObj and ClassToPyObj
   template< class T >
   struct SelectToPyObj
   {
