@@ -17,6 +17,7 @@ extern "C"
 #endif
   #include <py/objmodule.h>
   #include <py/runtime.h>
+  #include <py/runtime0.h>
 }
 
 #include <limits>

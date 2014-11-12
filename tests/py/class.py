@@ -14,3 +14,8 @@ print( upywraptest.Simple( 1 ).SimpleFunc( upywraptest.Simple( 3 ) ).Value() )
 
 simple1.val = 5
 print( simple1.val )
+
+print( simple1 == simple2 )
+print( simple1 == simple1 )
+print( simple1.__hash__() == simple2.__hash__() )
+print( simple1.__hash__() == simple1.__hash__() )

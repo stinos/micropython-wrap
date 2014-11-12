@@ -226,6 +226,7 @@ namespace upywrap
       func_name_def( Init )
       func_name_def( Exit )
       func_name_def( __del__ )
+      func_name_def( __hash__ )
     };
 
     T* GetPtr()
@@ -291,6 +292,22 @@ namespace upywrap
       }
     }
 
+    static mp_obj_t binary_op( mp_uint_t op, mp_obj_t self_in, mp_obj_t other_in )
+    {
+      auto self = (this_type*) self_in;
+      auto other = (this_type*) other_in;
+      if( op != MP_BINARY_OP_EQUAL )
+        return MP_OBJ_NULL; //not supported
+      return ToPyObj< bool >::Convert( self->GetPtr() == other->GetPtr() );
+    }
+
+    static mp_obj_t hash( mp_obj_t self_in )
+    {
+      auto self = (this_type*) self_in;
+      static_assert( sizeof( mp_int_t ) >= sizeof( decltype( self->GetPtr() ) ), "hash fnction requires mp_int_t to be pointer sized" );
+      return ToPyObj< mp_int_t >::Convert( (mp_int_t) self->GetPtr() );
+    }
+
     void OneTimeInit( std::string name, mp_obj_dict_t* dict )
     {
       const auto qname = qstr_from_str( name.data() );
@@ -300,6 +317,7 @@ namespace upywrap
       type.make_new = nullptr;
       type.store_attr = store_attr;
       type.load_attr = load_attr;
+      type.binary_op = binary_op;
 
       mp_obj_dict_store( dict, new_qstr( qname ), &type );
       //store our dict in the module's dict so it's reachable by the GC mark phase,
@@ -307,6 +325,7 @@ namespace upywrap
       mp_obj_dict_store( dict, new_qstr( ( name + "_locals" ).data() ), type.locals_dict );
 
       DelImpl();
+      AddFunctionToTable( FixedFuncNames::__hash__(), mp_make_function_n( 1, hash ) );
     }
 
     void AddFunctionToTable( const qstr name, mp_obj_t fun )
