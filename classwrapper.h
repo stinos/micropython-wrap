@@ -308,6 +308,17 @@ namespace upywrap
       return ToPyObj< mp_int_t >::Convert( (mp_int_t) self->GetPtr() );
     }
 
+    static mp_obj_t del( mp_obj_t self_in )
+    {
+      auto self = (this_type*) self_in;
+#if UPYWRAP_SHAREDPTROBJ
+      self->obj.~shared_ptr();
+#else
+      delete self->obj;
+#endif
+      return ToPyObj< void >::Convert();
+    }
+
     void OneTimeInit( std::string name, mp_obj_dict_t* dict )
     {
       const auto qname = qstr_from_str( name.data() );
@@ -324,7 +335,7 @@ namespace upywrap
       //or in other words: prevent the GC from sweeping it!!
       mp_obj_dict_store( dict, new_qstr( ( name + "_locals" ).data() ), type.locals_dict );
 
-      DelImpl();
+      AddFunctionToTable( FixedFuncNames::__del__(), mp_make_function_n( 1, del ) );
       AddFunctionToTable( FixedFuncNames::__hash__(), mp_make_function_n( 1, hash ) );
     }
 
@@ -360,13 +371,6 @@ namespace upywrap
     void GetterImpl( const char* name, Fun f )
     {
       getters[ qstr_from_str( name ) ] = new NativeGetterCall< A >( f );
-    }
-
-    void DelImpl()
-    {
-      typedef NativeMemberCall< FixedFuncNames::__del__, void, T* > call_type;
-      auto call = (void*) call_type::Delete;
-      AddFunctionToTable( FixedFuncNames::__del__(), mp_make_function_n( 1, call ) );
     }
 
     template< index_type name, class Fun, class... A >
@@ -503,17 +507,6 @@ namespace upywrap
         UPYWRAP_TRY
         return AsPyObj( apply( f, args, make_index_sequence< sizeof...( A ) >() ), true );
         UPYWRAP_CATCH
-      }
-
-      static mp_obj_t Delete( mp_obj_t self_in )
-      {
-        auto self = (this_type*) self_in;
-#if UPYWRAP_SHAREDPTROBJ
-        self->obj.~shared_ptr();
-#else
-        delete self->obj;
-#endif
-        return ToPyObj< void >::Convert();
       }
 
     private:
