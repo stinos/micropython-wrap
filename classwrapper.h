@@ -335,8 +335,8 @@ namespace upywrap
       //or in other words: prevent the GC from sweeping it!!
       mp_obj_dict_store( dict, new_qstr( ( name + "_locals" ).data() ), type.locals_dict );
 
-      AddFunctionToTable( FixedFuncNames::__del__(), mp_make_function_n( 1, del ) );
-      AddFunctionToTable( FixedFuncNames::__hash__(), mp_make_function_n( 1, hash ) );
+      AddFunctionToTable( FixedFuncNames::__del__(), mp_make_function_n( 1, (void*) del ) );
+      AddFunctionToTable( FixedFuncNames::__hash__(), mp_make_function_n( 1, (void*) hash ) );
     }
 
     void AddFunctionToTable( const qstr name, mp_obj_t fun )
@@ -395,7 +395,7 @@ namespace upywrap
     struct NativeSetterCall : NativeSetterCallBase
     {
       typedef InstanceFunctionCall< T, void, A > call_type;
-    
+
       NativeSetterCall( typename call_type::func_type f ) :
         f( new NonMemberFunctionCall< T, void, A >( f ) )
       {
@@ -421,7 +421,7 @@ namespace upywrap
     struct NativeGetterCall : NativeGetterCallBase
     {
       typedef InstanceFunctionCall< T, A > call_type;
-    
+
       NativeGetterCall( typename call_type::func_type f ) :
         f( new NonMemberFunctionCall< T, A >( f ) )
       {
