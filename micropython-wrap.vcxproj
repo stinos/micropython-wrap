@@ -156,6 +156,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="maptype.h" />
+    <ClInclude Include="module.h" />
     <ClInclude Include="tests\tmap.h" />
     <ClInclude Include="variable.h" />
     <ClInclude Include="classwrapper.h" />
