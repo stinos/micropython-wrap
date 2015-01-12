@@ -1,6 +1,9 @@
 #ifndef MICROPYTHON_WRAP_DETAIL_MICROPYTHON_H
 #define MICROPYTHON_WRAP_DETAIL_MICROPYTHON_H
 
+#ifdef _MSC_VER
+#pragma warning ( disable : 4200 ) //nonstandard extension used : zero-sized array in struct/union
+#endif
 extern "C"
 {
   #include <py/mpconfig.h>
@@ -8,17 +11,14 @@ extern "C"
   #include <py/qstr.h>
   #include <py/nlr.h>
   #include <py/obj.h>
-#ifdef _MSC_VER
-#pragma warning ( disable : 4200 )
-#endif
   #include <py/objfun.h>
-#ifdef _MSC_VER
-#pragma warning ( default : 4200 )
-#endif
   #include <py/objmodule.h>
   #include <py/runtime.h>
   #include <py/runtime0.h>
 }
+#ifdef _MSC_VER
+#pragma warning ( default : 4200 )
+#endif
 
 #include <limits>
 #include <cmath>
