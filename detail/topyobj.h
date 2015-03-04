@@ -80,7 +80,25 @@ namespace upywrap
   {
     static mp_obj_t Convert( unsigned arg )
     {
-      return ToPyObj< mp_int_t >::Convert( safe_integer_cast< mp_uint_t >( arg ) );
+      return ToPyObj< mp_uint_t >::Convert( safe_integer_cast< mp_uint_t >( arg ) );
+    }
+  };
+#else
+  template<>
+  struct ToPyObj< std::int64_t > : std::true_type
+  {
+    static mp_obj_t Convert( std::int64_t arg )
+    {
+      return ToPyObj< mp_int_t >::Convert( safe_integer_cast< mp_int_t >( arg ) );
+    }
+  };
+
+  template<>
+  struct ToPyObj< std::uint64_t > : std::true_type
+  {
+    static mp_obj_t Convert( std::uint64_t arg )
+    {
+      return ToPyObj< mp_uint_t >::Convert( safe_integer_cast< mp_uint_t >( arg ) );
     }
   };
 #endif

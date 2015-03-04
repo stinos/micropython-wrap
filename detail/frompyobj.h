@@ -70,6 +70,24 @@ namespace upywrap
       return safe_integer_cast< unsigned >( FromPyObj< mp_uint_t >::Convert( arg ) );
     }
   };
+#else
+  template<>
+  struct FromPyObj< std::int64_t > : std::true_type
+  {
+    static std::int64_t Convert( mp_obj_t arg )
+    {
+      return safe_integer_cast< std::int64_t >( FromPyObj< mp_int_t >::Convert( arg ) );
+    }
+  };
+
+  template<>
+  struct FromPyObj< std::uint64_t > : std::true_type
+  {
+    static std::uint64_t Convert( mp_obj_t arg )
+    {
+      return safe_integer_cast< std::uint64_t >( FromPyObj< mp_uint_t >::Convert( arg ) );
+    }
+  };
 #endif
 
   template<>

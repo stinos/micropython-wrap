@@ -22,6 +22,8 @@ extern "C"
 
 #include <limits>
 #include <cmath>
+#include <cstdint>
+#include <type_traits>
 
 namespace upywrap
 {
@@ -112,17 +114,43 @@ namespace upywrap
     }
   };
 
-#if defined( __LP64__ ) || defined( _WIN64 )
+  template< class T, bool uns >
+  struct abs_all
+  {
+    static T abs( T t )
+    {
+      return t;
+    }
+  };
 
+  template< class T >
+  struct abs_all< T, false >
+  {
+    static T abs( T t )
+    {
+      return std::abs( t );
+    }
+  };
+
+
+#ifdef max
   #undef max
+#endif
 
+  template< class T, class S >
+  static void IntegerBoundCheck( S src )
+  {
+    if( abs_all< S, std::is_unsigned< S >::value >::abs( src ) > static_cast< S >( std::numeric_limits< T >::max() ) )
+      RaiseTypeException( "Source integer does not fit in target integer" );
+  }
+
+#if defined( __LP64__ ) || defined( _WIN64 )
   template<>
   struct safe_integer_caster< mp_int_t, int >
   {
     static int Convert( mp_int_t src )
     {
-      if( std::abs( src ) > std::numeric_limits< int >::max() )
-        RaiseTypeException( "Argument does not fit in 32bit integer" );
+      IntegerBoundCheck< int >( src );
       return static_cast< int >( src );
     }
   };
@@ -132,8 +160,27 @@ namespace upywrap
   {
     static unsigned Convert( std::size_t src )
     {
-      if( src > std::numeric_limits< unsigned >::max() )
-        RaiseTypeException( "Argument does not fit in 32bit integer" );
+      IntegerBoundCheck< unsigned >( src );
+      return static_cast< unsigned >( src );
+    }
+  };
+#else
+  template<>
+  struct safe_integer_caster< std::int64_t, int >
+  {
+    static int Convert( std::int64_t src )
+    {
+      IntegerBoundCheck< int >( src );
+      return static_cast< int >( src );
+    }
+  };
+
+  template<>
+  struct safe_integer_caster< std::uint64_t, unsigned >
+  {
+    static unsigned Convert( std::uint64_t src )
+    {
+      IntegerBoundCheck< unsigned >( src );
       return static_cast< unsigned >( src );
     }
   };
