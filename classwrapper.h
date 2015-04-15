@@ -292,6 +292,21 @@ namespace upywrap
       }
     }
 
+    static void attr( mp_obj_t self_in, qstr attr, mp_obj_t* dest )
+    {
+      if( dest[ 0 ] == MP_OBJ_NULL )
+      {
+        load_attr( self_in, attr, dest );
+      }
+      else
+      {
+        if( store_attr( self_in, attr, dest[ 1 ] ) )
+        {
+          dest[ 0 ] = MP_OBJ_NULL;
+        }
+      }
+    }
+
     static mp_obj_t binary_op( mp_uint_t op, mp_obj_t self_in, mp_obj_t other_in )
     {
       auto self = (this_type*) self_in;
@@ -326,8 +341,7 @@ namespace upywrap
       type.name = qname;
       type.locals_dict = (mp_obj_dict_t*) mp_obj_new_dict( 0 );
       type.make_new = nullptr;
-      type.store_attr = store_attr;
-      type.load_attr = load_attr;
+      type.attr = attr;
       type.binary_op = binary_op;
 
       mp_obj_dict_store( dict, new_qstr( qname ), &type );

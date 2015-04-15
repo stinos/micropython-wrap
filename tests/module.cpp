@@ -86,7 +86,7 @@ extern "C"
 #ifdef _MSC_VER
   _declspec( dllexport )
 #endif
-  mp_obj_module_t* initupywraptest()
+  mp_obj_module_t* init_upywraptest()
   {
     auto mod = upywrap::CreateModule( "upywraptest", false );
 
