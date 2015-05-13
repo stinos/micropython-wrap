@@ -35,7 +35,9 @@ struct F
   func_name_def( BuiltinConstReference )
   func_name_def( BuiltinPointer )
   func_name_def( BuiltinConstPointer )
+  func_name_def( ReturnBuiltinValue )
   func_name_def( ReturnBuiltinReference )
+  func_name_def( ReturnBuiltinConstReference )
   func_name_def( ReturnBuiltinPointer )
   func_name_def( Pointer )
   func_name_def( ConstPointer )
@@ -128,6 +130,8 @@ extern "C"
     fn.Def< F::BuiltinValue >( BuiltinValue );
     fn.Def< F::BuiltinConstValue >( BuiltinConstValue );
     fn.Def< F::BuiltinConstReference >( BuiltinConstReference );
+    fn.Def< F::ReturnBuiltinValue >( ReturnBuiltinValue );
+    fn.Def< F::ReturnBuiltinConstReference >( ReturnBuiltinConstReference );
     fn.Def< F::Value >( Value );
     fn.Def< F::Pointer >( Pointer );
     fn.Def< F::ConstPointer >( ConstPointer );

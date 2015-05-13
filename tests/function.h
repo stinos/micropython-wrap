@@ -21,7 +21,7 @@ namespace upywrap
     std::cout << a() << std::endl;
   }
 
-  void Func4( std::function< std::string( int, std::string ) > a )
+  void Func4( const std::function< std::string( int, const std::string& ) >& a )
   {
     std::cout << a( 4, "hello" ) << std::endl;
   }

@@ -66,9 +66,19 @@ namespace upywrap
     std::cout << *a << std::endl;
   }
 
+  std::string ReturnBuiltinValue( std::string a )
+  {
+    return a;
+  }
+
   std::string& ReturnBuiltinReference() //not supported
   {
     static std::string a;
+    return a;
+  }
+
+  const std::string& ReturnBuiltinConstReference( const std::string& a ) //supported if UPYWRAP_PASSCONSTREF
+  {
     return a;
   }
 

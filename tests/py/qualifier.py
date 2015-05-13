@@ -3,6 +3,8 @@ import upywraptest
 upywraptest.BuiltinValue( 0 )
 upywraptest.BuiltinConstValue( 1 )
 upywraptest.BuiltinConstReference( 'a' )
+print( upywraptest.ReturnBuiltinValue( 'a' ) )
+print( upywraptest.ReturnBuiltinConstReference( 'a' ) )
 
 a = upywraptest.Q()
 upywraptest.Value( a )
