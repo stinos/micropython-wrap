@@ -47,6 +47,11 @@ namespace upywrap
       mp_store_name( qstr_from_str( name ), value );
     }
 
+    inline void SetVariable( mp_obj_t instance, mp_obj_t value, const char* name )
+    {
+      mp_store_attr( instance, qstr_from_str( name ), value );
+    }
+
     template< class... Names, size_t... Indices >
     mp_obj_t GetVariableHelper( const std::tuple< Names... >& args, index_sequence< Indices... > )
     {
@@ -75,7 +80,7 @@ namespace upywrap
         auto var = GetVariable( names[ 0 ].data() );
         for( size_t i = 1 ; i < numNames - 1 ; ++i )
           var = GetVariable( var, names[ i ].data() );
-        mp_store_attr( var, qstr_from_str( names[ numNames - 1 ].data() ), value );
+        SetVariable( var, value, names[ numNames - 1 ].data() );
       }
     }
   }
