@@ -55,7 +55,7 @@ namespace upywrap
       if( conv )
         callerObject->convert_retval = conv;
       functionPointers[ (void*) name ] = callerObject;
-      auto call = sizeof...( A ) > UPYWRAP_MAX_NATIVE_ARGS ? (void*) call_type::CallN : (void*) call_type::Call;
+      auto call = sizeof...( A ) > UPYWRAP_MAX_NATIVE_ARGS ? (mp_fun_ptr) call_type::CallN : (mp_fun_ptr) call_type::Call;
       mp_obj_dict_store( globals, new_qstr( name() ), mp_make_function_n( sizeof...( A ), call ) );
     }
 

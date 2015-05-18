@@ -349,8 +349,8 @@ namespace upywrap
       //or in other words: prevent the GC from sweeping it!!
       mp_obj_dict_store( dict, new_qstr( ( name + "_locals" ).data() ), type.locals_dict );
 
-      AddFunctionToTable( FixedFuncNames::__del__(), mp_make_function_n( 1, (void*) del ) );
-      AddFunctionToTable( FixedFuncNames::__hash__(), mp_make_function_n( 1, (void*) hash ) );
+      AddFunctionToTable( FixedFuncNames::__del__(), mp_make_function_n( 1, (mp_fun_ptr) del ) );
+      AddFunctionToTable( FixedFuncNames::__hash__(), mp_make_function_n( 1, (mp_fun_ptr) hash ) );
     }
 
     void AddFunctionToTable( const qstr name, mp_obj_t fun )
@@ -371,7 +371,7 @@ namespace upywrap
       if( conv )
         callerObject->convert_retval = conv;
       functionPointers[ (void*) name ] = callerObject;
-      auto call = sizeof...( A ) + 1 > UPYWRAP_MAX_NATIVE_ARGS ? (void*) call_type::CallN : (void*) call_type::Call;
+      auto call = sizeof...( A ) + 1 > UPYWRAP_MAX_NATIVE_ARGS ? (mp_fun_ptr) call_type::CallN : (mp_fun_ptr) call_type::Call;
       AddFunctionToTable( name(), mp_make_function_n( 1 + sizeof...( A ), call ) );
     }
 
@@ -401,7 +401,7 @@ namespace upywrap
       typedef NativeMemberCall< name, void > call_type;
       functionPointers[ (void*) name ] = call_type::CreateCaller( f );
       AddFunctionToTable( MP_QSTR___enter__, (mp_obj_t) &mp_identity_obj );
-      AddFunctionToTable( MP_QSTR___exit__, mp_make_function_n( 4, (void*) call_type::CallDiscard ) );
+      AddFunctionToTable( MP_QSTR___exit__, mp_make_function_n( 4, (mp_fun_ptr) call_type::CallDiscard ) );
     }
 
     //wrap native setter in function with uPy store_attr compatible signature

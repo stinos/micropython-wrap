@@ -37,7 +37,9 @@ namespace upywrap
     return new_qstr( qstr_from_str( what ) );
   }
 
-  inline mp_obj_t mp_make_function_n( int n_args, void* fun )
+  using mp_fun_ptr = std::add_pointer< void(void) >::type;
+
+  inline mp_obj_t mp_make_function_n( int n_args, mp_fun_ptr fun )
   {
     auto o = m_new_obj( mp_obj_fun_builtin_t );
     o->base.type = &mp_type_fun_builtin;
