@@ -1,6 +1,5 @@
 import upywraptest
-if upywraptest.HasFinaliser() :
-  import gc
+import gc
 
 with upywraptest.Context() as p :
   pass
@@ -10,7 +9,4 @@ def fun() :
 
 fun()
 
-if upywraptest.HasFinaliser() :
-  gc.collect()
-else :
-  print( '__del__' )
+gc.collect()

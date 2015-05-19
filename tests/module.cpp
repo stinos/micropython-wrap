@@ -148,7 +148,6 @@ extern "C"
 #ifndef UPYWRAP_NOCHARSTRING
     fn.Def< F::CharString >( CharString );
 #endif
-    fn.Def< F::HasFinaliser >( HasFinaliser );
     fn.Def< F::Four >( Four );
     fn.Def< F::Eight >( Eight );
     fn.Def< F::Int >( Int );

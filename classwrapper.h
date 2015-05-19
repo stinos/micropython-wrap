@@ -186,14 +186,9 @@ namespace upywrap
 
     static mp_obj_t AsPyObj( native_obj_t p )
     {
-#ifdef UPYWRAP_NOFINALISER
-      #define upywrap_new_obj m_new_obj
-#else
-      #define upywrap_new_obj m_new_obj_with_finaliser
-#endif
       if( type.base.type == nullptr )
         RaiseTypeException( "Native type has not been registered" );
-      auto o = upywrap_new_obj( this_type );
+      auto o = m_new_obj_with_finaliser( this_type );
       o->base.type = &type;
       o->cookie = defCookie;
 #if UPYWRAP_SHAREDPTROBJ
