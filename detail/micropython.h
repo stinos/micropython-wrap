@@ -64,9 +64,19 @@ namespace upywrap
     nlr_raise( mp_obj_new_exception_msg( &mp_type_TypeError, msg ) );
   }
 
+  inline void RaiseTypeException( mp_const_obj_t source, const char* target )
+  {
+    nlr_raise( mp_obj_new_exception_msg_varg( &mp_type_TypeError, "can't convert %s to %s", mp_obj_get_type_str( source ), target ) );
+  }
+
   inline void RaiseAttributeException( qstr name, qstr attr )
   {
     nlr_raise( mp_obj_new_exception_msg_varg( &mp_type_AttributeError, "'%s' object has no attribute '%s'", qstr_str( name ), qstr_str( attr ) ) );
+  }
+
+  inline mp_obj_t RaiseOverflowException( const char* msg )
+  {
+    nlr_raise( mp_obj_new_exception_msg( &mp_type_OverflowError, msg ) );
   }
 
   inline mp_obj_t RaiseRuntimeException( const char* msg )
@@ -130,7 +140,7 @@ namespace upywrap
   static void IntegerBoundCheck( S src )
   {
     if( abs_all< S, std::is_unsigned< S >::value >::abs( src ) > static_cast< S >( std::numeric_limits< T >::max() ) )
-      RaiseTypeException( "Source integer does not fit in target integer" );
+      RaiseOverflowException( "Integer overflow" );
   }
 
 #if defined( __LP64__ ) || defined( _WIN64 )

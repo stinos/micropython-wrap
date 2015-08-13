@@ -199,20 +199,22 @@ namespace upywrap
       return o;
     }
 
-    static T* AsNativePtr( mp_obj_t arg )
+    static ClassWrapper< T >* AsNativeObjChecked( mp_obj_t arg )
     {
       auto native = (this_type*) arg;
       if( native->cookie != defCookie )
-        RaiseTypeException( "Cannot convert this object to a native class instance" );
-      return native->GetPtr();
+        RaiseTypeException( arg, "native class instance" );
+      return native;
+    }
+
+    static T* AsNativePtr( mp_obj_t arg )
+    {
+      return AsNativeObjChecked( arg )->GetPtr();
     }
 
     static native_obj_t AsNativeObj( mp_obj_t arg )
     {
-      auto native = (this_type*) arg;
-      if( native->cookie != defCookie )
-        RaiseTypeException( "Cannot convert this object to a native class instance" );
-      return native->obj;
+      return AsNativeObjChecked( arg )->obj;
     }
 
   private:
