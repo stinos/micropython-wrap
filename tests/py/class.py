@@ -17,5 +17,5 @@ print( simple1.val )
 
 print( simple1 == simple2 )
 print( simple1 == simple1 )
-print( simple1.__hash__() == simple2.__hash__() )
-print( simple1.__hash__() == simple1.__hash__() )
+print( hash( simple1 ) == hash( simple2 ) )
+print( hash( simple1 ) == hash( simple1 ) )

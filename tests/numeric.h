@@ -1,6 +1,8 @@
 #ifndef MICROPYTHON_WRAP_TESTS_NUMERIC_H
 #define MICROPYTHON_WRAP_TESTS_NUMERIC_H
 
+#include <cctype>
+
 namespace upywrap
 {
   int Int( int a )
@@ -9,6 +11,16 @@ namespace upywrap
   }
 
   unsigned Unsigned( unsigned a )
+  {
+    return a;
+  }
+
+  std::int64_t Int64( std::int64_t a )
+  {
+    return a;
+  }
+
+  std::uint64_t Unsigned64( std::uint64_t a )
   {
     return a;
   }

@@ -66,30 +66,39 @@ namespace upywrap
   };
 
 #if defined( __LP64__ ) || defined( _WIN64 )
+  //64bit build, we can safely cast 32bit integers to 64bit 'native' uPy integer
+  static_assert( std::is_same< mp_int_t, std::int64_t >::value, "unsupported integer type" );
+  static_assert( std::is_same< mp_uint_t, std::uint64_t >::value, "unsupported integer type" );
+
   template<>
-  struct ToPyObj< int > : std::true_type
+  struct ToPyObj< std::int32_t > : std::true_type
   {
-    static mp_obj_t Convert( int arg )
+    static mp_obj_t Convert( std::int32_t arg )
     {
-      return ToPyObj< mp_int_t >::Convert( safe_integer_cast< mp_int_t >( arg ) );
+      return ToPyObj< mp_int_t >::Convert( static_cast< mp_int_t >( arg ) );
     }
   };
 
   template<>
-  struct ToPyObj< unsigned > : std::true_type
+  struct ToPyObj< std::uint32_t > : std::true_type
   {
-    static mp_obj_t Convert( unsigned arg )
+    static mp_obj_t Convert( std::uint32_t arg )
     {
-      return ToPyObj< mp_uint_t >::Convert( safe_integer_cast< mp_uint_t >( arg ) );
+      return ToPyObj< mp_uint_t >::Convert( static_cast< mp_uint_t >( arg ) );
     }
   };
 #else
+  //32bit build, 64bit integers are handled through mpz
+  static_assert( std::is_same< mp_int_t, std::int32_t >::value, "Expected 32bit uPy integer type" );
+  static_assert( std::is_same< mp_uint_t, std::uint32_t >::value, "Expected 32bit uPy integer type" );
+
   template<>
   struct ToPyObj< std::int64_t > : std::true_type
   {
     static mp_obj_t Convert( std::int64_t arg )
     {
-      return ToPyObj< mp_int_t >::Convert( safe_integer_cast< mp_int_t >( arg ) );
+      static_assert( std::is_same< long long, std::int64_t >::value, "Expected 64bit long long" );
+      return mp_obj_new_int_from_ll( arg );
     }
   };
 
@@ -98,7 +107,8 @@ namespace upywrap
   {
     static mp_obj_t Convert( std::uint64_t arg )
     {
-      return ToPyObj< mp_uint_t >::Convert( safe_integer_cast< mp_uint_t >( arg ) );
+      static_assert( std::is_same< unsigned long long, std::uint64_t >::value, "Expected 64bit long long" );
+      return mp_obj_new_int_from_ull( arg );
     }
   };
 #endif

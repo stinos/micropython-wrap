@@ -34,12 +34,57 @@ namespace upywrap
     }
   };
 
+  namespace detail
+  {
+    //uPy has no built-in conversion to unsigned integer.
+    //Define it here so we can make use of the full range: we could also use
+    //mp_obj_get_int but that only gives half of the range before overflowing
+    //If arg is an mp_obj_int_t conversion is done via largeIntConv since the
+    //implementation is different for 32bit and 64bit builds.
+    template< class LargeIntToT >
+    auto mp_obj_get_uint( mp_const_obj_t arg, LargeIntToT largeIntConv ) -> typename std::result_of< decltype( largeIntConv )( mp_obj_int_t* ) >::type
+    {
+      if( arg == mp_const_false )
+      {
+        return 0u;
+      }
+      else if( arg == mp_const_true )
+      {
+        return 1u;
+      }
+      else if( MP_OBJ_IS_SMALL_INT( arg ) )
+      {
+        using return_t = decltype( largeIntConv( nullptr ) );
+        return safe_integer_cast< return_t >( MP_OBJ_SMALL_INT_VALUE( arg ) );
+      }
+      else if( MP_OBJ_IS_TYPE( arg, &mp_type_int ) )
+      {
+        return largeIntConv( (mp_obj_int_t*) arg );
+      }
+      else
+      {
+        RaiseTypeException( arg, "unsigned integer" );
+      }
+      return 0u;
+    }
+
+    //mpz -> mp_uint_t for use with mp_obj_get_uint, all builds
+    static mp_uint_t mpz_to_uint( const mp_obj_int_t* self )
+    {
+      mp_uint_t value;
+      if( mpz_as_uint_checked( &self->mpz, &value ) )
+        return value;
+      RaiseOverflowException( "Value too large for integer" );
+      return 0u;
+    }
+  }
+
   template<>
   struct FromPyObj< mp_uint_t > : std::true_type
   {
     static mp_uint_t Convert( mp_obj_t arg )
     {
-      return safe_integer_cast< mp_uint_t >( mp_obj_get_int( arg ) );
+      return detail::mp_obj_get_uint( arg, detail::mpz_to_uint );
     }
   };
 
@@ -53,6 +98,8 @@ namespace upywrap
   };
 
 #if defined( __LP64__ ) || defined( _WIN64 )
+  //64bit build, cast 32bit integers from 64bit native uPy type while checking for overflow
+
   template<>
   struct FromPyObj< int > : std::true_type
   {
@@ -71,12 +118,52 @@ namespace upywrap
     }
   };
 #else
+  //32bit build, 64bit integers are handled through mpz
+
+  namespace detail
+  {
+    //mpz -> 64bit integer for 32bit builds
+    inline std::uint64_t mpz_to_64bit_int( const mp_obj_int_t* arg, bool is_signed )
+    {
+      static_assert( MPZ_DIG_SIZE == 16, "Expected MPZ_DIG_SIZE == 16" );
+
+      //see mpz_as_int_checked
+      const std::uint64_t maxCalcThreshold = is_signed ? 140737488355327 : 281474976710655;
+
+      auto i = &arg->mpz;
+      if( !is_signed && i->neg )
+        RaiseTypeException( "Source integer must be unsigned" );
+
+      auto d = i->dig + i->len;
+      std::uint64_t val = 0;
+
+      while( d-- > i->dig )
+      {
+        if( val > maxCalcThreshold )
+          RaiseOverflowException( "Value too large for 64bit integer" );
+        val = ( val << MPZ_DIG_SIZE ) | *d;
+      }
+
+#ifdef _MSC_VER
+  #pragma warning( disable : 4146 )
+#endif
+      if( i->neg )
+        val = -val;
+#ifdef _MSC_VER
+  #pragma warning( default : 4146 )
+#endif
+
+      return val;
+    }
+  }
+
   template<>
   struct FromPyObj< std::int64_t > : std::true_type
   {
     static std::int64_t Convert( mp_obj_t arg )
     {
-      return safe_integer_cast< std::int64_t >( FromPyObj< mp_int_t >::Convert( arg ) );
+      const auto value = detail::mp_obj_get_uint( arg, [] ( const mp_obj_int_t* s ) { return detail::mpz_to_64bit_int( s, true ); } );
+      return static_cast< std::int64_t >( value );
     }
   };
 
@@ -85,7 +172,7 @@ namespace upywrap
   {
     static std::uint64_t Convert( mp_obj_t arg )
     {
-      return safe_integer_cast< std::uint64_t >( FromPyObj< mp_uint_t >::Convert( arg ) );
+      return detail::mp_obj_get_uint( arg, [] ( const mp_obj_int_t* s ) { return detail::mpz_to_64bit_int( s, false ); } );
     }
   };
 #endif
@@ -104,7 +191,7 @@ namespace upywrap
   {
     static float Convert( mp_obj_t arg )
     {
-      return static_cast< float >( mp_obj_get_float( arg ) );
+      return safe_integer_cast< float >( FromPyObj< double >::Convert( arg ) );
     }
   };
 

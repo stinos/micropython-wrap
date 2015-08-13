@@ -15,6 +15,8 @@ extern "C"
   #include <py/objmodule.h>
   #include <py/runtime.h>
   #include <py/runtime0.h>
+  #include <py/mpz.h>
+  #include <py/objint.h>
 }
 #ifdef _MSC_VER
 #pragma warning ( default : 4200 )
@@ -103,13 +105,18 @@ namespace upywrap
 #endif
 
   //Implement some casts used and check for overflow where trunctaion is needed.
-  //Only implemented for signed/unsiged 64bit to corresponding 32bit, rest resolves to static_cast.
+  //Only implemented for conversions which are effectively used.
   template< class S, class T >
   struct safe_integer_caster
   {
-    static T Convert( S src )
+  };
+
+  template< class T >
+  struct safe_integer_caster< T, T >
+  {
+    static T Convert( T src )
     {
-      return static_cast< T >( src );
+      return src;
     }
   };
 
@@ -143,27 +150,13 @@ namespace upywrap
       RaiseOverflowException( "Integer overflow" );
   }
 
-#if defined( __LP64__ ) || defined( _WIN64 )
-  template<>
-  struct safe_integer_caster< mp_int_t, int >
+  template< class T >
+  static void PositiveIntegerCheck( T src )
   {
-    static int Convert( mp_int_t src )
-    {
-      IntegerBoundCheck< int >( src );
-      return static_cast< int >( src );
-    }
-  };
+    if( src < 0 )
+      RaiseTypeException( "Source integer must be unsigned" );
+  }
 
-  template<>
-  struct safe_integer_caster< std::size_t, unsigned >
-  {
-    static unsigned Convert( std::size_t src )
-    {
-      IntegerBoundCheck< unsigned >( src );
-      return static_cast< unsigned >( src );
-    }
-  };
-#else
   template<>
   struct safe_integer_caster< std::int64_t, int >
   {
@@ -183,7 +176,46 @@ namespace upywrap
       return static_cast< unsigned >( src );
     }
   };
-#endif
+
+  template<>
+  struct safe_integer_caster< std::int32_t, std::uint32_t >
+  {
+    static std::uint32_t Convert( std::int32_t src )
+    {
+      PositiveIntegerCheck( src );
+      return static_cast< std::uint32_t >( src );
+    }
+  };
+
+  template<>
+  struct safe_integer_caster< std::int32_t, std::uint64_t >
+  {
+    static std::uint64_t Convert( std::int32_t src )
+    {
+      PositiveIntegerCheck( src );
+      return static_cast< std::uint64_t >( src );
+    }
+  };
+
+  template<>
+  struct safe_integer_caster< std::int64_t, std::uint64_t >
+  {
+    static std::uint64_t Convert( std::int64_t src )
+    {
+      PositiveIntegerCheck( src );
+      return static_cast< std::uint64_t >( src );
+    }
+  };
+
+  template<>
+  struct safe_integer_caster< double, float >
+  {
+    static float Convert( double src )
+    {
+      IntegerBoundCheck< float >( src );
+      return static_cast< float >( src );
+    }
+  };
 
   template< class T, class S >
   T safe_integer_cast( S src )
