@@ -65,7 +65,9 @@ namespace upywrap
       {
         RaiseTypeException( arg, "unsigned integer" );
       }
+#if !defined( _MSC_VER ) || defined( _DEBUG )
       return 0u;
+#endif
     }
 
     //mpz -> mp_uint_t for use with mp_obj_get_uint, all builds
@@ -75,7 +77,9 @@ namespace upywrap
       if( mpz_as_uint_checked( &self->mpz, &value ) )
         return value;
       RaiseOverflowException( "Value too large for integer" );
+#if !defined( _MSC_VER ) || defined( _DEBUG )
       return 0u;
+#endif
     }
   }
 
