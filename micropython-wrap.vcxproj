@@ -83,12 +83,12 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|INTime'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="../micropython/windows/msvc/intime_debug.props" />
+    <Import Project="../micropython/windows/msvc/intime_debug.props" Condition="exists('../micropython/windows/msvc/intime_debug.props')" />
     <Import Project="../micropython/windows/msvc/extmodule.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|INTime'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="../micropython/windows/msvc/intime_release.props" />
+    <Import Project="../micropython/windows/msvc/intime_release.props" Condition="exists('../micropython/windows/msvc/intime_release.props')" />
     <Import Project="../micropython/windows/msvc/extmodule.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
