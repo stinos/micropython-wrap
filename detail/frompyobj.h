@@ -342,6 +342,8 @@ namespace upywrap
 
     static std_fun_type Convert( mp_obj_t arg )
     {
+      if( arg == mp_const_none )
+        return std_fun_type();
       if( MP_OBJ_IS_TYPE( arg, &mp_type_fun_builtin ) )
       {
         //TODO if nativeFun actually points to NativeCall::Call or NativeMemberCall::Call, and we can
