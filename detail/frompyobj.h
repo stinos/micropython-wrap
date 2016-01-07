@@ -286,7 +286,7 @@ namespace upywrap
 
       static std_fun_type Native( const mp_obj_fun_builtin_t* nativeFun )
       {
-        const auto pyFun = (py_fun_type) nativeFun->fun;
+        const auto pyFun = (py_fun_type) nativeFun->fun._0;
         return std_fun_type(
           [pyFun] ( Args... args ) -> R
           {
@@ -314,7 +314,7 @@ namespace upywrap
 
       static std_fun_type Native( const mp_obj_fun_builtin_t* nativeFun )
       {
-        const auto pyFun = (py_fun_type) nativeFun->fun;
+        const auto pyFun = (py_fun_type) nativeFun->fun._0;
         return std_fun_type(
           [pyFun] ( Args... args )
           {

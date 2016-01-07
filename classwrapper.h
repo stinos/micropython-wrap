@@ -339,7 +339,7 @@ namespace upywrap
       //or in other words: prevent the GC from sweeping it!!
       mp_obj_dict_store( dict, new_qstr( ( name + "_locals" ).data() ), type.locals_dict );
 
-      AddFunctionToTable( FixedFuncNames::__del__(), mp_make_function_n( 1, (mp_fun_ptr) del ) );
+      AddFunctionToTable( FixedFuncNames::__del__(), MakeFunction( del ) );
     }
 
     void AddFunctionToTable( const qstr name, mp_obj_t fun )
@@ -360,8 +360,7 @@ namespace upywrap
       if( conv )
         callerObject->convert_retval = conv;
       functionPointers[ (void*) name ] = callerObject;
-      auto call = sizeof...( A ) + 1 > UPYWRAP_MAX_NATIVE_ARGS ? (mp_fun_ptr) call_type::CallN : (mp_fun_ptr) call_type::Call;
-      AddFunctionToTable( name(), mp_make_function_n( 1 + sizeof...( A ), call ) );
+      AddFunctionToTable( name(), call_type::CreateUPyFunction() );
     }
 
     template< class Fun, class A >
@@ -390,7 +389,7 @@ namespace upywrap
       typedef NativeMemberCall< name, void > call_type;
       functionPointers[ (void*) name ] = call_type::CreateCaller( f );
       AddFunctionToTable( MP_QSTR___enter__, (mp_obj_t) &mp_identity_obj );
-      AddFunctionToTable( MP_QSTR___exit__, mp_make_function_n( 4, (mp_fun_ptr) call_type::CallDiscard ) );
+      AddFunctionToTable( MP_QSTR___exit__, MakeFunction( 4, call_type::CallDiscard ) );
     }
 
     //wrap native setter in function with uPy store_attr compatible signature
@@ -476,6 +475,11 @@ namespace upywrap
         return new init_call_type( f );
       }
 
+      static mp_obj_t CreateUPyFunction()
+      {
+        return SelectUPyCall< FitsBuiltinNativeFunction( sizeof...( A ) + 1 ) >::Create();
+      }
+
       static mp_obj_t Call( mp_obj_t self_in, typename project2nd< A, mp_obj_t >::type... args )
       {
         auto self = (this_type*) self_in;
@@ -495,7 +499,7 @@ namespace upywrap
 
       static mp_obj_t CallDiscard( mp_uint_t n_args, const mp_obj_t* args )
       {
-        (void) n_args;
+        assert( n_args == 4 );
         static_assert( sizeof...( A ) == 0, "Arguments must be discarded" );
         auto self = (this_type*) args[ 0 ];
         auto f = (call_type*) this_type::functionPointers[ (void*) index ];
@@ -526,6 +530,18 @@ namespace upywrap
         (void) args;
         return CallReturn< Ret, A... >::Call( f, self, args[ Indices ]... );
       }
+
+      template< bool NativeArgs >
+      struct SelectUPyCall
+      {
+        static mp_obj_t Create() { return MakeFunction( Call ); }
+      };
+
+      template<>
+      struct SelectUPyCall< false >
+      {
+        static mp_obj_t Create() { return MakeFunction( 1 + sizeof...( A ), CallN ); }
+      };
     };
 
     typedef ClassWrapper< T > this_type;

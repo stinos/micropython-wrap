@@ -55,8 +55,7 @@ namespace upywrap
       if( conv )
         callerObject->convert_retval = conv;
       functionPointers[ (void*) name ] = callerObject;
-      auto call = sizeof...( A ) > UPYWRAP_MAX_NATIVE_ARGS ? (mp_fun_ptr) call_type::CallN : (mp_fun_ptr) call_type::Call;
-      mp_obj_dict_store( globals, new_qstr( name() ), mp_make_function_n( sizeof...( A ), call ) );
+      mp_obj_dict_store( globals, new_qstr( name() ), call_type::CreateUPyFunction() );
     }
 
   private:
@@ -72,13 +71,18 @@ namespace upywrap
         return new call_type( f );
       }
 
+      static mp_obj_t CreateUPyFunction()
+      {
+        return SelectUPyCall< FitsBuiltinNativeFunction( sizeof...( A ) ) >::Create();
+      }
+
       static mp_obj_t Call( typename project2nd< A, mp_obj_t >::type... args )
       {
         auto f = (call_type*) FunctionWrapper::functionPointers[ (void*) index ];
         return CallReturn< Ret, A... >::Call( f, args... );
       }
 
-      static mp_obj_t CallN( uint nargs, const mp_obj_t* args )
+      static mp_obj_t CallN( mp_uint_t nargs, const mp_obj_t* args )
       {
         if( nargs != sizeof...( A ) )
           RaiseTypeException( "Wrong number of arguments" );
@@ -93,6 +97,18 @@ namespace upywrap
         (void) args;
         return CallReturn< Ret, A... >::Call( f, args[ Indices ]... );
       }
+
+      template< bool NativeArgs >
+      struct SelectUPyCall
+      {
+        static mp_obj_t Create() { return MakeFunction( Call ); }
+      };
+
+      template<>
+      struct SelectUPyCall< false >
+      {
+        static mp_obj_t Create() { return MakeFunction( sizeof...( A ), CallN ); }
+      };
     };
 
     mp_obj_dict_t* globals;
