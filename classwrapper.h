@@ -506,7 +506,7 @@ namespace upywrap
         return CallReturn< Ret, A... >::Call( f, self->GetPtr() );
       }
 
-      static mp_obj_t MakeNew( mp_obj_t, mp_uint_t n_args, mp_uint_t, const mp_obj_t *args )
+      static mp_obj_t MakeNew( const mp_obj_type_t*, mp_uint_t n_args, mp_uint_t, const mp_obj_t *args )
       {
         if( n_args != sizeof...( A ) )
           RaiseTypeException( "Wrong number of arguments for constructor" );
