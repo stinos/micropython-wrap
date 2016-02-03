@@ -14,8 +14,15 @@ print( upywraptest.Simple( 1 ).SimpleFunc( upywraptest.Simple( 3 ) ).Value() )
 
 simple1.val = 5
 print( simple1.val )
+try:
+  simple1.val2
+except AttributeError:
+  print( 'AttributeError' )
 
 print( simple1 == simple2 )
 print( simple1 == simple1 )
 print( hash( simple1 ) == hash( simple2 ) )
 print( hash( simple1 ) == hash( simple1 ) )
+
+print( hasattr( simple1, 'Something' ) )
+print( hasattr( simple1, 'val' ) )

@@ -253,12 +253,21 @@ namespace upywrap
     };
 
     template< class Map >
-    static typename Map::mapped_type FindAttrChecked( Map& map, qstr attr )
+    static typename Map::mapped_type FindAttrMaybe( Map& map, qstr attr )
     {
       auto ret = map.find( attr );
       if( ret == map.end() )
-        RaiseAttributeException( type.name, attr );
+        return nullptr;
       return ret->second;
+    }
+
+    template< class Map >
+    static typename Map::mapped_type FindAttrChecked( Map& map, qstr attr )
+    {
+      const auto attrValue = FindAttrMaybe( map, attr );
+      if( !attrValue )
+        RaiseAttributeException( type.name, attr );
+      return attrValue;
     }
 
     static bool store_attr( mp_obj_t self_in, qstr attr, mp_obj_t value )
@@ -284,7 +293,9 @@ namespace upywrap
       else
       {
         this_type* self = (this_type*) self_in;
-        *dest = FindAttrChecked( self->getters, attr )->Call( self );
+        const auto attrValue = FindAttrMaybe( self->getters, attr );
+        if( attrValue )
+          *dest = attrValue->Call( self );
       }
     }
 
