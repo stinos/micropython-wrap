@@ -276,6 +276,20 @@ namespace upywrap
     }
   };
 
+  template< class A, class B >
+  struct FromPyObj< std::pair< A, B > > : std::true_type
+  {
+    static std::pair< A, B > Convert( mp_obj_t arg )
+    {
+      mp_uint_t len;
+      mp_obj_t* items;
+      mp_obj_get_array( arg, &len, &items );
+      if( len != 2 )
+        RaiseTypeException( "Pair needs 2 tuple elements" );
+      return std::make_pair( SelectFromPyObj< A >::type::Convert( items[ 0 ] ), SelectFromPyObj< B >::type::Convert( items[ 1 ] ) );
+    }
+  };
+
   namespace detail
   {
     template< class R, class... Args >

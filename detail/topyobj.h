@@ -176,11 +176,8 @@ namespace upywrap
     }
   };
 
-  template< class... A >
-  struct ToPyObj< std::tuple< A... > > : std::true_type
+  namespace detail
   {
-    typedef std::tuple< A... > tuple_type;
-
     struct AddConvertedToVec
     {
       std::vector< mp_obj_t > items;
@@ -191,13 +188,31 @@ namespace upywrap
         items.push_back( SelectToPyObj< T >::type::Convert( a ) );
       }
     };
+  }
+
+  template< class... A >
+  struct ToPyObj< std::tuple< A... > > : std::true_type
+  {
+    typedef std::tuple< A... > tuple_type;
 
     static mp_obj_t Convert( const tuple_type& a )
     {
       const auto numItems = sizeof...( A );
-      AddConvertedToVec addtoVec;
+      detail::AddConvertedToVec addtoVec;
       apply( addtoVec, a );
       return mp_obj_new_tuple( safe_integer_cast< uint >( numItems ), addtoVec.items.data() );
+    }
+  };
+
+  template< class A, class B >
+  struct ToPyObj< std::pair< A, B > > : std::true_type
+  {
+    static mp_obj_t Convert( const std::pair< A, B >& p )
+    {
+      detail::AddConvertedToVec addtoVec;
+      addtoVec( p.first );
+      addtoVec( p.second );
+      return mp_obj_new_tuple( 2, addtoVec.items.data() );
     }
   };
 

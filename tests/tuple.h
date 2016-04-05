@@ -8,6 +8,12 @@
 
 namespace upywrap
 {
+  auto Pair( std::pair< std::pair< int, bool >, double > x ) -> decltype( x )
+  {
+    std::cout << x.first.first << x.first.second << x.second << std::endl;
+    return x;
+  }
+
   auto Tuple1( std::tuple< int, bool, double > x ) -> decltype( x )
   {
     std::cout << std::get< 0 >( x ) << std::get< 1 >( x ) << std::get< 2 >( x ) << std::endl;

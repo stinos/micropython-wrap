@@ -17,6 +17,7 @@ using namespace upywrap;
 
 struct F
 {
+  func_name_def( Pair )
   func_name_def( Tuple1 )
   func_name_def( Tuple2 )
   func_name_def( Vector1 )
@@ -117,6 +118,7 @@ extern "C"
     nargs.Def< F::Four >( &NargsTest::Four );
 
     upywrap::FunctionWrapper fn( mod );
+    fn.Def< F::Pair >( Pair );
     fn.Def< F::Tuple1 >( Tuple1 );
     fn.Def< F::Tuple2 >( Tuple2 );
     fn.Def< F::Vector1 >( Vector< int > );
