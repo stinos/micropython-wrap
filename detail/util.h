@@ -4,6 +4,10 @@
 #include <type_traits>
 #include <tuple>
 
+//The usual stringize macros
+#define UPY_STRINGIZE( x )    UPY_STRINGIZE_I( x )
+#define UPY_STRINGIZE_I( x )  #x
+
 namespace upywrap
 {
   //Remove const/reference/pointer

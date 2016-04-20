@@ -660,4 +660,15 @@ namespace upywrap
   };
 }
 
+//In order for native instances to be returned to uPy, they must have been registered.
+//However sometimes you just want to return a native instance to another module without
+//defining any class methods for use in uPy, then use this macro to quickly register the class.
+//Note the other way around (passing uPy object as native instance into another module, where
+//the native class is not registered) is not a problem, since in order to get a uPy object in
+//the first place it obviously must have been registered already somewhere
+#define UPYWRAP_REGISTER_OPAQUE( className, module ) \
+  { \
+    upywrap::ClassWrapper< className > registerInstance( UPY_STRINGIZE( className ), module ); \
+  }
+
 #endif //#ifndef MICROPYTHON_WRAP_CLASSWRAPPER
