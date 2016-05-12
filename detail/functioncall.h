@@ -1,6 +1,8 @@
 #ifndef MICROPYTHON_WRAP_DETAIL_FUNCTIONCALL_H
 #define MICROPYTHON_WRAP_DETAIL_FUNCTIONCALL_H
 
+#include <cassert>
+
 namespace upywrap
 {
   template< class Ret >
@@ -20,6 +22,8 @@ namespace upywrap
   struct InstanceFunctionCall
   {
     typedef Ret( *func_type )( T*, A... );
+    typedef Ret( *byref_func_type )( T&, A... );
+    typedef Ret( *byconstref_func_type )( const T&, A... );
     typedef Ret( T::*mem_func_type )( A... );
     typedef Ret( T::*const_mem_func_type )( A... ) const;
     InstanceFunctionCall() : convert_retval( nullptr ) {}
@@ -44,7 +48,7 @@ namespace upywrap
     typedef typename InstanceFunctionCall< T, Ret, A... >::mem_func_type mem_func_type;
     mem_func_type func;
     MemberFunctionCall( mem_func_type func ) : func( func ) {}
-    virtual Ret Call( T* p, A&&... a ) { return ( p->*func )( std::forward< A >( a )... ); }
+    virtual Ret Call( T* p, A&&... a ) override { return ( p->*func )( std::forward< A >( a )... ); }
   };
 
   //Normal const member function call (const is ignored btw)
@@ -54,7 +58,7 @@ namespace upywrap
     typedef typename InstanceFunctionCall< T, Ret, A... >::const_mem_func_type const_mem_func_type;
     const_mem_func_type func;
     ConstMemberFunctionCall( const_mem_func_type func ) : func( func ) {}
-    virtual Ret Call( T* p, A&&... a ) { return ( p->*func )( std::forward< A >( a )... ); }
+    virtual Ret Call( T* p, A&&... a ) override { return ( p->*func )( std::forward< A >( a )... ); }
   };
 
   //Non-member function taking T* as first argument
@@ -64,7 +68,27 @@ namespace upywrap
     typedef typename InstanceFunctionCall< T, Ret, A... >::func_type func_type;
     func_type func;
     NonMemberFunctionCall( func_type func ) : func( func ) {}
-    virtual Ret Call( T* p, A&&... a ) { return func( p, std::forward< A >( a )... ); }
+    virtual Ret Call( T* p, A&&... a ) override { return func( p, std::forward< A >( a )... ); }
+  };
+
+  //Non-member function taking T& as first argument, for convenience
+  template< class T, class Ret, class... A >
+  struct NonMemberByRefFunctionCall : public InstanceFunctionCall< T, Ret, A... >
+  {
+    typedef typename InstanceFunctionCall< T, Ret, A... >::byref_func_type byref_func_type;
+    byref_func_type func;
+    NonMemberByRefFunctionCall( byref_func_type func ) : func( func ) {}
+    virtual Ret Call( T* p, A&&... a ) override { assert( p ); return func( *p, std::forward< A >( a )... ); }
+  };
+
+  //Non-member function taking const T& as first argument, for convenience
+  template< class T, class Ret, class... A >
+  struct NonMemberByConstRefFunctionCall : public InstanceFunctionCall< T, Ret, A... >
+  {
+    typedef typename InstanceFunctionCall< T, Ret, A... >::byconstref_func_type byconstref_func_type;
+    byconstref_func_type func;
+    NonMemberByConstRefFunctionCall( byconstref_func_type func ) : func( func ) {}
+    virtual Ret Call( T* p, A&&... a ) override { assert( p ); return func( *p, std::forward< A >( a )... ); }
   };
 
   //Standard function call object

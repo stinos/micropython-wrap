@@ -99,6 +99,18 @@ namespace upywrap
     }
 
     template< index_type name, class Ret, class... A >
+    void Def( Ret( *f ) ( T&, A... ), typename SelectRetvalConverter< Ret >::type conv = nullptr )
+    {
+      DefImpl< name, Ret, decltype( f ), A... >( f, conv );
+    }
+
+    template< index_type name, class Ret, class... A >
+    void Def( Ret( *f ) ( const T&, A... ), typename SelectRetvalConverter< Ret >::type conv = nullptr )
+    {
+      DefImpl< name, Ret, decltype( f ), A... >( f, conv );
+    }
+
+    template< index_type name, class Ret, class... A >
     void Def( Ret( T::*f ) ( A... ), typename SelectRetvalConverter< Ret >::type conv = nullptr )
     {
       DefImpl< name, Ret, decltype( f ), A... >( f, conv );
@@ -462,6 +474,8 @@ namespace upywrap
       typedef InstanceFunctionCall< T, Ret, A... > call_type;
       typedef FunctionCall< T*, A... > init_call_type;
       typedef typename call_type::func_type func_type;
+      typedef typename call_type::byref_func_type byref_func_type;
+      typedef typename call_type::byconstref_func_type byconstref_func_type;
       typedef typename call_type::mem_func_type mem_func_type;
       typedef typename call_type::const_mem_func_type const_mem_func_type;
       typedef typename init_call_type::func_type init_func_type;
@@ -469,6 +483,16 @@ namespace upywrap
       static call_type* CreateCaller( func_type f )
       {
         return new NonMemberFunctionCall< T, Ret, A... >( f );
+      }
+
+      static call_type* CreateCaller( byref_func_type f )
+      {
+        return new NonMemberByRefFunctionCall< T, Ret, A... >( f );
+      }
+
+      static call_type* CreateCaller( byconstref_func_type f )
+      {
+        return new NonMemberByConstRefFunctionCall< T, Ret, A... >( f );
       }
 
       static call_type* CreateCaller( mem_func_type f )
