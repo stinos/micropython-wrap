@@ -229,6 +229,13 @@ namespace upywrap
       return AsNativeObjChecked( arg )->obj;
     }
 
+#if UPYWRAP_SHAREDPTROBJ
+    static native_obj_t& AsNativeObjRef( mp_obj_t arg ) //in case the native side wants a reference, avoid extra ptr copies
+    {
+      return AsNativeObjChecked( arg )->obj;
+    }
+#endif
+
   private:
     struct FixedFuncNames
     {
@@ -633,13 +640,34 @@ namespace upywrap
       return ClassWrapper< T >::AsNativeObj( arg );
     }
   };
+
+  template< class T >
+  struct ClassFromPyObj< std::shared_ptr< T >& >
+  {
+    static std::shared_ptr< T >& Convert( mp_obj_t arg )
+    {
+      return ClassWrapper< T >::AsNativeObjRef( arg );
+    }
+  };
 #endif
 
   template< class T >
   struct ClassFromPyObj< T& >
   {
+    template< class U >
+    struct IsSharedPtr : std::false_type
+    {
+    };
+
+    template< class U >
+    struct IsSharedPtr< std::shared_ptr< U > > : std::true_type
+    {
+    };
+
     static T& Convert( mp_obj_t arg )
     {
+      //make sure ClassFromPyObj< std::shared_ptr< T >& > gets used instead
+      static_assert( !IsSharedPtr< T >::value, "cannot convert object to shared_ptr&" );
       return *ClassFromPyObj< T* >::Convert( arg );
     }
   };

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <memory>
 
 namespace upywrap
 {
@@ -104,6 +105,21 @@ namespace upywrap
     a->Call();
   }
 
+  void SharedPointer( std::shared_ptr< Q > p )
+  {
+    p->Call();
+  }
+
+  void ConstSharedPointer( const std::shared_ptr< Q > p )
+  {
+    p->Call();
+  }
+
+  void ConstSharedPointerRef( const std::shared_ptr< Q >& p )
+  {
+    p->Call();
+  }
+
   void Reference( Q& a )
   {
     a.Call();
@@ -127,6 +143,11 @@ namespace upywrap
   Q& ReturnReference( Q* a )
   {
     return *a;
+  }
+
+  std::shared_ptr< Q > ReturnSharedPointer()
+  {
+    return std::make_shared< Q >();
   }
 
 }

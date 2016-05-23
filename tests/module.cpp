@@ -42,10 +42,14 @@ struct F
   func_name_def( ReturnBuiltinPointer )
   func_name_def( Pointer )
   func_name_def( ConstPointer )
+  func_name_def( SharedPointer )
+  func_name_def( ConstSharedPointer )
+  func_name_def( ConstSharedPointerRef )
   func_name_def( Reference )
   func_name_def( ConstReference )
   func_name_def( ReturnPointer )
   func_name_def( ReturnReference )
+  func_name_def( ReturnSharedPointer )
   func_name_def( ReturnValue )
   func_name_def( Get )
   func_name_def( Address )
@@ -139,10 +143,14 @@ extern "C"
     fn.Def< F::Value >( Value );
     fn.Def< F::Pointer >( Pointer );
     fn.Def< F::ConstPointer >( ConstPointer );
+    fn.Def< F::SharedPointer >( SharedPointer );
+    fn.Def< F::ConstSharedPointer >( ConstSharedPointer );
+    fn.Def< F::ConstSharedPointerRef >( ConstSharedPointerRef );
     fn.Def< F::Reference >( Reference );
     fn.Def< F::ConstReference >( ConstReference );
     fn.Def< F::ReturnPointer >( ReturnPointer );
     fn.Def< F::ReturnReference >( ReturnReference );
+    fn.Def< F::ReturnSharedPointer >( ReturnSharedPointer );
     fn.Def< F::HasExceptions >( HasExceptions );
 #ifndef UPYWRAP_NOEXCEPTIONS
     fn.Def< F::Throw >( Throw );
