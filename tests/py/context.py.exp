@@ -1,4 +1,4 @@
 __init__
 __exit__
 __init__
-__del__
+__exit__

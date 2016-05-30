@@ -23,7 +23,6 @@ namespace upywrap
       std::cout << "__exit__" << std::endl;
     }
   };
-
 }
 
 #endif //#ifndef MICROPYTHON_WRAP_TESTS_CONTEXT_H
