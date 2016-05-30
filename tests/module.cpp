@@ -148,7 +148,6 @@ extern "C"
     fn.Def< F::ConstSharedPointerRef >( ConstSharedPointerRef );
     fn.Def< F::Reference >( Reference );
     fn.Def< F::ConstReference >( ConstReference );
-    fn.Def< F::ReturnPointer >( ReturnPointer );
     fn.Def< F::ReturnReference >( ReturnReference );
     fn.Def< F::ReturnSharedPointer >( ReturnSharedPointer );
     fn.Def< F::HasExceptions >( HasExceptions );
@@ -174,6 +173,7 @@ extern "C"
 
     //these are all not suported so should yield compiler errors
 #ifdef TEST_STATIC_ASSERTS_FOR_UNSUPPORTED_TYPES
+    fn.Def< F::ReturnPointer >( ReturnPointer );
     fn.Def< F::BuiltinReference >( BuiltinReference );
     fn.Def< F::BuiltinPointer >( BuiltinPointer );
     fn.Def< F::BuiltinConstPointer >( BuiltinConstPointer );

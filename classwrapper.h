@@ -687,7 +687,9 @@ namespace upywrap
   {
     static mp_obj_t Convert( T* p )
     {
-      return ClassWrapper< T >::AsPyObj( p, false );
+      //Could return ClassWrapper< T >::AsPyObj( p, false ) here, but if p was allocated
+      //it wouldn't ever get deallocated so disallow this to avoid memory leaks
+      static_assert( false, "Storing bare pointers in ClassWrapper is not allowed, return a reference or shared_ptr instead" );
     }
   };
 
@@ -697,7 +699,7 @@ namespace upywrap
   {
     static mp_obj_t Convert( std::shared_ptr< T > p )
     {
-      return ClassWrapper< T >::AsPyObj( p );
+      return ClassWrapper< T >::AsPyObj( std::move( p ) );
     }
   };
 #endif
@@ -707,7 +709,7 @@ namespace upywrap
   {
     static mp_obj_t Convert( T& p )
     {
-      return ClassToPyObj< T* >::Convert( &p );
+      return ClassWrapper< T >::AsPyObj( &p, false );
     }
   };
 }

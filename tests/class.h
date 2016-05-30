@@ -35,9 +35,9 @@ namespace upywrap
     int a;
   };
 
-  Simple* SimpleFunc( Simple* p1, Simple* p2 )
+  Simple& SimpleFunc( Simple& p1, Simple* p2 )
   {
-    p1->Plus( p2 );
+    p1.Plus( p2 );
     return p1;
   }
 
