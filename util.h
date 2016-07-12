@@ -25,6 +25,36 @@ namespace upywrap
     mp_obj_print_helper( &mp_my_print, obj, kind );
     return var;
   }
+
+  /**
+    * Wrap a function Call to uPy code in nlr_push/nlr_pop: use this to safely invoke
+    * uPy code outside of the standard interpreter, to make sure nlr_raise is properly handled.
+    * If an exception is raised it is passed to the HandleEx instance - better make sure the
+    * latter doesn't raise an exception itself since it is outside of the nlr_push/pop.
+    * Returns true if no exception was raised.
+    */
+  template< class Call, class HandleEx >
+  bool WrapMicroPythonCall( Call f, HandleEx ex )
+  {
+#ifdef _MSC_VER
+  #pragma warning ( disable : 4611 ) //interaction between '_setjmp' and C++ object destruction is non-portable
+#endif
+    nlr_buf_t nlr;
+    if( nlr_push( &nlr ) == 0 )
+    {
+      f();
+      nlr_pop();
+      return true;
+    }
+    else
+    {
+      ex( nlr.ret_val );
+    }
+    return false;
+#ifdef _MSC_VER
+  #pragma warning ( default : 4611 )
+#endif
+  }
 }
 
 #endif //#ifndef MICROPYTHON_WRAP_UTIL_H
