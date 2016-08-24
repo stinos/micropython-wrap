@@ -21,9 +21,6 @@ namespace upywrap
     {
       std::cout << a << b << c << d << std::endl;
     }
-
-  private:
-    int a;
   };
 
   void Four( int a, int b, int c, int d )

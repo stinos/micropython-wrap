@@ -166,8 +166,8 @@ namespace upywrap
   {
     static std::int64_t Convert( mp_obj_t arg )
     {
-      const auto value = detail::mp_obj_get_uint( arg, [] ( const mp_obj_int_t* s ) { return detail::mpz_to_64bit_int( s, true ); } );
-      return static_cast< std::int64_t >( value );
+      const auto val = detail::mp_obj_get_uint( arg, [] ( const mp_obj_int_t* s ) { return detail::mpz_to_64bit_int( s, true ); } );
+      return static_cast< std::int64_t >( val );
     }
   };
 
