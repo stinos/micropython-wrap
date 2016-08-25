@@ -3,3 +3,4 @@
 Debug/
 Release/
 *.sh
+*.VC.*db
