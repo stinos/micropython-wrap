@@ -30,6 +30,8 @@ struct F
   func_name_def( Func4 )
   func_name_def( Func5 )
   func_name_def( Func6 )
+  func_name_def( Func7 )
+  func_name_def( Func8 )
   func_name_def( BuiltinValue )
   func_name_def( BuiltinConstValue )
   func_name_def( BuiltinReference )
@@ -135,6 +137,8 @@ extern "C"
     fn.Def< F::Func4 >( Func4 );
     fn.Def< F::Func5 >( Func5 );
     fn.Def< F::Func6 >( Func6 );
+    fn.Def< F::Func7 >( Func7 );
+    fn.Def< F::Func8 >( Func8 );
     fn.Def< F::BuiltinValue >( BuiltinValue );
     fn.Def< F::BuiltinConstValue >( BuiltinConstValue );
     fn.Def< F::BuiltinConstReference >( BuiltinConstReference );

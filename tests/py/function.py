@@ -34,3 +34,10 @@ upywraptest.Func4( func4 )
 #native functions
 upywraptest.Func5( math.fabs )
 upywraptest.Func5( upywraptest.Func6 )
+
+#more than 3 arguments
+def Take4( a, b, c, d ):
+  return a + b + c + d
+
+print( upywraptest.Func8( upywraptest.Func7 ) )
+print( upywraptest.Func8( Take4 ) )

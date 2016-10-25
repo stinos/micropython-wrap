@@ -35,6 +35,16 @@ namespace upywrap
   {
     return x < 0 ? -x : x;
   }
+
+  int Func7( int a, int b, int c, int d )
+  {
+    return a + b + c + d;
+  }
+
+  int Func8( std::function< int( int, int, int, int ) > a )
+  {
+    return a( 1, 2, 3, 4 );
+  }
 }
 
 #endif //#ifndef MICROPYTHON_WRAP_TESTS_FUNCTION_H
