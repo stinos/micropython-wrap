@@ -298,13 +298,25 @@ namespace upywrap
       typedef typename std::function< R( Args... ) > std_fun_type;
       typedef mp_obj_t( *py_fun_type )( typename project2nd< Args, mp_obj_t >::type... );
 
-      static std_fun_type Native( const mp_obj_fun_builtin_t* nativeFun )
+      static std_fun_type Native( const mp_obj_fun_builtin_fixed_t* nativeFun )
       {
-        const auto pyFun = (py_fun_type) nativeFun->fun._0;
+        const auto nativeFunPtr = (py_fun_type) nativeFun->fun._0;
         return std_fun_type(
-          [pyFun] ( Args... args ) -> R
+          [nativeFunPtr] ( Args... args ) -> R
           {
-            return SelectFromPyObj< R >::type::Convert( pyFun( SelectToPyObj< Args >::type::Convert( args )... ) );
+            return SelectFromPyObj< R >::type::Convert( nativeFunPtr( SelectToPyObj< Args >::type::Convert( args )... ) );
+          } );
+      }
+
+      static std_fun_type Native( const mp_obj_fun_builtin_var_t* nativeFun )
+      {
+        const auto nativeFunPtr = nativeFun->fun.var;
+        return std_fun_type(
+          [nativeFunPtr] ( Args... args ) -> R
+          {
+            //+1 to avoid zero-sized array which is illegal for msvc
+            mp_obj_t objs[ sizeof...( Args ) + 1 ] = { SelectToPyObj< Args >::type::Convert( args )... };
+            return SelectFromPyObj< R >::type::Convert( nativeFunPtr( sizeof...( Args ), objs ) );
           } );
       }
 
@@ -313,7 +325,6 @@ namespace upywrap
         return std_fun_type(
           [fun] ( Args... args ) -> R
           {
-            //+1 to avoid zero-sized array which is illegal for msvc
             mp_obj_t objs[ sizeof...( Args ) + 1 ] = { SelectToPyObj< Args >::type::Convert( args )... };
             return SelectFromPyObj< R >::type::Convert( mp_call_function_n_kw( fun, sizeof...( Args ), 0, objs ) );
           } );
@@ -326,13 +337,24 @@ namespace upywrap
       typedef typename std::function< void( Args... ) > std_fun_type;
       typedef mp_obj_t( *py_fun_type )( typename project2nd< Args, mp_obj_t >::type... );
 
-      static std_fun_type Native( const mp_obj_fun_builtin_t* nativeFun )
+      static std_fun_type Native( const mp_obj_fun_builtin_fixed_t* nativeFun )
       {
-        const auto pyFun = (py_fun_type) nativeFun->fun._0;
+        const auto nativeFunPtr = (py_fun_type) nativeFun->fun._0;
         return std_fun_type(
-          [pyFun] ( Args... args )
+          [nativeFunPtr] ( Args... args )
           {
-            pyFun( SelectToPyObj< Args >::type::Convert( args )... );
+            nativeFunPtr( SelectToPyObj< Args >::type::Convert( args )... );
+          } );
+      }
+
+      static std_fun_type Native( const mp_obj_fun_builtin_var_t* nativeFun )
+      {
+        const auto nativeFunPtr = nativeFun->fun.var;
+        return std_fun_type(
+          [nativeFunPtr] ( Args... args )
+          {
+            mp_obj_t objs[ sizeof...( Args ) + 1 ] = { SelectToPyObj< Args >::type::Convert( args )... };
+            nativeFunPtr( sizeof...( Args ), objs );
           } );
       }
 
@@ -358,11 +380,21 @@ namespace upywrap
     {
       if( arg == mp_const_none )
         return std_fun_type();
-      if( MP_OBJ_IS_TYPE( arg, &mp_type_fun_builtin ) )
+      const auto obj = reinterpret_cast< mp_obj_base_t* >( MP_OBJ_TO_PTR( arg ) );
+      const auto type = obj->type;
+      if( type == &mp_type_fun_builtin_0 ||
+          type == &mp_type_fun_builtin_1 ||
+          type == &mp_type_fun_builtin_2 ||
+          type == &mp_type_fun_builtin_3 )
       {
         //TODO if nativeFun actually points to NativeCall::Call or NativeMemberCall::Call, and we can
         //figure that out somehow, we do not have to go through the double conversion native->mp_obj_t->native
-        const auto nativeFun = (mp_obj_fun_builtin_t*) arg;
+        const auto nativeFun = reinterpret_cast< mp_obj_fun_builtin_fixed_t* >( obj );
+        return make_fun::Native( nativeFun );
+      }
+      else if( type == &mp_type_fun_builtin_var )
+      {
+        const auto nativeFun = reinterpret_cast< mp_obj_fun_builtin_var_t* >( obj );
         return make_fun::Native( nativeFun );
       }
       else

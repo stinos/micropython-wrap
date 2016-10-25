@@ -39,52 +39,50 @@ namespace upywrap
     return new_qstr( qstr_from_str( what ) );
   }
 
-  inline mp_obj_fun_builtin_t* new_function( mp_uint_t numArgs )
-  {
-    auto o = m_new_obj( mp_obj_fun_builtin_t );
-    o->base.type = &mp_type_fun_builtin;
-    o->is_kw = false;
-    o->n_args_min = numArgs;
-    o->n_args_max = numArgs;
-    return o;
-  }
-
   inline mp_obj_t MakeFunction( mp_obj_t (*fun) ( void ) )
   {
-    auto o = new_function( 0 );
+    auto o = m_new_obj( mp_obj_fun_builtin_fixed_t );
+    o->base.type = &mp_type_fun_builtin_0;
     o->fun._0 = fun;
     return o;
   }
 
   inline mp_obj_t MakeFunction( mp_obj_t (*fun) ( mp_obj_t ) )
   {
-    auto o = new_function( 1 );
+    auto o = m_new_obj( mp_obj_fun_builtin_fixed_t );
+    o->base.type = &mp_type_fun_builtin_1;
     o->fun._1 = fun;
     return o;
   }
 
   inline mp_obj_t MakeFunction( mp_obj_t (*fun) ( mp_obj_t, mp_obj_t ) )
   {
-    auto o = new_function( 2 );
+    auto o = m_new_obj( mp_obj_fun_builtin_fixed_t );
+    o->base.type = &mp_type_fun_builtin_2;
     o->fun._2 = fun;
     return o;
   }
 
   inline mp_obj_t MakeFunction( mp_obj_t (*fun) ( mp_obj_t, mp_obj_t, mp_obj_t ) )
   {
-    auto o = new_function( 3 );
+    auto o = m_new_obj( mp_obj_fun_builtin_fixed_t );
+    o->base.type = &mp_type_fun_builtin_3;
     o->fun._3 = fun;
     return o;
   }
 
   inline mp_obj_t MakeFunction( mp_uint_t numArgs, mp_obj_t (*fun) ( mp_uint_t, const mp_obj_t* ) )
   {
-    auto o = new_function( numArgs );
+    auto o = m_new_obj( mp_obj_fun_builtin_var_t );
+    o->base.type = &mp_type_fun_builtin_var;
+    o->is_kw = false;
+    o->n_args_min = numArgs;
+    o->n_args_max = numArgs;
     o->fun.var = fun;
     return o;
   }
 
-  //see mp_obj_fun_builtin_t: for up to 3 arguments there's a builtin function signature
+  //see mp_obj_fun_builtin_fixed_t: for up to 3 arguments there's a builtin function signature
   //this is reflected in MakeFunction
   //VS2013 hasn't constexpr yet so fall back to a macro..
   #define FitsBuiltinNativeFunction( numArgs ) ( (numArgs) < 4 )
