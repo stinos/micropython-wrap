@@ -300,6 +300,21 @@ namespace upywrap
 
   namespace detail
   {
+    /**
+      * Wrap a uPy function call in an std::function.
+      * If the function call is a bound method we need to make sure the uPy object is protected
+      * from being GC'd as long as the corresponding std::function instance is alive: the uPy object
+      * gets captured in the lambda and as such is stored in the std::function. However that is out
+      * of reach for the GC mark phase so it might get sweeped leading to nasty crashes when the
+      * function is called afterwards. Fix this by storing the uPy object in a PinPyObj: it will
+      * have the same lifetime as the function then, no matter how many times it is copied.
+      * For mp_obj_fun_builtin_fixed_t/mp_obj_fun_builtin_var_t calls these measures aren't
+      * (shouldn't be?) needed since those:
+      * - are either one of uPy's functions which are statically defined using MP_DEFINE_CONST_FUN_XXX
+      *   so not even considered for GC since they are not on the heap
+      * - or else point to a function created by ClassWrapper or FunctionWrapper and those
+          are explcicitly added to a uPy dict already to make sure they are never collected
+      */
     template< class R, class... Args >
     struct MakeStdFun
     {
@@ -308,7 +323,7 @@ namespace upywrap
 
       static std_fun_type Native( const mp_obj_fun_builtin_fixed_t* nativeFun )
       {
-        const auto nativeFunPtr = (py_fun_type) nativeFun->fun._0;
+        const auto nativeFunPtr = reinterpret_cast< py_fun_type >( nativeFun->fun._0 );
         return std_fun_type(
           [nativeFunPtr] ( Args... args ) -> R
           {
@@ -330,11 +345,12 @@ namespace upywrap
 
       static std_fun_type PythonFun( mp_obj_t fun )
       {
+        const PinPyObj pin( fun );
         return std_fun_type(
-          [fun] ( Args... args ) -> R
+          [pin] ( Args... args ) -> R
           {
             mp_obj_t objs[ sizeof...( Args ) + 1 ] = { SelectToPyObj< Args >::type::Convert( args )... };
-            return SelectFromPyObj< R >::type::Convert( mp_call_function_n_kw( fun, sizeof...( Args ), 0, objs ) );
+            return SelectFromPyObj< R >::type::Convert( mp_call_function_n_kw( pin.Get(), sizeof...( Args ), 0, objs ) );
           } );
       }
     };

@@ -25,6 +25,7 @@ extern "C"
 #include <limits>
 #include <cmath>
 #include <cstdint>
+#include <memory>
 #include <type_traits>
 
 namespace upywrap
@@ -86,15 +87,6 @@ namespace upywrap
   //this is reflected in MakeFunction
   //VS2013 hasn't constexpr yet so fall back to a macro..
   #define FitsBuiltinNativeFunction( numArgs ) ( (numArgs) < 4 )
-
-  inline mp_obj_module_t* CreateModule( const char* name, bool doRegister = false )
-  {
-    const qstr qname = qstr_from_str( name );
-    mp_obj_module_t* mod = (mp_obj_module_t*) mp_obj_new_module( qname );
-    if( doRegister )
-      mp_module_register( qname, mod );
-    return mod;
-  }
 
   inline void RaiseTypeException( const char* msg )
   {
@@ -254,6 +246,122 @@ namespace upywrap
   T safe_integer_cast( S src )
   {
     return safe_integer_caster< S, T >::Convert( src );
+  }
+
+  /**
+    * Static list for storing mp_obj_t.
+    * Used to prevent uPy objects from being GC'd when they are kept where the GC mark phase
+    * cannot find them, for instance as a member of a C++ class when allocated on the standard heap.
+    * Probably usage should be restricted to upywrap internals, or in any case avoided unless really needed:
+    * - no conversions between uPy and C++ objects in upywrap, except functions, needs it because they
+    *   essentially create new objects which are unrelated copies and do not store any state
+    * - we don't know yet if this is the best solution; suppose the list ends up containing hundreds of
+    *   items then adding/removing might become too slow for the application and it's an extra load
+    *   on the GC as well.
+    * For now counter this possible problem by allowing a maximum number of 50 items and
+    * also add a bunch of checks to assure correct usage.
+    * See PinPyObj to make use of this conveniently; InitBackEnd must be called exactly once before usage.
+    */
+  class StaticPyObjectStore
+  {
+  public:
+    static void Store( mp_obj_t obj )
+    {
+      mp_obj_list_append( *List(), obj );
+
+      static const mp_uint_t maxLen = 50;
+      if( (*List())->len > maxLen )
+        RaiseRuntimeException( "StaticPyObjectStore: list is full" );
+    }
+
+    static void Remove( mp_obj_t obj )
+    {
+      if( !Contains( obj ) )
+        RaiseRuntimeException( "StaticPyObjectStore: item not added" );
+      mp_obj_list_remove( *List(), obj );
+    }
+
+    static mp_obj_list_t* InitBackEnd()
+    {
+      auto list = List();
+      if( *list )
+        RaiseRuntimeException( "StaticPyObjectStore: already initialized" );
+      *list = m_new_obj( mp_obj_list_t );
+      mp_obj_list_init( *list, 0 );
+      return *list;
+    }
+
+    static bool Initialized()
+    {
+      return !!*List();
+    }
+
+  private:
+    static bool Contains( mp_obj_t obj )
+    {
+      const auto list = *List();
+      if( !list )
+        RaiseRuntimeException( "StaticPyObjectStore: not initialized" );
+      mp_uint_t len;
+      mp_obj_t* items;
+      mp_obj_list_get( list, &len, &items );
+      for( mp_uint_t i = 0 ; i < len ; ++i )
+        if( items[ i ] == obj )
+          return true;
+      return false;
+    }
+
+    //just to avoid a global static and corresponding linking issues
+    static mp_obj_list_t** List()
+    {
+      static mp_obj_list_t* list = nullptr;
+      return &list;
+    }
+  };
+
+  /**
+    * Smart pointer which 'pins' a uPy object so it won't get GC'd during the lifetime of the PinPyObj it's held in.
+    * Adds an mp_obj_t to StoreStaticPyObj when constructed and removes it again when all instances are destructed.
+    * Store instances of this class instead of bare mp_obj_t to assure they don't get GC'd but also don't leak.
+    * Note in some cases it might take 2 gc_collect calls before GC occurs: if a PinPyObj is stored in X,
+    * and X's destructor gets called because it gets finalized in gc_collect, the stored object might already have
+    * been marked if it happens to be at a lower memory address than X. As such only the second gc_collect call
+    * will sweep it.
+    */
+  class PinPyObj
+  {
+  public:
+    PinPyObj( mp_obj_t obj ) :
+      obj( new mp_obj_t( obj ), [] ( mp_obj_t* o ) { StaticPyObjectStore::Remove( *o ); } )
+    {
+      StaticPyObjectStore::Store( Get() );
+    }
+
+    mp_obj_t Get() const
+    {
+      return *obj.get();
+    }
+  
+  private:
+    std::shared_ptr< mp_obj_t > obj;
+  };
+
+    /**
+      * Wrapper around mp_obj_new_module/mp_module_register.
+      * Also creates the StaticPyObjectStore backend so PinPyObj can be used.
+      */
+  inline mp_obj_module_t* CreateModule( const char* name, bool doRegister = false )
+  {
+    const qstr qname = qstr_from_str( name );
+    mp_obj_module_t* mod = (mp_obj_module_t*) mp_obj_new_module( qname );
+    if( doRegister )
+      mp_module_register( qname, mod );
+    //Create StaticPyObjectStore instance and store it in the module's globals dict,
+    //which ensures anything in the list will also not be sweeped by the GC.
+    //Do this only once though, so all translation units in the binary use the same list.
+    if( !StaticPyObjectStore::Initialized() )
+      mp_obj_dict_store( mod->globals, new_qstr( "_StaticPyObjectStore" ), StaticPyObjectStore::InitBackEnd() );
+    return mod;
   }
 
 }
