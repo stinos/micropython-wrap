@@ -373,8 +373,6 @@ namespace upywrap
           type == &mp_type_fun_builtin_2 ||
           type == &mp_type_fun_builtin_3 )
       {
-        //TODO if nativeFun actually points to NativeCall::Call or NativeMemberCall::Call, and we can
-        //figure that out somehow, we do not have to go through the double conversion native->mp_obj_t->native
         const auto nativeFun = reinterpret_cast< mp_obj_fun_builtin_fixed_t* >( obj );
         return make_fun::Native( nativeFun );
       }
