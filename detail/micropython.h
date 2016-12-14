@@ -83,10 +83,38 @@ namespace upywrap
     return o;
   }
 
-  //see mp_obj_fun_builtin_fixed_t: for up to 3 arguments there's a builtin function signature
+  //See mp_obj_fun_builtin_fixed_t: for up to 3 arguments there's a builtin function signature
   //this is reflected in MakeFunction
   //VS2013 hasn't constexpr yet so fall back to a macro..
   #define FitsBuiltinNativeFunction( numArgs ) ( (numArgs) < 4 )
+
+  /**
+    * Select the appropriate MakeFunction overload based on the arguments.
+    */
+  template< class... Args >
+  struct CreateFunction
+  {
+    template< bool NativeArgs, size_t NumArgs >
+    struct FunctionSelector
+    {
+      template< class BuiltinFixedT, class BuiltinVarT >
+      static mp_obj_t Create( BuiltinFixedT call, BuiltinVarT ) { return MakeFunction( call ); }
+    };
+
+    template< size_t NumArgs >
+    struct FunctionSelector< false, NumArgs >
+    {
+      template< class BuiltinFixedT, class BuiltinVarT >
+      static mp_obj_t Create( BuiltinFixedT, BuiltinVarT call ) { return MakeFunction( NumArgs, call ); }
+    };
+
+    template< class BuiltinFixedT, class BuiltinVarT >
+    static mp_obj_t Create( BuiltinFixedT fixed, BuiltinVarT var )
+    {
+      static const auto numArgs = sizeof...( Args );
+      return FunctionSelector< FitsBuiltinNativeFunction( numArgs ), numArgs >::Create( fixed, var );
+    }
+  };
 
   inline void RaiseTypeException( const char* msg )
   {

@@ -519,7 +519,6 @@ namespace upywrap
 
       static mp_obj_t CreateUPyFunction()
       {
-        return SelectUPyCall< FitsBuiltinNativeFunction( sizeof...( A ) + 1 ) >::Create();
       }
 
       static mp_obj_t Call( mp_obj_t self_in, typename project2nd< A, mp_obj_t >::type... args )
@@ -537,6 +536,7 @@ namespace upywrap
         auto firstArg = &args[ 1 ];
         auto f = (call_type*) this_type::functionPointers[ (void*) index ];
         return callvar( f, self->GetPtr(), firstArg, make_index_sequence< sizeof...( A ) >() );
+        return CreateFunction< mp_obj_t, A... >::Create( Call, CallN );
       }
 
       static mp_obj_t CallDiscard( mp_uint_t n_args, const mp_obj_t* args )
@@ -572,18 +572,6 @@ namespace upywrap
         (void) args;
         return CallReturn< Ret, A... >::Call( f, self, args[ Indices ]... );
       }
-
-      template< bool NativeArgs >
-      struct SelectUPyCall
-      {
-        static mp_obj_t Create() { return MakeFunction( Call ); }
-      };
-
-      template<>
-      struct SelectUPyCall< false >
-      {
-        static mp_obj_t Create() { return MakeFunction( 1 + sizeof...( A ), CallN ); }
-      };
     };
 
     typedef ClassWrapper< T > this_type;

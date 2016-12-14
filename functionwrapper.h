@@ -73,7 +73,7 @@ namespace upywrap
 
       static mp_obj_t CreateUPyFunction()
       {
-        return SelectUPyCall< FitsBuiltinNativeFunction( sizeof...( A ) ) >::Create();
+        return CreateFunction< A... >::Create( Call, CallN );
       }
 
       static mp_obj_t Call( typename project2nd< A, mp_obj_t >::type... args )
@@ -97,18 +97,6 @@ namespace upywrap
         (void) args;
         return CallReturn< Ret, A... >::Call( f, args[ Indices ]... );
       }
-
-      template< bool NativeArgs >
-      struct SelectUPyCall
-      {
-        static mp_obj_t Create() { return MakeFunction( Call ); }
-      };
-
-      template<>
-      struct SelectUPyCall< false >
-      {
-        static mp_obj_t Create() { return MakeFunction( sizeof...( A ), CallN ); }
-      };
     };
 
     mp_obj_dict_t* globals;
