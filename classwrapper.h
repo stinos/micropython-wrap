@@ -669,6 +669,11 @@ namespace upywrap
     }
   };
 
+  template< class T >
+  struct False : std::integral_constant< bool, false >
+  {
+  };
+
   //Wrap instance in a new mp_obj_t
   template< class T >
   struct ClassToPyObj< T* >
@@ -677,7 +682,7 @@ namespace upywrap
     {
       //Could return ClassWrapper< T >::AsPyObj( p, false ) here, but if p was allocated
       //it wouldn't ever get deallocated so disallow this to avoid memory leaks
-      static_assert( false, "Storing bare pointers in ClassWrapper is not allowed, return a reference or shared_ptr instead" );
+      static_assert( False< T >::value, "Storing bare pointers in ClassWrapper is not allowed, return a reference or shared_ptr instead" );
     }
   };
 
