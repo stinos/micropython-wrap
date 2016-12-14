@@ -1,0 +1,41 @@
+environment:
+  MICROPY_CPYTHON3: c:/python34/python.exe
+  MICROPYPATH: c:/projects/micropython/windows
+
+init:
+  # Set build version number to commit to be travis-like
+- ps: Update-AppveyorBuild -Version $env:appveyor_repo_commit.substring(0,8)
+
+configuration:
+- Debug
+- Release
+
+platform:
+- x86
+- x64
+
+build_script:
+- cmd: >-
+    git clone -q --branch=windows-pyd https://github.com/stinos/micropython ../micropython
+
+    msbuild ../micropython/windows/micropythoncore.vcxproj /p:platform=%platform%;configuration=%configuration%
+
+    msbuild ../micropython/windows/micropython.vcxproj /p:platform=%platform%;configuration=%configuration%
+
+    msbuild micropython-wrap.vcxproj /p:platform=%platform%;configuration=%configuration%
+
+test_script:
+- cmd: >-
+    cd ../micropython/tests
+
+    %MICROPY_CPYTHON3% run-tests -d ../../micropython-wrap/tests/py
+
+skip_tags: true
+
+deploy: off
+
+nuget:
+  disable_publish_on_pr: true
+
+matrix:
+  fast_finish: true
