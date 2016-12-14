@@ -87,12 +87,11 @@ namespace upywrap
         if( nargs != sizeof...( A ) )
           RaiseTypeException( "Wrong number of arguments" );
         auto f = (call_type*) FunctionWrapper::functionPointers[ (void*) index ];
-        return callvar( f, args, make_index_sequence< sizeof...( A ) >() );
+        return CallVar( f, args, make_index_sequence< sizeof...( A ) >() );
       }
 
-    private:
       template< size_t... Indices >
-      static mp_obj_t callvar( call_type* f, const mp_obj_t* args, index_sequence< Indices... > )
+      static mp_obj_t CallVar( call_type* f, const mp_obj_t* args, index_sequence< Indices... > )
       {
         (void) args;
         return CallReturn< Ret, A... >::Call( f, args[ Indices ]... );

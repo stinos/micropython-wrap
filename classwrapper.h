@@ -519,23 +519,6 @@ namespace upywrap
 
       static mp_obj_t CreateUPyFunction()
       {
-      }
-
-      static mp_obj_t Call( mp_obj_t self_in, typename project2nd< A, mp_obj_t >::type... args )
-      {
-        auto self = (this_type*) self_in;
-        auto f = (call_type*) this_type::functionPointers[ (void*) index ];
-        return CallReturn< Ret, A... >::Call( f, self->GetPtr(), args... );
-      }
-
-      static mp_obj_t CallN( mp_uint_t n_args, const mp_obj_t* args )
-      {
-        if( n_args != sizeof...( A ) + 1 )
-          RaiseTypeException( "Wrong number of arguments" );
-        auto self = (this_type*) args[ 0 ];
-        auto firstArg = &args[ 1 ];
-        auto f = (call_type*) this_type::functionPointers[ (void*) index ];
-        return callvar( f, self->GetPtr(), firstArg, make_index_sequence< sizeof...( A ) >() );
         return CreateFunction< mp_obj_t, A... >::Create( Call, CallN );
       }
 
@@ -554,20 +537,37 @@ namespace upywrap
           RaiseTypeException( "Wrong number of arguments for constructor" );
         auto f = (init_call_type*) this_type::functionPointers[ (void*) index ];
         UPYWRAP_TRY
-        return AsPyObj( apply( f, args, make_index_sequence< sizeof...( A ) >() ), true );
+        return AsPyObj( Apply( f, args, make_index_sequence< sizeof...( A ) >() ), true );
         UPYWRAP_CATCH
       }
 
     private:
+      static mp_obj_t Call( mp_obj_t self_in, typename project2nd< A, mp_obj_t >::type... args )
+      {
+        auto self = (this_type*) self_in;
+        auto f = (call_type*) this_type::functionPointers[ (void*) index ];
+        return CallReturn< Ret, A... >::Call( f, self->GetPtr(), args... );
+      }
+
+      static mp_obj_t CallN( mp_uint_t n_args, const mp_obj_t* args )
+      {
+        if( n_args != sizeof...( A ) + 1 )
+          RaiseTypeException( "Wrong number of arguments" );
+        auto self = (this_type*) args[ 0 ];
+        auto firstArg = &args[ 1 ];
+        auto f = (call_type*) this_type::functionPointers[ (void*) index ];
+        return CallVar( f, self->GetPtr(), firstArg, make_index_sequence< sizeof...( A ) >() );
+      }
+
       template< size_t... Indices >
-      static T* apply( init_call_type* f, const mp_obj_t* args, index_sequence< Indices... > )
+      static T* Apply( init_call_type* f, const mp_obj_t* args, index_sequence< Indices... > )
       {
         (void) args;
         return f->Call( SelectFromPyObj< A >::type::Convert( args[ Indices ] )... );
       }
 
       template< size_t... Indices >
-      static mp_obj_t callvar( call_type* f, T* self, const mp_obj_t* args, index_sequence< Indices... > )
+      static mp_obj_t CallVar( call_type* f, T* self, const mp_obj_t* args, index_sequence< Indices... > )
       {
         (void) args;
         return CallReturn< Ret, A... >::Call( f, self, args[ Indices ]... );
