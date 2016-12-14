@@ -1,0 +1,14 @@
+sudo: required
+dist: trusty
+language: c++
+compiler:
+  - gcc
+
+before_script:
+  - sudo apt-get install -y python3 gcc-multilib pkg-config libffi-dev
+  - gcc --version
+  - python3 --version
+  - git clone https://github.com/micropython/micropython/ ../micropython
+
+script:
+  - make test
