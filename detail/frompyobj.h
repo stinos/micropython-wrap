@@ -251,12 +251,16 @@ namespace upywrap
     static map_type Convert( mp_obj_t arg )
     {
       map_type ret;
-      mp_map_elem_t* next = nullptr;
-      mp_uint_t cur = 0;
-      while( ( next = dict_iter_next( (mp_obj_dict_t*) arg, &cur ) ) != nullptr )
+      const auto dict = static_cast< mp_obj_dict_t* >( MP_OBJ_TO_PTR( arg ) );
+      const auto map = &dict->map;
+      //this is basically dict_iter_next but that isn't exposed as an API method
+      for( mp_uint_t i = 0 ; i < map->alloc ; ++i )
       {
-        ret.insert( typename map_type::value_type( SelectFromPyObj< K >::type::Convert( next->key ),
-                                                   SelectFromPyObj< V >::type::Convert( next->value ) ) );
+        if( MP_MAP_SLOT_IS_FILLED( map, i ) )
+        {
+          ret.emplace( SelectFromPyObj< K >::type::Convert( map->table[ i ].key ),
+                       SelectFromPyObj< V >::type::Convert( map->table[ i ].value ) );
+        }
       }
       return ret;
     }
