@@ -1,149 +1,119 @@
-Provide convenient wrapping of C and C++ functions and classes so they can be called from
-Micro Python (http://github.com/micropython/micropython).
+[![Unix Build Status](https://travis-ci.org/stinos/micropython-wrap.svg?branch=master)](https://travis-ci.org/stinos/micropython-wrap)
+[![Windows Build status](https://ci.appveyor.com/api/projects/status/3a7gmffr0mpfv9va?svg=true)](https://ci.appveyor.com/project/stinos/micropython-wrap)
 
-Currently supports these conversions for function arguments and return values:
+MicroPython-Wrap
+================
 
-    uPy double <-> double
-    uPy int <-> int
-    uPy bool <-> bool
-    uPy str <-> std::string
-    uPy str <-> const char* (optional)
-    uPy tuple <-> std::tuple
-    uPy array <-> std::vector
-    uPy dict <-> std::map
-    uPy callable -> std::function
+This header-only C++ library provides some interoperability between C/C++ and the [MicroPython](https://github.com/micropython/micropython) programming language.
 
-    uPy functions <-> C++ free functions
-    uPy type <-> C++ T (if T is registered with ClassWrapper, see Usage)
-    uPy class methods <-> getter/setter methods of T
-    uPy class attributes <-> getter/setter methods of T
+The standard way of extending MicroPython with your own C or C++ modules involves a lot of boilerplate,
+both for converting function arguments and return values between native types and the MicroPython object model and for
+regsitering the function and type names so they can be discovered by MicroPython.
+Using MicroPython-Wrap most of that boilerplate is avoided and instead one can focus on writing the actual C and/or C++ code
+while the process of integration with MicroPython comes down to adding two lines of code for every function/method or type which needs to be
+available in your scripts.
 
-For the latter, native functions accepting pointers, values and references are allowed,
-and pointers and referenecs can be returned.
-For the 'builtin' types, the native function must take the argument by value, const value or const reference,
-and only values can be returned.
+WARNING: while fully tested and daily in use without problems, this project should still be considered to be in beta stage and is subject to changes of the
+code base, including project-wide name changes and API changes.
+Furthermore the actual integration at the build level is not too straightforward, see below.
 
-Some typical Python concepts are supported for class types:
+Platforms
+---------
+Has been tested under Unix with gcc and Windows with msvc; Windows with msys should be no problem either.
 
-    uPy __init__ = native class constructor or factory function of choice
-    uPy __del__ = native class destructor
-    uPy __exit__ = can be registered to call a void() method
+Example
+-------
+Complete usage examples covering all aspects can be found in the the [tests](tests) directory which also serves as documentation:
+ in [module.cpp](tests/module.cpp) a micropython module is created and a bunch of C++ classes and functions are added to the module.
+Consequently when running the [python test code](tests/py) using the standard MicroPython test runner the module is imported and all registered functions are called.
 
-Furthermore there is optional support for wrapping each native call in a try/catch for std::exception,
-and re-raise it as a uPy RuntimeError
+Just to get an idea here is a short sample of C++ code registration; code achieving the same using just the MicroPython API is not shown here but would likely be around 50 lines:
 
-The tests cover pretty much everything that is supported so they serve as
-the main documentationf the possibilities.
-
-Though fully operational (all tests are ok on 32/64 bit unix/windows ports)
-the code should still be considered beta and todos include:
-- check if it would be needed to pass certain mutable py types (list etc) by reference
-  (which would translate to converting uPy argument to native type, call native function,
-  then convert back to uPy type)
-- check with real-life code if there are any performance problems that can be solved
-- the tests require a native module to be registered with uPy;
-  Ideally that requires a working dynamic import system for Micro Python, but as long as
-  that is not available, we manually build with tests/module.cpp included as source and
-  call InitUpyWrapTest() in main()..
-- if we refactor uPy specifics away from main code, we can reuse this lib for eg CPython
-
-Usage Sample
-------------
-
-    #include <micropython-wrap/classwrapper.h>
     #include <micropython-wrap/functionwrapper.h>
-    #include <iostream>
 
-    class SomeClass
+    //function we want to call from within a MicroPython script
+    std::vector< std::string > SomeFunction( std::vector< std::string > vec )
     {
-    public:
-      SomeClass();
+      for( auto& v : vec )
+        v += "TRANSFORM";
+      return vec;
+    }
 
-      static SomeClass* Factory();
-
-      std::string Foo( const std::string& a, int n );
-
-      void Bar( const std::vector< double >& vec );
-
-      void Use( SomeClass* p );
-
-      int GetValue() const;
-
-      void SetValue();
-    };
-
-    class ContextManager
+    //function names are declared in structs
+    struct FunctionNames
     {
-    public:
-      ContextManager( int a );
-
-      void Dispose();
-    };
-
-    void Func( SomeClass* p, const std::string& a, int n );
-
-    std::vector< std::string > List( std::vector< std::string > i );
-
-    std::map< int, int > Dict( std::map< int, int > arg );
-
-    std::tuple< int, std::string > Tuple( std::tuple< int, std::string > arg );
-
-    struct Funcs
-    {
-      func_name_def( Foo )
-      func_name_def( Bar )
-      func_name_def( Use )
-      func_name_def( Factory )
-      func_name_def( Func )
-      func_name_def( List )
-      func_name_def( Dict )
-      func_name_def( Tuple )
+      func_name_def( TransformList )
     };
 
     extern "C"
     {
-      void RegisterMyModule()
+      void RegisterMyModule(void)
       {
-        auto mod = upywrap::CreateModule( "mod" );
+        //register a module named 'foo'
+        auto mod = upywrap::CreateModule( "foo" );
 
-        upywrap::ClassWrapper< SomeClass > wrapclass( "SomeClass", mod );
-        wrapclass.DefInit<>();
-        wrapclass.Def< Funcs::Foo >( &SomeClass::Foo );
-        wrapclass.Def< Funcs::Bar >( &SomeClass::Bar );
-        wrapclass.Def< Funcs::Use >( &SomeClass::Use );
-        wrapclass.Def< Funcs::Func >( Func );
-        wrapClass.Property( "value", &SomeClass::SetValue, &SomeClass::GetValue );
-
-        upywrap::ClassWrapper< ContextManager > wrapcman( "ContextManager", mod );
-        wrapcman.DefInit< int >();
-        wrapcman.DefExit( &ContextManager::Dispose );
-
+        //register our function with the name 'TransformList'
+        //conversion of a MicroPython list of strings is done automatically
         upywrap::FunctionWrapper wrapfunc( mod );
-        wrapfunc.Def< Funcs::Func >( Func );
-        wrapfunc.Def< Funcs::Factory >( SomeClass::Factory );
-        wrapfunc.Def< Funcs::List >( List );
-        wrapfunc.Def< Funcs::Dict >( Dict );
-        wrapfunc.Def< Funcs::Tuple >( Tuple );
+        wrapfunc.Def< FunctionNames::TransformList >( SomeFunction );
       }
     }
 
-After calling RegisterMyModule from uPy's main for instance,
-module mod can be used in Python like this:
+    //now call RegisterMyModule() in MicroPython's main() for example
 
-    import mod
+And the MicroPython code making use of this looks like:
 
-    x = mod.SomeClass()
-    x.Bar( [ 0.0, 1.0, 2.0 ] )
-    print( x.Foo( 'abc', 1 ) )
-    x.Func( 'abc', 1 )
-    mod.Func( x, 'glob', 2 )
-    x.Use( mod.Factory() )
-    x.value = 0
-    print( x.value )
+    import foo
 
-    with mod.ContextManager( 1 ) as p :
-      pass
+    print(foo.TransformList(['a', 'b']))  # Prints ['aTRANSFORM', 'bTRANSFORM']
 
-    print( mod.List( [ 'a', 'b' ] ) )
-    print( mod.Dict( { 3: 4 } ) )
-    print( mod.Tuple( [ 0, 'upy' ] ) )
+Type Conversion
+---------------
+Conversion between standard native types and `mp_obj_t`, the MicroPython opaque object type
+is declared in two template classes aptly named [ToPyObj](detail/topyobj.h) and [FromPyObj](detail/frompyobj.h).
+
+Currently these conversions are supported:
+
+    uPy double <-> double/float
+    uPy int <-> std::int32_t/std::int64_t/std::uint32_t/std::uint64_t with overflow checks
+    uPy bool <-> bool
+    uPy str <-> std::string
+    uPy str <-> const char* (optional)
+    uPy tuple <-> std::tuple
+    uPy list <-> std::vector (each element must be of the same type)
+    uPy dict <-> std::map (each key/value must be of the same type)
+    uPy callable -> std::function
+
+Function and class wrapping
+---------------------------
+Wrapping code is provided for:
+
+    uPy functions <-> free functions via upywrap::FunctionWrapper
+    uPy class <-> C++ class via upywrap::ClasssWrapper
+    uPy __init__ <-> C++ class constructor or factory function of choice
+    uPy __del__ <-> C++ class destructor (called only when instance is grabage collected!)
+    uPy __exit__ <-> C++ class method with void() signature
+    uPy class methods <-> C++ class methods
+    uPy class attributes <-> C++ class methods
+
+For builtin types listed under 'type conversion', the native function must take the argument by value, const value or const reference,
+and only values can be returned.
+ClassWrapper types can be passed by pointer, value, reference or std::shared_ptr and returned as pointer,
+reference or std::shared_ptr. See tests for ownership rules.
+
+Furthermore there is optional support for wrapping each native call in a try/catch for std::exception,
+and re-raise it as a uPy RuntimeError
+
+Integrating and Building
+------------------------
+First clone this repository alongside the MicroPython repository, then refer to the way the tests module
+is built and create your own modules in the same way: see [Travis config](.travis.yml) and [Makefile](Makefile) for Unix,
+and the [Appveyor config](.appveyor.yml) and [Project file](micropython-wrap.vcxproj) for Windows.
+
+- the [Unix Makefile](Makefile) shows one way of integration: all native code (including class/function registration) is
+  compiled into a static library. MicroPython's main() function is modified to call the module registration function and then built.
+  Alternatively, instead of building a static library, one could modify the MicroPython Makefile to allow C++ compilation and add all C++ source and wrapper code directly to it.
+- for Windows with Visual Studio (2013 or up) some extra work has already been done in [this MicroPython fork](https://github.com/stinos/micropython/tree/windows-pyd).
+  Create an empty C++ dll project, import [extmodule.props](https://github.com/stinos/micropython/blob/windows-pyd/windows/msvc/extmodule.props)
+  and all code is built into a dll with a .pyd extension which is discovered automatically by the fork's micropython.exe when using
+  an import statement.
