@@ -16,7 +16,7 @@ platform:
 
 build_script:
 - cmd: >-
-    git clone -q --branch=windows-pyd https://github.com/stinos/micropython ../micropython
+    git clone -q --depth 10 --branch=windows-pyd https://github.com/stinos/micropython ../micropython
 
     msbuild ../micropython/windows/micropythoncore.vcxproj /p:platform=%platform%;configuration=%configuration%
 
