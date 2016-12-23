@@ -683,6 +683,7 @@ namespace upywrap
       //Could return ClassWrapper< T >::AsPyObj( p, false ) here, but if p was allocated
       //it wouldn't ever get deallocated so disallow this to avoid memory leaks
       static_assert( False< T >::value, "Storing bare pointers in ClassWrapper is not allowed, return a reference or shared_ptr instead" );
+      return mp_const_none;
     }
   };
 
