@@ -110,9 +110,12 @@ First clone this repository alongside the MicroPython repository, then refer to 
 is built and create your own modules in the same way: see [Travis config](.travis.yml) and [Makefile](Makefile) for Unix,
 and the [Appveyor config](.appveyor.yml) and [Project file](micropython-wrap.vcxproj) for Windows.
 
-- the [Unix Makefile](Makefile) shows one way of integration: all native code (including class/function registration) is
-  compiled into a static library. MicroPython's main() function is modified to call the module registration function and then built.
-  Alternatively, instead of building a static library, one could modify the MicroPython Makefile to allow C++ compilation and add all C++ source and wrapper code directly to it.
+- the [Unix Makefile](Makefile) shows two ways way of integration:
+    - with a static library: all native test code (including class/function registration) is compiled into a static library.
+      MicroPython's main() function is modified to call the module registration function and then built.
+      Alternatively, instead of building a static library, one could modify the MicroPython Makefile to allow C++ compilation and add all C++ source and wrapper code directly to it.
+    - with a shared library: using [this MicroPython fork](https://github.com/stinos/micropython/tree/windows-pyd) adds CPython-like
+      support for loading dynamic modules. This way we don't have to explicitly initialize the module in main().
 - for Windows with Visual Studio (2013 or up) some extra work has already been done in [this MicroPython fork](https://github.com/stinos/micropython/tree/windows-pyd).
   Create an empty C++ dll project, import [extmodule.props](https://github.com/stinos/micropython/blob/windows-pyd/windows/msvc/extmodule.props)
   and all code is built into a dll with a .pyd extension which is discovered automatically by the fork's micropython.exe when using

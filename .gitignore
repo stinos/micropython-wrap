@@ -6,3 +6,5 @@ Release/
 *.VC.*db
 *.o
 *.a
+*.so
+
