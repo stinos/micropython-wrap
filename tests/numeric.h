@@ -15,6 +15,16 @@ namespace upywrap
     return a;
   }
 
+  std::int16_t Int16( std::int16_t a )
+  {
+    return a;
+  }
+
+  std::uint16_t Unsigned16( std::uint16_t a )
+  {
+    return a;
+  }
+
   std::int64_t Int64( std::int64_t a )
   {
     return a;

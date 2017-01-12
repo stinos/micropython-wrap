@@ -65,6 +65,24 @@ namespace upywrap
     }
   };
 
+  template<>
+  struct ToPyObj< std::int16_t > : std::true_type
+  {
+    static mp_obj_t Convert( std::int16_t arg )
+    {
+      return ToPyObj< mp_int_t >::Convert( static_cast< std::int16_t >( arg ) );
+    }
+  };
+
+  template<>
+  struct ToPyObj< std::uint16_t > : std::true_type
+  {
+    static mp_obj_t Convert( std::uint16_t arg )
+    {
+      return ToPyObj< mp_uint_t >::Convert( static_cast< std::uint16_t >( arg ) );
+    }
+  };
+
 #if defined( __LP64__ ) || defined( _WIN64 )
   //64bit build, we can safely cast 32bit integers to 64bit 'native' uPy integer
   static_assert( std::is_same< mp_int_t, std::int64_t >::value, "unsupported integer type" );

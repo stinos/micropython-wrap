@@ -109,6 +109,24 @@ namespace upywrap
     }
   };
 
+  template<>
+  struct FromPyObj< std::int16_t > : std::true_type
+  {
+    static std::int16_t Convert( mp_obj_t arg )
+    {
+      return safe_integer_cast< std::int16_t >( FromPyObj< mp_int_t >::Convert( arg ) );
+    }
+  };
+
+  template<>
+  struct FromPyObj< std::uint16_t > : std::true_type
+  {
+    static std::uint16_t Convert( mp_obj_t arg )
+    {
+      return safe_integer_cast< std::uint16_t >( FromPyObj< mp_uint_t >::Convert( arg ) );
+    }
+  };
+
 #if defined( __LP64__ ) || defined( _WIN64 )
   //64bit build, cast 32bit integers from 64bit native uPy type while checking for overflow
 

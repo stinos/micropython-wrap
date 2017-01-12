@@ -66,6 +66,8 @@ struct F
   func_name_def( Eight )
   func_name_def( Int )
   func_name_def( Unsigned )
+  func_name_def( Int16 )
+  func_name_def( Unsigned16 )
   func_name_def( Int64 )
   func_name_def( Unsigned64 )
   func_name_def( Double )
@@ -166,8 +168,10 @@ extern "C"
     fn.Def< F::Four >( Four );
     fn.Def< F::Eight >( Eight );
     fn.Def< F::Int >( Int );
+    fn.Def< F::Int16 >( Int16 );
     fn.Def< F::Int64 >( Int64 );
     fn.Def< F::Unsigned >( Unsigned );
+    fn.Def< F::Unsigned16 >( Unsigned16 );
     fn.Def< F::Unsigned64 >( Unsigned64 );
     fn.Def< F::Float >( Float );
     fn.Def< F::Double >( Double );

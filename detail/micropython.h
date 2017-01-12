@@ -211,6 +211,26 @@ namespace upywrap
   }
 
   template<>
+  struct safe_integer_caster< mp_int_t, std::int16_t >
+  {
+    static std::int16_t Convert( mp_int_t src )
+    {
+      IntegerBoundCheck< std::int16_t >( src );
+      return static_cast< std::int16_t >( src );
+    }
+  };
+
+  template<>
+  struct safe_integer_caster< mp_uint_t, std::uint16_t >
+  {
+    static std::uint16_t Convert( mp_uint_t src )
+    {
+      IntegerBoundCheck< std::uint16_t >( src );
+      return static_cast< std::uint16_t >( src );
+    }
+  };
+
+  template<>
   struct safe_integer_caster< std::int64_t, int >
   {
     static int Convert( std::int64_t src )
