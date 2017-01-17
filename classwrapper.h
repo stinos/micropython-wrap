@@ -198,11 +198,11 @@ namespace upywrap
 
     static mp_obj_t AsPyObj( native_obj_t p )
     {
-      if( type.base.type == nullptr )
-        RaiseTypeException( "Native type has not been registered" );
+      CheckTypeIsRegistered();
       auto o = m_new_obj_with_finaliser( this_type );
       o->base.type = &type;
       o->cookie = defCookie;
+      o->typeId = &typeid( T );
 #if UPYWRAP_SHAREDPTROBJ
       new( &o->obj ) native_obj_t( std::move( p ) );
 #else
@@ -213,9 +213,20 @@ namespace upywrap
 
     static ClassWrapper< T >* AsNativeObjChecked( mp_obj_t arg )
     {
-      auto native = (this_type*) arg;
-      if( native->cookie != defCookie )
-        RaiseTypeException( arg, "native class instance" );
+      auto native = (this_type*) MP_OBJ_TO_PTR( arg );
+      if( !MP_OBJ_IS_TYPE( arg, &type ) )
+      {
+        //if whatever gets passed in doesn't remotely look like an object bail out
+        //otherwise it's possible we're being passed an arbitrary 'opaque' ClassWrapper (so the cookie mathches)
+        //which has not been registered or has been registered elsewhere (e.g. another dll, hence the uPy type check failure)
+        //but if it's the same C++ type we're good to go after all
+        if( MP_OBJ_IS_SMALL_INT( arg ) || MP_OBJ_IS_QSTR( arg ) || !MP_OBJ_IS_OBJ( arg ) ||
+            native->cookie != defCookie || typeid( T ) != *native->typeId )
+        {
+          CheckTypeIsRegistered(); //since we want to access type.name
+          RaiseTypeException( arg, qstr_str( type.name ) );
+        }
+      }
       return native;
     }
 
@@ -370,6 +381,12 @@ namespace upywrap
       mp_obj_dict_store( dict, new_qstr( ( name + "_locals" ).data() ), type.locals_dict );
 
       AddFunctionToTable( FixedFuncNames::__del__(), MakeFunction( del ) );
+    }
+
+    static void CheckTypeIsRegistered()
+    {
+      if( type.base.type == nullptr )
+        RaiseTypeException( (std::string( "Native type " ) + typeid( T ).name() + " has not been registered").data() );
     }
 
     void AddFunctionToTable( const qstr name, mp_obj_t fun )
@@ -580,6 +597,7 @@ namespace upywrap
 
     mp_obj_base_t base; //must always be the first member!
     std::int64_t cookie; //we'll use this to check if a pointer really points to a ClassWrapper
+    const std::type_info* typeId; //and this will be used to check if types aren't being mixed
     native_obj_t obj;
     static mp_obj_type_t type;
     static function_ptrs functionPointers;
