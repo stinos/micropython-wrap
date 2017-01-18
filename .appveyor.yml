@@ -28,7 +28,7 @@ test_script:
 - cmd: >-
     cd ../micropython/tests
 
-    %MICROPY_CPYTHON3% run-tests -d ../../micropython-wrap/tests/py
+    %MICROPY_CPYTHON3% run-tests --keep-path -d ../../micropython-wrap/tests/py
 
 skip_tags: true
 

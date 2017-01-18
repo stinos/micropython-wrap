@@ -37,7 +37,7 @@ testsharedlib: sharedlib
 	# Only works with MicroPython windows-pyd branch, which already has the correct linker options
 	# so there's no need to add anything here.
 	$(MAKEUPY) $(UPYFLAGS)
-	cd $(MICROPYTHON_DIR)/tests && python3 run-tests -d $(CUR_DIR)/tests/py
+	cd $(MICROPYTHON_DIR)/tests && python3 run-tests --keep-path -d $(CUR_DIR)/tests/py
 
 test: teststaticlib testsharedlib
 
