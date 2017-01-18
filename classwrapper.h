@@ -22,7 +22,15 @@
 //the garbage collected object, shared_ptr's destructor is called but the object
 //is not deleted unless there are no references anymore.
 #ifndef UPYWRAP_SHAREDPTROBJ
-  #define UPYWRAP_SHAREDPTROBJ 1
+  #define UPYWRAP_SHAREDPTROBJ (1)
+#endif
+
+//Require exact type matches when converting uPy objects into native ones.
+//By default this is on in order to get proper error messages when passing mismatching types.
+//However when your application wants to passs pointers to derived classes to functions
+//taking base class pointers this has to be turned off.
+#ifndef UPYWRAP_FULLTYPECHECK
+  #define UPYWRAP_FULLTYPECHECK (1)
 #endif
 
 #include "detail/index.h"
@@ -219,9 +227,13 @@ namespace upywrap
         //if whatever gets passed in doesn't remotely look like an object bail out
         //otherwise it's possible we're being passed an arbitrary 'opaque' ClassWrapper (so the cookie mathches)
         //which has not been registered or has been registered elsewhere (e.g. another dll, hence the uPy type check failure)
-        //but if it's the same C++ type we're good to go after all
+        //but if it's the same C++ type (or that check is disabled) we're good to go after all
         if( MP_OBJ_IS_SMALL_INT( arg ) || MP_OBJ_IS_QSTR( arg ) || !MP_OBJ_IS_OBJ( arg ) ||
-            native->cookie != defCookie || typeid( T ) != *native->typeId )
+            native->cookie != defCookie
+#if UPYWRAP_FULLTYPECHECK
+            || typeid( T ) != *native->typeId
+#endif
+            )
         {
           CheckTypeIsRegistered(); //since we want to access type.name
           RaiseTypeException( arg, qstr_str( type.name ) );
