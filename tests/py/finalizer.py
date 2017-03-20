@@ -6,11 +6,16 @@ import gc
 a = 1
 b = 2
 c = 3
-d = [a] * 13
 
-def fun() :
+def allocate_some():
+  d = [a] * 100
+  e = [3] * 100
+  f = [4] * 100
+
+def fun():
   x = upywraptest.Context()
 
 fun()
+allocate_some()
 
 gc.collect()
