@@ -1,3 +1,5 @@
+image: Visual Studio 2017
+
 environment:
   MICROPY_CPYTHON3: c:/python34/python.exe
   MICROPYPATH: c:/projects/micropython/windows
