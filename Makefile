@@ -1,9 +1,9 @@
 # staticlib target: build static library from tests/module.cpp
 # sharedlib target: build shared library from tests/module.cpp
 # teststaticlib target: patch micropython to initialize and register the
-#	upywraptest module from the static libe in main
-# testsharedlib: build micropython with -rdynamic so when loading the
-#   upywraptest module it will find all symbols
+#   upywraptest module from the static lib in main
+# testsharedlib: build micropython and run tests (must use windows-pyd
+#   branch for uPy as it has -rdynamic)
 #
 # Before any lib can be built the MicroPython headers are generated.
 # Builds with MICROPY_PY_THREAD=0 to allow finaliser, see gc.c
