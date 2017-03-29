@@ -317,7 +317,7 @@ namespace upywrap
     {
       mp_obj_list_append( *List(), obj );
 
-      static const mp_uint_t maxLen = 50;
+      static const size_t maxLen = 50;
       if( (*List())->len > maxLen )
         RaiseRuntimeException( "StaticPyObjectStore: list is full" );
     }
@@ -350,10 +350,10 @@ namespace upywrap
       const auto list = *List();
       if( !list )
         RaiseRuntimeException( "StaticPyObjectStore: not initialized" );
-      mp_uint_t len;
+      size_t len;
       mp_obj_t* items;
       mp_obj_list_get( list, &len, &items );
-      for( mp_uint_t i = 0 ; i < len ; ++i )
+      for( size_t i = 0 ; i < len ; ++i )
         if( items[ i ] == obj )
           return true;
       return false;

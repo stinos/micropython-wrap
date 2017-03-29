@@ -30,7 +30,7 @@ namespace upywrap
     }
     else if( MP_OBJ_IS_TYPE( obj, &mp_type_list ) )
     {
-      mp_uint_t len;
+      size_t len;
       mp_obj_t* items;
       mp_obj_get_array( obj, &len, &items );
       if( !len )

@@ -230,9 +230,9 @@ namespace upywrap
   {
     static std::string Convert( mp_obj_t arg )
     {
-      mp_uint_t len;
+      size_t len;
       auto chars = mp_obj_str_get_data( arg, &len );
-      return std::string( chars, safe_integer_cast< size_t >( len ) );
+      return std::string( chars, len );
     }
   };
 
@@ -252,10 +252,10 @@ namespace upywrap
 
     static vec_type Convert( mp_obj_t arg )
     {
-      mp_uint_t len;
+      size_t len;
       mp_obj_t* items;
       mp_obj_get_array( arg, &len, &items ); //works for list and tuple
-      vec_type ret( safe_integer_cast< size_t >( len ) );
+      vec_type ret( len );
       std::transform( items, items + len, ret.begin(), SelectFromPyObj< T >::type::Convert );
       return ret;
     }
@@ -272,7 +272,7 @@ namespace upywrap
       const auto dict = static_cast< mp_obj_dict_t* >( MP_OBJ_TO_PTR( arg ) );
       const auto map = &dict->map;
       //this is basically dict_iter_next but that isn't exposed as an API method
-      for( mp_uint_t i = 0 ; i < map->alloc ; ++i )
+      for( size_t i = 0 ; i < map->alloc ; ++i )
       {
         if( MP_MAP_SLOT_IS_FILLED( map, i ) )
         {
@@ -291,10 +291,10 @@ namespace upywrap
 
     static tuple_type Convert( mp_obj_t arg )
     {
-      mp_uint_t len;
+      size_t len;
       mp_obj_t* items;
       mp_obj_get_array( arg, &len, &items );
-      if( len != safe_integer_cast< mp_uint_t >( sizeof...( A ) ) )
+      if( len != sizeof...( A ) )
         RaiseTypeException( "Not enough tuple elements" );
       return make_it( items, make_index_sequence< sizeof...( A ) >() );
     }

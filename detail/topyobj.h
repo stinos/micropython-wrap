@@ -154,7 +154,7 @@ namespace upywrap
   {
     static mp_obj_t Convert( const std::string& a )
     {
-      return mp_obj_new_str( reinterpret_cast< const char* >( a.data() ), safe_integer_cast< uint >( a.length() ), false );
+      return mp_obj_new_str( reinterpret_cast< const char* >( a.data() ), a.length(), false );
     }
   };
 
@@ -163,7 +163,7 @@ namespace upywrap
   {
     static mp_obj_t Convert( const char* a )
     {
-      return mp_obj_new_str( a, safe_integer_cast< uint >( ::strlen( a ) ), false );
+      return mp_obj_new_str( a, ::strlen( a ), false );
     }
   };
 
@@ -175,7 +175,7 @@ namespace upywrap
       const auto numItems = a.size();
       std::vector< mp_obj_t > items( numItems );
       std::transform( a.cbegin(), a.cend(), items.begin(), SelectToPyObj< T >::type::Convert );
-      return mp_obj_new_list( safe_integer_cast< uint >( numItems ), items.data() );
+      return mp_obj_new_list( numItems, items.data() );
     }
   };
 
@@ -185,7 +185,7 @@ namespace upywrap
     static mp_obj_t Convert( const std::map< K, V >& a )
     {
       const auto numItems = a.size();
-      auto dict = mp_obj_new_dict( safe_integer_cast< uint >( numItems ) );
+      auto dict = mp_obj_new_dict( numItems );
       std::for_each( a.cbegin(), a.cend(), [&dict] ( decltype( *a.cbegin() )& p )
       {
         mp_obj_dict_store( dict, SelectToPyObj< K >::type::Convert( p.first ), SelectToPyObj< V >::type::Convert( p.second ) );
@@ -218,7 +218,7 @@ namespace upywrap
       const auto numItems = sizeof...( A );
       detail::AddConvertedToVec addtoVec;
       apply( addtoVec, a );
-      return mp_obj_new_tuple( safe_integer_cast< uint >( numItems ), addtoVec.items.data() );
+      return mp_obj_new_tuple( numItems, addtoVec.items.data() );
     }
   };
 
