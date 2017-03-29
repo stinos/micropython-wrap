@@ -284,10 +284,10 @@ namespace upywrap
     }
   };
 
-  template< class... A >
-  struct FromPyObj< std::tuple< A... > > : std::true_type
+  template< template < class... > class TupleLike, class... A >
+  struct TupleFromPyObj
   {
-    typedef std::tuple< A... > tuple_type;
+    using tuple_type = TupleLike< A... >;
 
     static tuple_type Convert( mp_obj_t arg )
     {
@@ -302,22 +302,18 @@ namespace upywrap
     template< size_t... Indices >
     static tuple_type make_it( const mp_obj_t* args, index_sequence< Indices... > )
     {
-      return std::make_tuple( SelectFromPyObj< A >::type::Convert( args[ Indices ] )... );
+      return tuple_type( SelectFromPyObj< A >::type::Convert( args[ Indices ] )... );
     }
   };
 
-  template< class A, class B >
-  struct FromPyObj< std::pair< A, B > > : std::true_type
+  template< class... A >
+  struct FromPyObj< std::tuple< A... > > : TupleFromPyObj< std::tuple, A... >, std::true_type
   {
-    static std::pair< A, B > Convert( mp_obj_t arg )
-    {
-      mp_uint_t len;
-      mp_obj_t* items;
-      mp_obj_get_array( arg, &len, &items );
-      if( len != 2 )
-        RaiseTypeException( "Pair needs 2 tuple elements" );
-      return std::make_pair( SelectFromPyObj< A >::type::Convert( items[ 0 ] ), SelectFromPyObj< B >::type::Convert( items[ 1 ] ) );
-    }
+  };
+
+  template< class A, class B >
+  struct FromPyObj< std::pair< A, B > > : TupleFromPyObj< std::pair, A, B >, std::true_type
+  {
   };
 
   namespace detail
