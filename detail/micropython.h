@@ -116,9 +116,27 @@ namespace upywrap
     }
   };
 
+  /**
+    * Use in place of mp_obj_new_exception_msg if no printf-like formatting is needed.
+    * mp_obj_new_exception_msg forwards to mp_obj_new_exception_msg_varg but that has the unwanted
+    * side effect that if the message happens to contain '%' it is passed to vstr_vprintf which then asserts
+    * because of invalid format specifiers etc.
+    */
+  inline mp_obj_t RaiseException( const mp_obj_type_t *exc_type, const char *msg )
+  {
+    mp_obj_exception_t* o = m_new_obj_var( mp_obj_exception_t, mp_obj_t, 0 );
+    if( !o )
+      throw std::bad_alloc();
+    o->base.type = exc_type;
+    o->traceback_data = nullptr;
+    o->args = reinterpret_cast< mp_obj_tuple_t* >( MP_OBJ_TO_PTR( mp_obj_new_tuple( 1, nullptr ) ) );
+    o->args->items[ 0 ] = mp_obj_new_str( msg, strlen( msg ), false );
+    nlr_raise( MP_OBJ_FROM_PTR( o ) );
+  }
+
   inline void RaiseTypeException( const char* msg )
   {
-    nlr_raise( mp_obj_new_exception_msg( &mp_type_TypeError, msg ) );
+    RaiseException( &mp_type_TypeError, msg );
   }
 
   inline void RaiseTypeException( mp_const_obj_t source, const char* target )
@@ -133,12 +151,12 @@ namespace upywrap
 
   inline mp_obj_t RaiseOverflowException( const char* msg )
   {
-    nlr_raise( mp_obj_new_exception_msg( &mp_type_OverflowError, msg ) );
+    return RaiseException( &mp_type_OverflowError, msg );
   }
 
   inline mp_obj_t RaiseRuntimeException( const char* msg )
   {
-    nlr_raise( mp_obj_new_exception_msg( &mp_type_RuntimeError, msg ) );
+    return RaiseException( &mp_type_RuntimeError, msg );
   }
 
 #ifdef UPYWRAP_NOEXCEPTIONS
