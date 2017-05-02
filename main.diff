@@ -1,6 +1,6 @@
 --- main.c	2016-12-12 12:05:52.253531000 +0100
 +++ main2.c	2016-12-12 12:26:37.029896500 +0100
-@@ -400,6 +400,9 @@
+@@ -417,6 +417,9 @@
      return main_(argc, argv);
  }
  
@@ -10,12 +10,12 @@
  MP_NOINLINE int main_(int argc, char **argv) {
      mp_stack_set_limit(40000 * (BYTES_PER_WORD / 4));
  
-@@ -412,6 +415,8 @@
+@@ -441,6 +443,8 @@
  
      mp_init();
  
 +    mp_module_register(qstr_from_str("upywraptest"), init_upywraptest());
 +
-     // create keyboard interrupt object
-     MP_STATE_VM(keyboard_interrupt_obj) = mp_obj_new_exception(&mp_type_KeyboardInterrupt);
+     char *home = getenv("HOME");
+     char *path = getenv("MICROPYPATH");
  

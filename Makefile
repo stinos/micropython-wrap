@@ -31,13 +31,13 @@ teststaticlib: staticlib
 	cd $(MICROPYTHON_DIR)/unix && patch -i $(CUR_DIR)/main.diff
 	$(MAKEUPY) $(UPYFLAGS) LDFLAGS_MOD="$(CUR_DIR)/tests/libupywraptest.a -ldl -lstdc++"
 	cd $(MICROPYTHON_DIR)/unix && patch -R -i $(CUR_DIR)/main.diff
-	cd $(MICROPYTHON_DIR)/tests && python3 run-tests -d $(CUR_DIR)/tests/py
+	cd $(MICROPYTHON_DIR)/tests && python3 ./run-tests -d $(CUR_DIR)/tests/py
 
 testsharedlib: sharedlib
 	# Only works with MicroPython windows-pyd branch, which already has the correct linker options
 	# so there's no need to add anything here.
 	$(MAKEUPY) $(UPYFLAGS)
-	cd $(MICROPYTHON_DIR)/tests && python3 run-tests --keep-path -d $(CUR_DIR)/tests/py
+	cd $(MICROPYTHON_DIR)/tests && python3 ./run-tests --keep-path -d $(CUR_DIR)/tests/py
 
 test: teststaticlib testsharedlib
 
