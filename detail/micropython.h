@@ -26,6 +26,7 @@ extern "C"
 #include <cmath>
 #include <cstdint>
 #include <memory>
+#include <cstring>
 #include <type_traits>
 
 namespace upywrap
@@ -130,7 +131,7 @@ namespace upywrap
     o->base.type = exc_type;
     o->traceback_data = nullptr;
     o->args = reinterpret_cast< mp_obj_tuple_t* >( MP_OBJ_TO_PTR( mp_obj_new_tuple( 1, nullptr ) ) );
-    o->args->items[ 0 ] = mp_obj_new_str( msg, strlen( msg ), false );
+    o->args->items[ 0 ] = mp_obj_new_str( msg, std::strlen( msg ), false );
     nlr_raise( MP_OBJ_FROM_PTR( o ) );
   }
 
