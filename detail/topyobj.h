@@ -1,6 +1,7 @@
 #ifndef MICROPYTHON_WRAP_DETAIL_TOPYOBJ_H
 #define MICROPYTHON_WRAP_DETAIL_TOPYOBJ_H
 
+#include "util.h"
 #include "micropython.h"
 #include <string>
 #include <vector>
