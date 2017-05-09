@@ -12,7 +12,6 @@
 #include "qualifier.h"
 #include "nargs.h"
 #include "numeric.h"
-#include "tmap.h"
 using namespace upywrap;
 
 struct F
@@ -175,7 +174,6 @@ extern "C"
     fn.Def< F::Unsigned64 >( Unsigned64 );
     fn.Def< F::Float >( Float );
     fn.Def< F::Double >( Double );
-    fn.Def< F::UseTypeMap >( UseTypeMap );
 
     fn.Def< F::TestVariables >( TestVariables );
 
