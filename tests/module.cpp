@@ -109,6 +109,9 @@ extern "C"
     wrap1.Def< F::Plus >( &Simple::Plus );
     wrap1.Def< F::SimpleFunc >( SimpleFunc );
     wrap1.Property( "val", &Simple::SetValue, &Simple::Value );
+    wrap1.StoreClassVariable( "x", 0 );
+    wrap1.StoreClassVariable( "y", 0.0 );
+    wrap1.StoreClassVariable( "z", std::string( "z" ) );
 
     upywrap::ClassWrapper< Context > wrap2( "Context", mod );
     wrap2.DefInit<>();

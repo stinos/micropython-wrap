@@ -27,6 +27,10 @@ print( hash( simple1 ) == hash( simple1 ) )
 print( hasattr( simple1, 'Something' ) )
 print( hasattr( simple1, 'val' ) )
 
+print( upywraptest.Simple.x )
+print( upywraptest.Simple.y )
+print( upywraptest.Simple.z )
+
 try:
   simple1.Plus( 1 )
 except TypeError:

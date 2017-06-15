@@ -100,6 +100,12 @@ namespace upywrap
       }
     }
 
+    template< class A >
+    void StoreClassVariable( const char* name, const A& value )
+    {
+      mp_obj_dict_store( MP_OBJ_FROM_PTR( type.locals_dict ), new_qstr( name ), SelectToPyObj< A >::type::Convert( value ) );
+    }
+
     template< index_type name, class Ret, class... A >
     void Def( Ret( *f ) ( T*, A... ), typename SelectRetvalConverter< Ret >::type conv = nullptr )
     {
