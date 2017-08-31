@@ -362,7 +362,7 @@ namespace upywrap
       }
     }
 
-    static mp_obj_t binary_op( mp_uint_t op, mp_obj_t self_in, mp_obj_t other_in )
+    static mp_obj_t binary_op( mp_binary_op_t op, mp_obj_t self_in, mp_obj_t other_in )
     {
       auto self = (this_type*) self_in;
       auto other = (this_type*) other_in;
