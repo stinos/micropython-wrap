@@ -52,6 +52,7 @@ struct F
   func_name_def( ConstReference )
   func_name_def( ReturnPointer )
   func_name_def( ReturnReference )
+  func_name_def( ReturnConstReference )
   func_name_def( ReturnSharedPointer )
   func_name_def( ReturnValue )
   func_name_def( Get )
@@ -193,6 +194,7 @@ extern "C"
     fn.Def< F::ReturnBuiltinPointer >( ReturnBuiltinPointer );
     fn.Def< F::ReturnBuiltinReference >( ReturnBuiltinReference );
     fn.Def< F::ReturnValue >( ReturnValue );
+    fn.Def< F::ReturnConstReference >( ReturnConstReference );
 #endif
 
     return mod;

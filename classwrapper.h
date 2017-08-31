@@ -735,6 +735,16 @@ namespace upywrap
 #endif
 
   template< class T >
+  struct ClassToPyObj< const T& >
+  {
+    static mp_obj_t Convert( const T& p )
+    {
+      static_assert( false, "Conversion from const reference to ClassWrapper is not allowed since the const-ness cannot be guaranteed" );
+      return mp_const_none;
+    }
+  };
+
+  template< class T >
   struct ClassToPyObj< T& >
   {
     static mp_obj_t Convert( T& p )

@@ -145,6 +145,11 @@ namespace upywrap
     return *a;
   }
 
+  const Q& ReturnConstReference( const Q& a ) //not supported
+  {
+    return a;
+  }
+
   std::shared_ptr< Q > ReturnSharedPointer()
   {
     return std::make_shared< Q >();

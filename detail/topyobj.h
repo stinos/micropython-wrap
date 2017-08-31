@@ -275,7 +275,7 @@ namespace upywrap
   struct SelectToPyObj
   {
     typedef ToPyObj< typename remove_all< T >::type > builtin_type;
-    typedef ClassToPyObj< typename remove_all_const< T >::type > class_type;
+    typedef ClassToPyObj< T > class_type;
 
     typedef typename std::conditional< builtin_type::value, IsSupportedToPyObjQualifier< T >, std::true_type >::type is_valid_builtinq;
     static_assert( is_valid_builtinq::value, "Unsupported qualifier for builtin uPy types (must be returned by value)" );
