@@ -41,3 +41,10 @@ def Take4( a, b, c, d ):
 
 print( upywraptest.Func8( upywraptest.Func7 ) )
 print( upywraptest.Func8( Take4 ) )
+
+print(upywraptest.IsEmptyFunction(None))
+
+def ModifyNative(s):
+  s.val = 45
+
+print(upywraptest.CallbackWithNativeArg(ModifyNative))

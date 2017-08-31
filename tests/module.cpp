@@ -31,6 +31,8 @@ struct F
   func_name_def( Func6 )
   func_name_def( Func7 )
   func_name_def( Func8 )
+  func_name_def( IsEmptyFunction )
+  func_name_def( CallbackWithNativeArg )
   func_name_def( BuiltinValue )
   func_name_def( BuiltinConstValue )
   func_name_def( BuiltinReference )
@@ -143,6 +145,8 @@ extern "C"
     fn.Def< F::Func6 >( Func6 );
     fn.Def< F::Func7 >( Func7 );
     fn.Def< F::Func8 >( Func8 );
+    fn.Def< F::IsEmptyFunction >( IsEmptyFunction );
+    fn.Def< F::CallbackWithNativeArg >( CallbackWithNativeArg );
     fn.Def< F::BuiltinValue >( BuiltinValue );
     fn.Def< F::BuiltinConstValue >( BuiltinConstValue );
     fn.Def< F::BuiltinConstReference >( BuiltinConstReference );

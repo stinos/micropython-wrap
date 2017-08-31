@@ -1,6 +1,7 @@
 #ifndef MICROPYTHON_WRAP_TESTS_FUNCTION_H
 #define MICROPYTHON_WRAP_TESTS_FUNCTION_H
 
+#include "class.h"
 #include <functional>
 #include <iostream>
 
@@ -44,6 +45,18 @@ namespace upywrap
   int Func8( std::function< int( int, int, int, int ) > a )
   {
     return a( 1, 2, 3, 4 );
+  }
+
+  bool IsEmptyFunction( std::function< void() > f )
+  {
+    return !f;
+  }
+
+  int CallbackWithNativeArg( std::function< void( Simple& ) > callback )
+  {
+    Simple s( 32 );
+    callback( s );
+    return s.Value();
   }
 }
 
