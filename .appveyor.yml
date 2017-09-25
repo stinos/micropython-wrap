@@ -2,7 +2,7 @@ image: Visual Studio 2017
 
 environment:
   MICROPY_CPYTHON3: c:/python34/python.exe
-  MICROPYPATH: c:/projects/micropython/windows
+  MICROPYPATH: c:/projects/micropython/ports/windows
 
 init:
   # Set build version number to commit to be travis-like
@@ -20,9 +20,9 @@ build_script:
 - cmd: >-
     git clone -q --depth 10 --branch=windows-pyd https://github.com/stinos/micropython ../micropython
 
-    msbuild ../micropython/windows/micropythoncore.vcxproj /p:platform=%platform%;configuration=%configuration%
+    msbuild ../micropython/ports/windows/micropythoncore.vcxproj /p:platform=%platform%;configuration=%configuration%
 
-    msbuild ../micropython/windows/micropython.vcxproj /p:platform=%platform%;configuration=%configuration%
+    msbuild ../micropython/ports/windows/micropython.vcxproj /p:platform=%platform%;configuration=%configuration%
 
     msbuild micropython-wrap.vcxproj /p:platform=%platform%;configuration=%configuration%
 

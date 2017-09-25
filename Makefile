@@ -10,8 +10,8 @@
 
 CUR_DIR = $(shell pwd)
 MICROPYTHON_DIR = ../micropython
-CPPFLAGS = -Wall -Werror -std=c++11 -I$(MICROPYTHON_DIR) -I$(MICROPYTHON_DIR)/py -I$(MICROPYTHON_DIR)/unix -I$(MICROPYTHON_DIR)/unix/build -DMICROPY_PY_THREAD=0
-MAKEUPY = make -C $(MICROPYTHON_DIR)/unix
+CPPFLAGS = -Wall -Werror -std=c++11 -I$(MICROPYTHON_DIR) -I$(MICROPYTHON_DIR)/py -I$(MICROPYTHON_DIR)/ports/unix -I$(MICROPYTHON_DIR)/ports/unix/build -DMICROPY_PY_THREAD=0
+MAKEUPY = make -C $(MICROPYTHON_DIR)/ports/unix
 UPYFLAGS = MICROPY_PY_BTREE=0 MICROPY_PY_FFI=0 MICROPY_PY_USSL=0 MICROPY_PY_AXTLS=0 MICROPY_FATFS=0 MICROPY_PY_THREAD=0
 
 upyhdr:
@@ -28,9 +28,9 @@ sharedlib: upyhdr
 	cp tests/libupywraptest.so ~/.micropython/lib/upywraptest.so
 
 teststaticlib: staticlib
-	cd $(MICROPYTHON_DIR)/unix && patch -i $(CUR_DIR)/main.diff
+	cd $(MICROPYTHON_DIR)/ports/unix && patch -i $(CUR_DIR)/main.diff
 	$(MAKEUPY) $(UPYFLAGS) LDFLAGS_MOD="$(CUR_DIR)/tests/libupywraptest.a -ldl -lstdc++"
-	cd $(MICROPYTHON_DIR)/unix && patch -R -i $(CUR_DIR)/main.diff
+	cd $(MICROPYTHON_DIR)/ports/unix && patch -R -i $(CUR_DIR)/main.diff
 	cd $(MICROPYTHON_DIR)/tests && python3 ./run-tests -d $(CUR_DIR)/tests/py
 
 testsharedlib: sharedlib
@@ -42,4 +42,4 @@ testsharedlib: sharedlib
 test: teststaticlib testsharedlib
 
 clean:
-	rm tests/*.o tests/*.a tests/*.so $(MICROPYTHON_DIR)/unix/micropython
+	rm tests/*.o tests/*.a tests/*.so $(MICROPYTHON_DIR)/ports/unix/micropython
