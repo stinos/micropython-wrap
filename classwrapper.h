@@ -739,7 +739,7 @@ namespace upywrap
   {
     static mp_obj_t Convert( const T& p )
     {
-      static_assert( false, "Conversion from const reference to ClassWrapper is not allowed since the const-ness cannot be guaranteed" );
+      static_assert( !std::is_same< T, T >::value, "Conversion from const reference to ClassWrapper is not allowed since the const-ness cannot be guaranteed" );
       return mp_const_none;
     }
   };
