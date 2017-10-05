@@ -6,16 +6,9 @@
 #endif
 extern "C"
 {
-  #include <py/mpconfig.h>
-  #include <py/misc.h>
-  #include <py/qstr.h>
-  #include <py/nlr.h>
-  #include <py/obj.h>
+  #include <py/runtime.h>
   #include <py/objfun.h>
   #include <py/objmodule.h>
-  #include <py/runtime.h>
-  #include <py/runtime0.h>
-  #include <py/mpz.h>
   #include <py/objint.h>
 }
 #ifdef _MSC_VER
