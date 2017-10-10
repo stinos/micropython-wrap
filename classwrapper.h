@@ -371,6 +371,24 @@ namespace upywrap
       return ToPyObj< bool >::Convert( self->GetPtr() == other->GetPtr() );
     }
 
+    static void instance_print( const mp_print_t* print, mp_obj_t self_in, mp_print_kind_t kind )
+    {
+      auto self = (this_type*) self_in;
+      mp_obj_t member[ 2 ] = { MP_OBJ_NULL };
+      load_attr( self_in, ( kind == PRINT_STR ) ? MP_QSTR___str__ : MP_QSTR___repr__, member );
+      if( member[ 0 ] == MP_OBJ_NULL && kind == PRINT_STR )
+      {
+        load_attr( self_in, MP_QSTR___repr__, member );  //fall back to __repr__ if __str__ not found
+      }
+      if( member[ 0 ] != MP_OBJ_NULL )
+      {
+        mp_obj_t r = mp_call_function_1( member[ 0 ], self_in );
+        mp_obj_print_helper( print, r, PRINT_STR );
+        return;
+      }
+      mp_printf( print, "<%s object at %p>", mp_obj_get_type_str( self_in ), self );
+    }
+
     static mp_obj_t del( mp_obj_t self_in )
     {
       auto self = (this_type*) self_in;
@@ -392,6 +410,7 @@ namespace upywrap
       type.attr = attr;
       type.binary_op = binary_op;
       type.unary_op = mp_generic_unary_op;
+      type.print = instance_print;
 
       mp_obj_dict_store( dict, new_qstr( qname ), &type );
       //store our dict in the module's dict so it's reachable by the GC mark phase,
@@ -751,6 +770,20 @@ namespace upywrap
     {
       return ClassWrapper< T >::AsPyObj( &p, false );
     }
+  };
+
+  /**
+    * Declare a bunch of common special method names.
+    */
+  struct special_methods
+  {
+    func_name_def( __str__ )
+    func_name_def( __repr__ )
+    func_name_def( __bytes__ )
+    func_name_def( __format__ )
+    func_name_def( __iter__ )
+    func_name_def( __next__ )
+    func_name_def( __reversed__ )
   };
 }
 

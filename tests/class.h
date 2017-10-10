@@ -1,6 +1,8 @@
 #ifndef MICROPYTHON_WRAP_TESTS_CLASS_H
 #define MICROPYTHON_WRAP_TESTS_CLASS_H
 
+#include <string>
+
 namespace upywrap
 {
   class Simple
@@ -29,6 +31,11 @@ namespace upywrap
     void Plus( Simple* rh )
     {
       a += rh->a;
+    }
+
+    std::string Str() const
+    {
+      return "Simple " + std::to_string( a );
     }
 
   private:
