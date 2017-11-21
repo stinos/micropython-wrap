@@ -155,7 +155,7 @@ namespace upywrap
   {
     static mp_obj_t Convert( const std::string& a )
     {
-      return mp_obj_new_str( reinterpret_cast< const char* >( a.data() ), a.length(), false );
+      return mp_obj_new_str( reinterpret_cast< const char* >( a.data() ), a.length() );
     }
   };
 
@@ -164,7 +164,7 @@ namespace upywrap
   {
     static mp_obj_t Convert( const char* a )
     {
-      return mp_obj_new_str( a, ::strlen( a ), false );
+      return mp_obj_new_str( a, ::strlen( a ) );
     }
   };
 
