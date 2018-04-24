@@ -33,6 +33,14 @@ namespace upywrap
     * latter doesn't raise an exception itself since it is outside of the nlr_push/pop.
     * Returns true if no exception was raised.
     */
+#ifdef _MSC_VER
+  //In release builds the compiler/optimizer sometimes is able to figure
+  //out the call to ex() will lead to this code never being reached in cases
+  //where ex() contains nlr_jump or a throw statement.
+  //Moreover, disabling this warning only works for VS2013 when this pragma is
+  //outside of the function.
+  #pragma warning ( disable : 4702 )
+#endif
   template< class Call, class HandleEx >
   bool WrapMicroPythonCall( Call f, HandleEx ex )
   {
@@ -55,6 +63,30 @@ namespace upywrap
   #pragma warning ( default : 4611 )
 #endif
   }
+#ifdef _MSC_VER
+  #pragma warning ( default : 4702 )
+#endif
+
+  /**
+    * Provide scopeguard-like functionality (for nlr_raise, not for C++ exceptions) by
+    * wrapping a uPy function Call using nlr_push/nlr_pop, and assure that no matter if
+    * an exception got raised or not, the 'guard' function g gets called.
+    * Returns the value f returns, though that point will not get reached when f raises an exception.
+    */
+  template< class Call, class Guard >
+  mp_obj_t GuardMicroPythonCall( Call f, Guard g )
+  {
+    mp_obj_t returnValue;
+    auto exceptionHandler = [&] ( void* exception )
+    {
+      g();
+      nlr_jump( exception ); //re-raise
+    };
+    WrapMicroPythonCall( [&] () { returnValue = f(); }, exceptionHandler );
+    g();
+    return returnValue;
+  }
+
 }
 
 #endif //#ifndef MICROPYTHON_WRAP_UTIL_H
