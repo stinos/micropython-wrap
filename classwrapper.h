@@ -404,7 +404,7 @@ namespace upywrap
     {
       const auto qname = qstr_from_str( name.data() );
       type.base.type = &mp_type_type;
-      type.name = qname;
+      type.name = static_cast< decltype( type.name ) >( qname );
       type.locals_dict = (mp_obj_dict_t*) mp_obj_new_dict( 0 );
       type.make_new = nullptr;
       type.attr = attr;
