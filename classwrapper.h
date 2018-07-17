@@ -212,6 +212,7 @@ namespace upywrap
 
     static mp_obj_t AsPyObj( native_obj_t p )
     {
+      assert( p );
       CheckTypeIsRegistered();
       auto o = m_new_obj_with_finaliser( this_type );
       o->base.type = &type;
@@ -748,6 +749,12 @@ namespace upywrap
   {
     static mp_obj_t Convert( std::shared_ptr< T > p )
     {
+      //Allow empty pointers, but don't convert them into ClassWrapper instances,
+      //since trying to call functions on it would result in access violation anyway.
+      //Return None instead which is either useful (e.g. used as 'optional' return value),
+      //or will lead to an actual Python exception when used anyway.
+      if( !p )
+        return mp_const_none;
       return ClassWrapper< T >::AsPyObj( std::move( p ) );
     }
   };

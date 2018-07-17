@@ -46,3 +46,8 @@ try:
   simple1.Plus( upywraptest.NargsTest() )
 except TypeError:
   print( 'TypeError' )
+
+try:
+  simple1.SimpleFunc( None )
+except Exception:
+  print('TypeError')

@@ -54,6 +54,7 @@ struct F
   func_name_def( ReturnReference )
   func_name_def( ReturnConstReference )
   func_name_def( ReturnSharedPointer )
+  func_name_def( ReturnNullPtr )
   func_name_def( ReturnValue )
   func_name_def( Get )
   func_name_def( Address )
@@ -164,6 +165,7 @@ extern "C"
     fn.Def< F::ConstReference >( ConstReference );
     fn.Def< F::ReturnReference >( ReturnReference );
     fn.Def< F::ReturnSharedPointer >( ReturnSharedPointer );
+    fn.Def< F::ReturnNullPtr >( ReturnNullPtr );
     fn.Def< F::HasExceptions >( HasExceptions );
 #ifndef UPYWRAP_NOEXCEPTIONS
     fn.Def< F::Throw >( Throw );

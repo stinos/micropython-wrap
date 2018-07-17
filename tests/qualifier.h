@@ -155,6 +155,11 @@ namespace upywrap
     return std::make_shared< Q >();
   }
 
+  std::shared_ptr< Q > ReturnNullPtr()
+  {
+    return nullptr;
+  }
+
 }
 
 #endif //#ifndef MICROPYTHON_WRAP_TESTS_QUALIFIER_H
