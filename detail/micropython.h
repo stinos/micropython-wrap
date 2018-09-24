@@ -70,9 +70,7 @@ namespace upywrap
   {
     auto o = m_new_obj( mp_obj_fun_builtin_var_t );
     o->base.type = &mp_type_fun_builtin_var;
-    o->is_kw = false;
-    o->n_args_min = numArgs;
-    o->n_args_max = numArgs;
+    o->sig = static_cast< uint32_t >( MP_OBJ_FUN_MAKE_SIG( numArgs, numArgs, false ) );
     o->fun.var = fun;
     return o;
   }
