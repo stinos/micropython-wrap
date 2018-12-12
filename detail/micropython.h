@@ -109,12 +109,10 @@ namespace upywrap
   };
 
   /**
-    * Use in place of mp_obj_new_exception_msg if no printf-like formatting is needed.
-    * mp_obj_new_exception_msg forwards to mp_obj_new_exception_msg_varg but that has the unwanted
-    * side effect that if the message happens to contain '%' it is passed to vstr_vprintf which then asserts
-    * because of invalid format specifiers etc.
+    * Use in place of mp_obj_new_exception_msg if the message string needs to be copied
+    * (mp_obj_new_exception_msg assumes the message passed to it is in ROM so just stores the char pointer)
     */
-  inline mp_obj_t RaiseException( const mp_obj_type_t *exc_type, const char *msg )
+  inline mp_obj_t RaiseException( const mp_obj_type_t* exc_type, const char* msg )
   {
     mp_obj_exception_t* o = m_new_obj_var( mp_obj_exception_t, mp_obj_t, 0 );
     if( !o )
