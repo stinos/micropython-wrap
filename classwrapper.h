@@ -271,7 +271,6 @@ namespace upywrap
     {
       func_name_def( Init )
       func_name_def( Exit )
-      func_name_def( __del__ )
     };
 
     T* GetPtr()
@@ -418,7 +417,7 @@ namespace upywrap
       //or in other words: prevent the GC from sweeping it!!
       mp_obj_dict_store( dict, new_qstr( ( name + "_locals" ).data() ), type.locals_dict );
 
-      AddFunctionToTable( FixedFuncNames::__del__(), MakeFunction( del ) );
+      AddFunctionToTable( MP_QSTR___del__, MakeFunction( del ) );
     }
 
     static void CheckTypeIsRegistered()
