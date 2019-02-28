@@ -118,6 +118,14 @@ extern "C"
     wrap1.StoreClassVariable( "y", 0.0 );
     wrap1.StoreClassVariable( "z", std::string( "z" ) );
 
+    upywrap::ClassWrapper< NewSimple > wrapNewSimple( "Simple2", mod );
+    wrapNewSimple.DefInit( ConstructNewSimple );
+    wrapNewSimple.Def< F::Value >( &NewSimple::Value );
+
+    upywrap::ClassWrapper< SharedSimple > wrapSharedSimple( "Simple3", mod );
+    wrapSharedSimple.DefInit( ConstructSharedSimple );
+    wrapSharedSimple.Def< F::Value >( &SharedSimple::Value );
+
     upywrap::ClassWrapper< Context > wrap2( "Context", mod );
     wrap2.DefInit<>();
     wrap2.DefExit( &Context::Dispose );

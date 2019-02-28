@@ -194,14 +194,22 @@ namespace upywrap
     template< class... A >
     void DefInit()
     {
-      DefInit( ConstructorFactoryFunc< T, A... > );
+      DefInit( ConstructorFactoryFunc< A... > );
     }
 
     template< class... A >
     void DefInit( T*( *f ) ( A... ) )
     {
-      InitImpl< FixedFuncNames::Init, decltype( f ), A... >( f );
+      InitImpl< FixedFuncNames::Init, decltype( f ), T*, A... >( f );
     }
+
+#if UPYWRAP_SHAREDPTROBJ
+    template< class... A >
+    void DefInit( std::shared_ptr< T >( *f ) ( A... ) )
+    {
+      InitImpl< FixedFuncNames::Init, decltype( f ), std::shared_ptr< T >, A... >( f );
+    }
+#endif
 
     void DefExit( void( T::*f ) () )
     {
@@ -285,18 +293,31 @@ namespace upywrap
       func_name_def( Exit )
     };
 
-    T* GetPtr()
-    {
 #if UPYWRAP_SHAREDPTROBJ
-      return obj.get();
-#else
-      return obj;
-#endif
+    template< class... Args >
+    static std::shared_ptr< T > ConstructorFactoryFunc( Args... args )
+    {
+      return std::make_shared< T >( std::forward< Args >( args )... );
     }
 
-#if UPYWRAP_SHAREDPTROBJ
+    T* GetPtr()
+    {
+      return obj.get();
+    }
+
     static void NoDelete( T* )
     {
+    }
+#else
+    template< class... Args >
+    static T* ConstructorFactoryFunc( Args... args )
+    {
+      return new T( std::forward< Args >( args )... );
+    }
+
+    T* GetPtr()
+    {
+      return obj;
     }
 #endif
 
@@ -471,10 +492,10 @@ namespace upywrap
       getters[ qstr_from_str( name ) ] = new NativeGetterCall< A >( f );
     }
 
-    template< index_type name, class Fun, class... A >
+    template< index_type name, class Fun, class Ret, class... A >
     void InitImpl( Fun f )
     {
-      typedef NativeMemberCall< name, T*, A... > call_type;
+      typedef NativeMemberCall< name, Ret, A... > call_type;
       functionPointers[ (void*) name ] = call_type::CreateCaller( f );
       type.make_new = call_type::MakeNew;
     }
@@ -545,7 +566,7 @@ namespace upywrap
     struct NativeMemberCall
     {
       typedef InstanceFunctionCall< T, Ret, A... > call_type;
-      typedef FunctionCall< T*, A... > init_call_type;
+      typedef FunctionCall< Ret, A... > init_call_type;
       typedef typename call_type::func_type func_type;
       typedef typename call_type::byref_func_type byref_func_type;
       typedef typename call_type::byconstref_func_type byconstref_func_type;
@@ -603,7 +624,7 @@ namespace upywrap
           RaiseTypeException( "Wrong number of arguments for constructor" );
         auto f = (init_call_type*) this_type::functionPointers[ (void*) index ];
         UPYWRAP_TRY
-        return AsPyObj( Apply( f, args, make_index_sequence< sizeof...( A ) >() ), true );
+        return AsPyObj( native_obj_t( Apply( f, args, make_index_sequence< sizeof...( A ) >() ) ) );
         UPYWRAP_CATCH
       }
 
@@ -626,7 +647,7 @@ namespace upywrap
       }
 
       template< size_t... Indices >
-      static T* Apply( init_call_type* f, const mp_obj_t* args, index_sequence< Indices... > )
+      static Ret Apply( init_call_type* f, const mp_obj_t* args, index_sequence< Indices... > )
       {
         (void) args;
         return f->Call( SelectFromPyObj< A >::type::Convert( args[ Indices ] )... );

@@ -51,3 +51,6 @@ try:
   simple1.SimpleFunc( None )
 except Exception:
   print('TypeError')
+
+print(upywraptest.Simple2(10).Value())
+print(upywraptest.Simple3(20).Value())

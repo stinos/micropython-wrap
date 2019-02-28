@@ -48,20 +48,6 @@ namespace upywrap
     typedef B type;
   };
 
-  //Generic new/constructor caller
-  template< class T, class... Args >
-  T* ConstructorFactoryFunc( Args... args )
-  {
-    return new T( std::forward< Args >( args )... );
-  }
-
-  //Generic destructor/delete caller
-  template< class T >
-  void DestructorFactoryFunc( T* p )
-  {
-    delete p;
-  }
-
   //Compile-time generated sequence of size_t (will be in C++14)
   template< std::size_t... >
   struct index_sequence { };
