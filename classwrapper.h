@@ -269,14 +269,19 @@ namespace upywrap
       return native;
     }
 
-    static T* AsNativePtr( mp_obj_t arg )
+    static T* AsNativeNonNullPtr( mp_obj_t arg )
     {
       return AsNativeObjChecked( arg )->GetPtr();
     }
 
+    static T* AsNativePtr( mp_obj_t arg )
+    {
+      return arg == mp_const_none ? nullptr : AsNativeNonNullPtr( arg );
+    }
+
     static native_obj_t AsNativeObj( mp_obj_t arg )
     {
-      return AsNativeObjChecked( arg )->obj;
+      return arg == mp_const_none ? nullptr : AsNativeObjChecked( arg )->obj;
     }
 
 #if UPYWRAP_SHAREDPTROBJ
@@ -697,7 +702,7 @@ namespace upywrap
   const std::int64_t ClassWrapper< T >::defCookie = 0x12345678908765;
 
 
-  //Get instance pointer out of mp_obj_t
+  //Get instance pointer (or nullptr) out of mp_obj_t.
   template< class T >
   struct ClassFromPyObj< T* >
   {
@@ -744,7 +749,7 @@ namespace upywrap
     {
       //make sure ClassFromPyObj< std::shared_ptr< T >& > gets used instead
       static_assert( !IsSharedPtr< T >::value, "cannot convert object to shared_ptr&" );
-      return *ClassFromPyObj< T* >::Convert( arg );
+      return *ClassWrapper< T >::AsNativeNonNullPtr( arg );
     }
   };
 
@@ -753,7 +758,7 @@ namespace upywrap
   {
     static T Convert( mp_obj_t arg )
     {
-      return *ClassFromPyObj< T* >::Convert( arg );
+      return *ClassWrapper< T >::AsNativeNonNullPtr( arg );
     }
   };
 

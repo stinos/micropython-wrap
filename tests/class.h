@@ -33,9 +33,9 @@ namespace upywrap
       a = x;
     }
 
-    void Plus( Simple* rh )
+    void Plus( Simple& rh )
     {
-      a += rh->a;
+      a += rh.a;
     }
 
     std::string Str() const
@@ -47,7 +47,7 @@ namespace upywrap
     int a;
   };
 
-  Simple& SimpleFunc( Simple& p1, Simple* p2 )
+  Simple& SimpleFunc( Simple& p1, Simple& p2 )
   {
     p1.Plus( p2 );
     return p1;
@@ -81,6 +81,15 @@ namespace upywrap
     return std::make_shared< SharedSimple >( val );
   }
 
+  bool IsNullPtr( Simple* p )
+  {
+    return p == nullptr;
+  }
+
+  bool IsNullSharedPtr( std::shared_ptr< Simple > p )
+  {
+    return p == nullptr;
+  }
 }
 
 #endif //#ifndef MICROPYTHON_WRAP_TESTS_CLASS_H
