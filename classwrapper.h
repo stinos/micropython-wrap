@@ -136,6 +136,18 @@ namespace upywrap
       DefImpl< name, Ret, decltype( f ), A... >( f, conv );
     }
 
+    template< index_type name, class Base, class Ret, class... A >
+    typename std::enable_if< std::is_base_of< Base, T >::value >::type Def( Ret( Base::*f ) ( A... ), typename SelectRetvalConverter< Ret >::type conv = nullptr )
+    {
+      DefImpl< name, Ret, decltype( f ), A... >( f, conv );
+    }
+
+    template< index_type name, class Base, class Ret, class... A >
+    typename std::enable_if< std::is_base_of< Base, T >::value >::type Def( Ret( Base::*f ) ( A... ) const, typename SelectRetvalConverter< Ret >::type conv = nullptr )
+    {
+      DefImpl< name, Ret, decltype( f ), A... >( f, conv );
+    }
+
     template< class A >
     void Setter( const char* name, void( *f )( T*, A ) )
     {
