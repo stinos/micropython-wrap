@@ -158,7 +158,7 @@ namespace upywrap
   }
 #else
   #define UPYWRAP_TRY try {
-  #define UPYWRAP_CATCH } catch( const std::exception& e ) { return RaiseRuntimeException( e.what() ); }
+  #define UPYWRAP_CATCH } catch( const std::exception& e ) { return upywrap::RaiseRuntimeException( e.what() ); }
   inline bool HasExceptions()
   {
     return true;
