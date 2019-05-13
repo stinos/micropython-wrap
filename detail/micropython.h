@@ -75,6 +75,15 @@ namespace upywrap
     return o;
   }
 
+  inline mp_obj_t MakeFunction( mp_uint_t numArgsMin, mp_uint_t numArgsMax, mp_obj_t( *fun ) ( mp_uint_t, const mp_obj_t* ) )
+  {
+    auto o = m_new_obj( mp_obj_fun_builtin_var_t );
+    o->base.type = &mp_type_fun_builtin_var;
+    o->sig = static_cast< uint32_t >( MP_OBJ_FUN_MAKE_SIG( numArgsMin, numArgsMax, false ) );
+    o->fun.var = fun;
+    return o;
+  }
+
   //See mp_obj_fun_builtin_fixed_t: for up to 3 arguments there's a builtin function signature
   //this is reflected in MakeFunction
   //VS2013 hasn't constexpr yet so fall back to a macro..
