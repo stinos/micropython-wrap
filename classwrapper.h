@@ -769,6 +769,16 @@ namespace upywrap
 
   //Wrap instance in a new mp_obj_t
   template< class T >
+  struct ClassToPyObj
+  {
+    static mp_obj_t Convert( T )
+    {
+      static_assert( False< T >::value, "Conversion from value to ClassWrapper is not allowed, pass a reference or shared_ptr instead" );
+      return mp_const_none;
+    }
+  };
+
+  template< class T >
   struct ClassToPyObj< T* >
   {
     static mp_obj_t Convert( T* p )
@@ -802,7 +812,7 @@ namespace upywrap
   {
     static mp_obj_t Convert( const T& p )
     {
-      static_assert( !std::is_same< T, T >::value, "Conversion from const reference to ClassWrapper is not allowed since the const-ness cannot be guaranteed" );
+      static_assert( False< T >::value, "Conversion from const reference to ClassWrapper is not allowed since the const-ness cannot be guaranteed" );
       return mp_const_none;
     }
   };
