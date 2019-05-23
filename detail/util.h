@@ -1,6 +1,7 @@
 #ifndef MICROPYTHON_WRAP_DETAIL_UTIL_H
 #define MICROPYTHON_WRAP_DETAIL_UTIL_H
 
+#include <memory>
 #include <type_traits>
 #include <tuple>
 
@@ -100,6 +101,16 @@ namespace upywrap
   {
     return split_last( items... );
   }
+
+  template< class T >
+  struct is_shared_ptr : std::false_type
+  {
+  };
+
+  template< class T >
+  struct is_shared_ptr< std::shared_ptr< T > > : std::true_type
+  {
+  };
 }
 
 #endif //#ifndef MICROPYTHON_WRAP_DETAIL_UTIL_H

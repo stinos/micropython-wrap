@@ -735,20 +735,10 @@ namespace upywrap
   template< class T >
   struct ClassFromPyObj< T& >
   {
-    template< class U >
-    struct IsSharedPtr : std::false_type
-    {
-    };
-
-    template< class U >
-    struct IsSharedPtr< std::shared_ptr< U > > : std::true_type
-    {
-    };
-
     static T& Convert( mp_obj_t arg )
     {
       //make sure ClassFromPyObj< std::shared_ptr< T >& > gets used instead
-      static_assert( !IsSharedPtr< T >::value, "cannot convert object to shared_ptr&" );
+      static_assert( !is_shared_ptr< T >::value, "cannot convert object to shared_ptr&" );
       return *ClassWrapper< T >::AsNativeNonNullPtr( arg );
     }
   };
@@ -822,6 +812,8 @@ namespace upywrap
   {
     static mp_obj_t Convert( T& p )
     {
+      //Make sure ClassToPyObj< std::shared_ptr< T > > gets used instead.
+      static_assert( !is_shared_ptr< T >::value, "cannot convert object to shared_ptr&" );
       return ClassWrapper< T >::AsPyObj( &p, false );
     }
   };
