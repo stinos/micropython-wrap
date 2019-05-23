@@ -14,7 +14,7 @@ namespace upywrap
 template< class T >
 void StoreGlobal( mp_obj_module_t* mod, const char* name, const T& obj )
 {
-  mp_obj_dict_store( MP_OBJ_FROM_PTR( mod->globals ), new_qstr( name ), ToPyObj< T >::Convert( obj ) );
+  mp_obj_dict_store( MP_OBJ_FROM_PTR( mod->globals ), new_qstr( name ), ToPy( obj ) );
 }
 }
 

@@ -98,13 +98,13 @@ namespace upywrap
   template< class T, class... Names >
   T GetVariable( Names... names )
   {
-    return SelectFromPyObj< T >::type::Convert( detail::GetVariable( names... ) );
+    return FromPy< T >( detail::GetVariable( names... ) );
   }
 
   template< class T >
   T GetVariable( const varname& names )
   {
-    return SelectFromPyObj< T >::type::Convert( detail::GetVariable( names ) );
+    return FromPy< T >( detail::GetVariable( names ) );
   }
 
     /**
@@ -115,13 +115,13 @@ namespace upywrap
   template< class T, class... Names >
   void SetVariable( const T& value, Names... names )
   {
-    detail::SetVariable( SelectToPyObj< T >::type::Convert( value ), names... );
+    detail::SetVariable( ToPy( value ), names... );
   }
 
   template< class T >
   void SetVariable( const T& value, const varname& names )
   {
-    detail::SetVariable( SelectToPyObj< T >::type::Convert( value ), names );
+    detail::SetVariable( ToPy( value ), names );
   }
 }
 

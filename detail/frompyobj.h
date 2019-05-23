@@ -345,7 +345,7 @@ namespace upywrap
         return std_fun_type(
           [nativeFunPtr] ( Args... args ) -> R
           {
-            return SelectFromPyObj< R >::type::Convert( nativeFunPtr( SelectToPyObj< Args >::type::Convert( args )... ) );
+            return SelectFromPyObj< R >::type::Convert( nativeFunPtr( ToPy< Args >( args )... ) );
           } );
       }
 
@@ -356,7 +356,7 @@ namespace upywrap
           [nativeFunPtr] ( Args... args ) -> R
           {
             //+1 to avoid zero-sized array which is illegal for msvc
-            mp_obj_t objs[ sizeof...( Args ) + 1 ] = { SelectToPyObj< Args >::type::Convert( args )... };
+            mp_obj_t objs[ sizeof...( Args ) + 1 ] = { ToPy< Args >( args )... };
             return SelectFromPyObj< R >::type::Convert( nativeFunPtr( sizeof...( Args ), objs ) );
           } );
       }
@@ -367,7 +367,7 @@ namespace upywrap
         return std_fun_type(
           [pin] ( Args... args ) -> R
           {
-            mp_obj_t objs[ sizeof...( Args ) + 1 ] = { SelectToPyObj< Args >::type::Convert( args )... };
+            mp_obj_t objs[ sizeof...( Args ) + 1 ] = { ToPy< Args >( args )... };
             return SelectFromPyObj< R >::type::Convert( mp_call_function_n_kw( pin.Get(), sizeof...( Args ), 0, objs ) );
           } );
       }
@@ -466,6 +466,19 @@ namespace upywrap
   {
     typedef FromPyObj< mp_obj_t > type;
   };
+
+  template< class T >
+  auto FromPy( const mp_obj_t arg ) -> decltype( SelectFromPyObj< T >::type::Convert( arg ) )
+  {
+    return SelectFromPyObj< T >::type::Convert( arg );
+  }
+
+  //Helper for getting an argument in a function with variable number of arguments.
+  template< class T >
+  T FromPy( mp_uint_t numArgs, const mp_obj_t* args, mp_uint_t argIndex, const T& def )
+  {
+    return numArgs > argIndex ? FromPy< T >( args[ argIndex ] ) : def;
+  }
 }
 
 #endif //#ifndef MICROPYTHON_WRAP_DETAIL_FROMPYOBJ_H

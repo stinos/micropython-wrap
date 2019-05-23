@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 #include <tuple>
 #include <algorithm>
 #include <cstring>
@@ -296,6 +297,36 @@ namespace upywrap
   {
     typedef ToPyObj< mp_obj_t > type;
   };
+
+  template< class T >
+  mp_obj_t ToPy( const T& arg )
+  {
+    return SelectToPyObj< T >::type::Convert( arg );
+  }
+
+#ifndef UPYWRAP_NOCHARSTRING
+  inline mp_obj_t ToPy( const char* arg )
+  {
+    return SelectToPyObj< const char* >::type::Convert( arg );
+  }
+#endif
+
+  inline mp_obj_t ToPy( mp_obj_t arg )
+  {
+    return SelectToPyObj< mp_obj_t >::type::Convert( arg );
+  }
+
+  template< class T >
+  mp_obj_t ToPy( T& arg, typename std::enable_if< !ToPyObj< typename remove_all< T >::type >::value && !is_shared_ptr< T >::value >::type* = nullptr )
+  {
+    return SelectToPyObj< T& >::type::Convert( arg );
+  }
+
+  template< class T >
+  mp_obj_t ToPy( std::shared_ptr< T > arg, typename std::enable_if< !ToPyObj< typename remove_all< T >::type >::value && !std::is_reference< T >::value >::type* = nullptr )
+  {
+    return SelectToPyObj< std::shared_ptr< T > >::type::Convert( arg );
+  }
 }
 
 #endif //#ifndef MICROPYTHON_WRAP_DETAIL_TOPYOBJ_H

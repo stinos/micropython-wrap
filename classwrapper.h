@@ -103,7 +103,7 @@ namespace upywrap
     template< class A >
     void StoreClassVariable( const char* name, const A& value )
     {
-      mp_obj_dict_store( MP_OBJ_FROM_PTR( type.locals_dict ), new_qstr( name ), SelectToPyObj< A >::type::Convert( value ) );
+      mp_obj_dict_store( MP_OBJ_FROM_PTR( type.locals_dict ), new_qstr( name ), ToPy( value ) );
     }
 
     template< index_type name, class Ret, class... A >
@@ -406,7 +406,7 @@ namespace upywrap
       auto other = (this_type*) other_in;
       if( op != MP_BINARY_OP_EQUAL )
         return MP_OBJ_NULL; //not supported
-      return ToPyObj< bool >::Convert( self->GetPtr() == other->GetPtr() );
+      return ToPy( self->GetPtr() == other->GetPtr() );
     }
 
     static void instance_print( const mp_print_t* print, mp_obj_t self_in, mp_print_kind_t kind )
@@ -655,7 +655,7 @@ namespace upywrap
       static Ret Apply( init_call_type* f, const mp_obj_t* args, index_sequence< Indices... > )
       {
         (void) args;
-        return f->Call( SelectFromPyObj< A >::type::Convert( args[ Indices ] )... );
+        return f->Call( FromPy< A >( args[ Indices ] )... );
       }
 
       template< size_t... Indices >

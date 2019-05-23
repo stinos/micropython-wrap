@@ -29,8 +29,8 @@ namespace upywrap
     {
       UPYWRAP_TRY
       if( f->convert_retval )
-        return f->convert_retval( f->Call( SelectFromPyObj< A >::type::Convert( args )... ) );
-      return SelectToPyObj< Ret >::type::Convert( f->Call( SelectFromPyObj< A >::type::Convert( args )... ) );
+        return f->convert_retval( f->Call( FromPy< A >( args )... ) );
+      return ToPy( f->Call( FromPy< A >( args )... ) );
       UPYWRAP_CATCH
     }
 
@@ -39,8 +39,8 @@ namespace upywrap
     {
       UPYWRAP_TRY
       if( f->convert_retval )
-        return f->convert_retval( f->Call( self, SelectFromPyObj< A >::type::Convert( args )... ) );
-      return SelectToPyObj< Ret >::type::Convert( f->Call( self, SelectFromPyObj< A >::type::Convert( args )... ) );
+        return f->convert_retval( f->Call( self, FromPy< A >( args )... ) );
+      return ToPy( f->Call( self, FromPy< A >( args )... ) );
       UPYWRAP_CATCH
     }
   };
@@ -52,7 +52,7 @@ namespace upywrap
     static mp_obj_t Call( Fun f, typename project2nd< A, mp_obj_t >::type... args )
     {
       UPYWRAP_TRY
-      f->Call( SelectFromPyObj< A >::type::Convert( args )... );
+      f->Call( FromPy< A >( args )... );
       return ToPyObj< void >::Convert();
       UPYWRAP_CATCH
     }
@@ -61,7 +61,7 @@ namespace upywrap
     static mp_obj_t Call( Fun f, Self self, typename project2nd< A, mp_obj_t >::type... args )
     {
       UPYWRAP_TRY
-      f->Call( self, SelectFromPyObj< A >::type::Convert( args )... );
+      f->Call( self, FromPy< A >( args )... );
       return ToPyObj< void >::Convert();
       UPYWRAP_CATCH
     }
