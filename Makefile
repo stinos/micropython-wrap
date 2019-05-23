@@ -42,4 +42,8 @@ testsharedlib: sharedlib
 test: teststaticlib testsharedlib
 
 clean:
-	rm tests/*.o tests/*.a tests/*.so $(MICROPYTHON_DIR)/ports/unix/micropython
+	# Just clean everything: we use different flags than the default so to avoid
+	# surprises (typically: not all qstrs being detected) make sure everything
+	# gets built again after we touched it.
+	$(MAKEUPY) clean
+	rm -f tests/*.o tests/*.a tests/*.so
