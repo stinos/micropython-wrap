@@ -8,6 +8,15 @@
 # Before any lib can be built the MicroPython headers are generated.
 # Builds with MICROPY_PY_THREAD=0 to allow finaliser, see gc.c
 
+AR = ar
+CD = cd
+CP = cp
+CXX = g++
+MKDIR = mkdir
+PATCH = patch
+PYTHON = python3
+RM = rm
+
 CUR_DIR = $(shell pwd)
 MICROPYTHON_DIR = ../micropython
 CPPFLAGS = -Wall -Werror -std=c++11 -I$(MICROPYTHON_DIR) -I$(MICROPYTHON_DIR)/py -I$(MICROPYTHON_DIR)/ports/unix -I$(MICROPYTHON_DIR)/ports/unix/build -DMICROPY_PY_THREAD=0
@@ -18,26 +27,26 @@ upyhdr:
 	$(MAKEUPY) $(UPYFLAGS) build/genhdr/qstrdefs.generated.h
 
 staticlib: upyhdr
-	g++ $(CPPFLAGS) -c tests/module.cpp -o tests/module_static.o
-	ar rcs tests/libupywraptest.a tests/module_static.o
+	$(CXX) $(CPPFLAGS) -c tests/module.cpp -o tests/module_static.o
+	$(AR) rcs tests/libupywraptest.a tests/module_static.o
 
 sharedlib: upyhdr
-	g++ -fPIC $(CPPFLAGS) -c tests/module.cpp -o tests/module_shared.o
-	g++ -shared -o tests/libupywraptest.so tests/module_shared.o
-	mkdir -p ~/.micropython/lib
-	cp tests/libupywraptest.so ~/.micropython/lib/upywraptest.so
+	$(CXX) -fPIC $(CPPFLAGS) -c tests/module.cpp -o tests/module_shared.o
+	$(CXX) -shared -o tests/libupywraptest.so tests/module_shared.o
+	$(MKDIR) -p ~/.micropython/lib
+	$(CP) tests/libupywraptest.so ~/.micropython/lib/upywraptest.so
 
 teststaticlib: staticlib
-	cd $(MICROPYTHON_DIR)/ports/unix && patch -i $(CUR_DIR)/main.diff
+	$(CD) $(MICROPYTHON_DIR)/ports/unix && $(PATCH) -i $(CUR_DIR)/main.diff
 	$(MAKEUPY) $(UPYFLAGS) LDFLAGS_MOD="$(CUR_DIR)/tests/libupywraptest.a -ldl -lstdc++"
-	cd $(MICROPYTHON_DIR)/ports/unix && patch -R -i $(CUR_DIR)/main.diff
-	cd $(MICROPYTHON_DIR)/tests && python3 ./run-tests -d $(CUR_DIR)/tests/py
+	$(CD) $(MICROPYTHON_DIR)/ports/unix && $(PATCH) -R -i $(CUR_DIR)/main.diff
+	$(CD) $(MICROPYTHON_DIR)/tests && $(PYTHON) ./run-tests -d $(CUR_DIR)/tests/py
 
 testsharedlib: sharedlib
 	# Only works with MicroPython windows-pyd branch, which already has the correct linker options
 	# so there's no need to add anything here.
 	$(MAKEUPY) $(UPYFLAGS)
-	cd $(MICROPYTHON_DIR)/tests && python3 ./run-tests --keep-path -d $(CUR_DIR)/tests/py
+	$(CD) $(MICROPYTHON_DIR)/tests && $(PYTHON) ./run-tests --keep-path -d $(CUR_DIR)/tests/py
 
 test: teststaticlib testsharedlib
 
@@ -46,4 +55,4 @@ clean:
 	# surprises (typically: not all qstrs being detected) make sure everything
 	# gets built again after we touched it.
 	$(MAKEUPY) clean
-	rm -f tests/*.o tests/*.a tests/*.so
+	$(RM) -f tests/*.o tests/*.a tests/*.so
