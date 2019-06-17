@@ -17,9 +17,15 @@ PATCH = patch
 PYTHON = python3
 RM = rm
 
+HASCPP17 = $(shell expr `$(CC) -dumpversion | cut -f1 -d.` \>= 7)
 CUR_DIR = $(shell pwd)
 MICROPYTHON_DIR = ../micropython
-CPPFLAGS = -Wall -Werror -std=c++11 -I$(MICROPYTHON_DIR) -I$(MICROPYTHON_DIR)/py -I$(MICROPYTHON_DIR)/ports/unix -I$(MICROPYTHON_DIR)/ports/unix/build -DMICROPY_PY_THREAD=0
+CPPFLAGS = -Wall -Werror -I$(MICROPYTHON_DIR) -I$(MICROPYTHON_DIR)/py -I$(MICROPYTHON_DIR)/ports/unix -I$(MICROPYTHON_DIR)/ports/unix/build -DMICROPY_PY_THREAD=0
+ifeq ($(HASCPP17), 1)
+	CPPFLAGS += -std=c++17
+else
+	CPPFLAGS += -std=c++11
+endif
 MAKEUPY = make -C $(MICROPYTHON_DIR)/ports/unix
 UPYFLAGS = MICROPY_PY_BTREE=0 MICROPY_PY_FFI=0 MICROPY_PY_USSL=0 MICROPY_PY_AXTLS=0 MICROPY_FATFS=0 MICROPY_PY_THREAD=0
 

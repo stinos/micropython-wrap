@@ -5,10 +5,12 @@ compiler:
   - gcc
 
 before_script:
-  - sudo apt-get install -y python3 gcc-multilib pkg-config libffi-dev
-  - gcc --version
+  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+  - sudo apt-get update -q
+  - sudo apt-get install -y python3 g++-7-multilib pkg-config libffi-dev
+  - $CC --version
   - python3 --version
   - git clone --depth=1 --branch=windows-pyd https://github.com/stinos/micropython/ ../micropython
 
 script:
-  - make test
+  - make test CC=gcc-7 CXX=g++-7

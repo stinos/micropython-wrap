@@ -10,6 +10,9 @@
 #include <tuple>
 #include <algorithm>
 #include <cstring>
+#if UPYWRAP_HAS_CPP17
+#include <optional>
+#endif
 
 namespace upywrap
 {
@@ -168,6 +171,21 @@ namespace upywrap
       return mp_obj_new_str( a, ::strlen( a ) );
     }
   };
+
+  #if UPYWRAP_HAS_CPP17
+  template< class T >
+  struct ToPyObj< std::optional< T > > : std::true_type
+  {
+    static mp_obj_t Convert( const std::optional< T >& arg )
+    {
+      if( arg )
+      {
+        return SelectToPyObj< T >::type::Convert( *arg );
+      }
+      return mp_const_none;
+    }
+  };
+  #endif
 
   template< class T >
   struct ToPyObj< std::vector< T > > : std::true_type

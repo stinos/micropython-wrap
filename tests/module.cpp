@@ -12,6 +12,9 @@
 #include "qualifier.h"
 #include "nargs.h"
 #include "numeric.h"
+#if UPYWRAP_HAS_CPP17
+#include "optional.h"
+#endif
 using namespace upywrap;
 
 struct F
@@ -83,6 +86,11 @@ struct F
   func_name_def( Value )
   func_name_def( Plus )
   func_name_def( SimpleFunc )
+
+  func_name_def( NullOpt )
+  func_name_def( OptionalInt )
+  func_name_def( OptionalVector )
+  func_name_def( OptionalArgument )
 
   func_name_def( TestVariables )
 };
@@ -199,6 +207,13 @@ extern "C"
     fn.Def< F::Double >( Double );
 
     fn.Def< F::TestVariables >( TestVariables );
+
+#if UPYWRAP_HAS_CPP17
+    fn.Def< F::NullOpt >( NullOpt );
+    fn.Def< F::OptionalInt >( OptionalInt );
+    fn.Def< F::OptionalVector >( OptionalVector );
+    fn.Def< F::OptionalArgument >( OptionalArgument );
+#endif
 
     //these are all not suported so should yield compiler errors
 #ifdef TEST_STATIC_ASSERTS_FOR_UNSUPPORTED_TYPES

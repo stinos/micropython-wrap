@@ -245,6 +245,21 @@ namespace upywrap
     }
   };
 
+  #if UPYWRAP_HAS_CPP17
+  template< class T >
+  struct FromPyObj< std::optional< T > > : std::true_type
+  {
+    static std::optional< T > Convert( mp_obj_t arg )
+    {
+      if( arg == mp_const_none )
+      {
+        return std::nullopt;
+      }
+      return SelectFromPyObj< T >::type::Convert( arg );
+    }
+  };
+  #endif
+
   template< class T >
   struct FromPyObj< std::vector< T > > : std::true_type
   {

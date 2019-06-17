@@ -15,6 +15,12 @@ extern "C"
 #pragma warning ( default : 4200 )
 #endif
 
+#if ((__cplusplus > 201402L) || (_MSVC_LANG >= 201703L))
+#define UPYWRAP_HAS_CPP17 (1)
+#else
+#define UPYWRAP_HAS_CPP17 (0)
+#endif
+
 #include <limits>
 #include <cmath>
 #include <cstdint>

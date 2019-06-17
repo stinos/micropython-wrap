@@ -99,7 +99,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="../micropython/ports/windows/msvc/extmodule.props" />
   </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Label="UserMacros">
+    <PlatformToolsetNum>$(PlatformToolset.Replace('v', ''))</PlatformToolsetNum>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <TargetName>upywraptest_d</TargetName>
   </PropertyGroup>
@@ -154,6 +156,11 @@
       <AdditionalDependencies>rtpp400d.lib;cpplib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalOptions Condition="'$(PlatformToolsetNum)' &gt; '120'">/std:c++latest %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="module.h" />
     <ClInclude Include="util.h" />
@@ -173,6 +180,7 @@
     <ClInclude Include="tests\function.h" />
     <ClInclude Include="tests\map.h" />
     <ClInclude Include="tests\nargs.h" />
+    <ClInclude Include="tests\optional.h" />
     <ClInclude Include="tests\qualifier.h" />
     <ClInclude Include="tests\string.h" />
     <ClInclude Include="tests\tuple.h" />
