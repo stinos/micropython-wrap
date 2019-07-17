@@ -2,8 +2,8 @@
 #define MICROPYTHON_WRAP_TESTS_QUALIFIER_H
 
 #include <iostream>
-#include <string>
 #include <memory>
+#include <string>
 
 namespace upywrap
 {

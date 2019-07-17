@@ -1,8 +1,8 @@
 #ifndef MICROPYTHON_WRAP_TESTS_CLASS_H
 #define MICROPYTHON_WRAP_TESTS_CLASS_H
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace upywrap
 {

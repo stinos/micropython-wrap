@@ -33,14 +33,14 @@
   #define UPYWRAP_FULLTYPECHECK (1)
 #endif
 
+#include "detail/callreturn.h"
+#include "detail/functioncall.h"
 #include "detail/index.h"
 #include "detail/util.h"
-#include "detail/functioncall.h"
-#include "detail/callreturn.h"
-#include <vector>
 #include <cstdint>
+#include <vector>
 #if UPYWRAP_SHAREDPTROBJ
-  #include <memory>
+#include <memory>
 #endif
 
 namespace upywrap

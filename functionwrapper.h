@@ -1,10 +1,10 @@
 #ifndef MICROPYTHON_WRAP_FUNCTIONWRAPPER
 #define MICROPYTHON_WRAP_FUNCTIONWRAPPER
 
+#include "detail/callreturn.h"
+#include "detail/functioncall.h"
 #include "detail/index.h"
 #include "detail/util.h"
-#include "detail/functioncall.h"
-#include "detail/callreturn.h"
 
 namespace upywrap
 {

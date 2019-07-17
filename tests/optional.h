@@ -1,9 +1,9 @@
 #ifndef MICROPYTHON_WRAP_TESTS_OPTIONAL_H
 #define MICROPYTHON_WRAP_TESTS_OPTIONAL_H
 
+#include <iostream>
 #include <optional>
 #include <vector>
-#include <iostream>
 
 namespace upywrap
 {

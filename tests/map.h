@@ -1,10 +1,10 @@
 #ifndef MICROPYTHON_WRAP_TESTS_MAP_H
 #define MICROPYTHON_WRAP_TESTS_MAP_H
 
-#include <map>
-#include <vector>
 #include <algorithm>
 #include <iostream>
+#include <map>
+#include <vector>
 
 namespace upywrap
 {

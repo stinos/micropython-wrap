@@ -1,10 +1,10 @@
 #ifndef MICROPYTHON_WRAP_TESTS_TUPLE_H
 #define MICROPYTHON_WRAP_TESTS_TUPLE_H
 
-#include <tuple>
-#include <string>
-#include <vector>
 #include <iostream>
+#include <string>
+#include <tuple>
+#include <vector>
 
 namespace upywrap
 {

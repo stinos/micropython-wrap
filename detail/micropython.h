@@ -6,10 +6,10 @@
 #endif
 extern "C"
 {
-  #include <py/runtime.h>
-  #include <py/objfun.h>
-  #include <py/objmodule.h>
-  #include <py/objint.h>
+#include <py/objfun.h>
+#include <py/objint.h>
+#include <py/objmodule.h>
+#include <py/runtime.h>
 }
 #ifdef _MSC_VER
 #pragma warning ( default : 4200 )
@@ -21,11 +21,11 @@ extern "C"
 #define UPYWRAP_HAS_CPP17 (0)
 #endif
 
-#include <limits>
 #include <cmath>
 #include <cstdint>
-#include <memory>
 #include <cstring>
+#include <limits>
+#include <memory>
 #include <type_traits>
 
 namespace upywrap

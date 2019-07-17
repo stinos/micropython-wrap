@@ -1,15 +1,15 @@
 #ifndef MICROPYTHON_WRAP_DETAIL_TOPYOBJ_H
 #define MICROPYTHON_WRAP_DETAIL_TOPYOBJ_H
 
-#include "util.h"
 #include "micropython.h"
-#include <string>
-#include <vector>
-#include <map>
-#include <memory>
-#include <tuple>
+#include "util.h"
 #include <algorithm>
 #include <cstring>
+#include <map>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <vector>
 #if UPYWRAP_HAS_CPP17
 #include <optional>
 #endif

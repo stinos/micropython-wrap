@@ -1,8 +1,8 @@
 #ifndef MICROPYTHON_WRAP_DETAIL_CALLRETURN_H
 #define MICROPYTHON_WRAP_DETAIL_CALLRETURN_H
 
-#include "topyobj.h"
 #include "frompyobj.h"
+#include "topyobj.h"
 
 namespace upywrap
 {

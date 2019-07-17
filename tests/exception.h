@@ -1,8 +1,8 @@
 #ifndef MICROPYTHON_WRAP_TESTS_EXCEPTION_H
 #define MICROPYTHON_WRAP_TESTS_EXCEPTION_H
 
-#include <string>
 #include <stdexcept>
+#include <string>
 
 namespace upywrap
 {

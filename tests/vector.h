@@ -1,9 +1,9 @@
 #ifndef MICROPYTHON_WRAP_TESTS_VECTOR_H
 #define MICROPYTHON_WRAP_TESTS_VECTOR_H
 
-#include <vector>
 #include <algorithm>
 #include <iostream>
+#include <vector>
 
 namespace upywrap
 {

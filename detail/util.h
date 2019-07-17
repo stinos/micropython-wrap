@@ -2,8 +2,8 @@
 #define MICROPYTHON_WRAP_DETAIL_UTIL_H
 
 #include <memory>
-#include <type_traits>
 #include <tuple>
+#include <type_traits>
 
 //The usual stringize macros
 #define UPY_STRINGIZE( x )    UPY_STRINGIZE_I( x )
