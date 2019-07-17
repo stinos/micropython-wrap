@@ -1,54 +1,54 @@
 import upywraptest
 
-simple1 = upywraptest.Simple( 0 )
-simple1.Add( 1 )
-print( simple1.Value() )
-print( simple1 )
+simple1 = upywraptest.Simple(0)
+simple1.Add(1)
+print(simple1.Value())
+print(simple1)
 
-simple2 = upywraptest.Simple( 2 )
-print( simple2.Value() )
+simple2 = upywraptest.Simple(2)
+print(simple2.Value())
 
-simple1.Plus( simple2 )
-print( simple1.Value() )
+simple1.Plus(simple2)
+print(simple1.Value())
 
-print( upywraptest.Simple( 1 ).SimpleFunc( upywraptest.Simple( 3 ) ).Value() )
+print(upywraptest.Simple(1).SimpleFunc(upywraptest.Simple(3)).Value())
 
 simple1.val = 5
-print( simple1.val )
+print(simple1.val)
 try:
   simple1.val2
 except AttributeError:
-  print( 'AttributeError' )
+  print('AttributeError')
 
-print( simple1 == simple2 )
-print( simple1 == simple1 )
-print( hash( simple1 ) == hash( simple2 ) )
-print( hash( simple1 ) == hash( simple1 ) )
+print(simple1 == simple2)
+print(simple1 == simple1)
+print(hash(simple1) == hash(simple2))
+print(hash(simple1) == hash(simple1))
 
-print( hasattr( simple1, 'Something' ) )
-print( hasattr( simple1, 'val' ) )
+print(hasattr(simple1, 'Something'))
+print(hasattr(simple1, 'val'))
 
-print( upywraptest.Simple.x )
-print( upywraptest.Simple.y )
-print( upywraptest.Simple.z )
+print(upywraptest.Simple.x)
+print(upywraptest.Simple.y)
+print(upywraptest.Simple.z)
 
 try:
-  simple1.Plus( 1 )
+  simple1.Plus(1)
 except TypeError:
-  print( 'TypeError' )
+  print('TypeError')
 
 try:
-  simple1.Plus( 'a' )
+  simple1.Plus('a')
 except TypeError:
-  print( 'TypeError' )
+  print('TypeError')
 
 try:
-  simple1.Plus( upywraptest.NargsTest() )
+  simple1.Plus(upywraptest.NargsTest())
 except TypeError:
-  print( 'TypeError' )
+  print('TypeError')
 
 try:
-  simple1.SimpleFunc( None )
+  simple1.SimpleFunc(None)
 except Exception:
   print('TypeError')
 

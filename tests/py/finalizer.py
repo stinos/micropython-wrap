@@ -8,12 +8,12 @@ b = 2
 c = 3
 
 def allocate_some():
-  d = [a] * 100
-  e = [3] * 100
-  f = [4] * 100
+  d = [a] * 100  # noqa
+  e = [3] * 100  # noqa
+  f = [4] * 100  # noqa
 
 def fun():
-  x = upywraptest.Context()
+  x = upywraptest.Context()  # noqa
 
 fun()
 allocate_some()
