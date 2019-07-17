@@ -35,10 +35,14 @@ namespace upywrap
     {
       const auto numNames = names.size();
       if( !numNames )
+      {
         throw std::runtime_error( "cannot get variable without a name" );
+      }
       auto var = GetVariable( names[ 0 ].data() );
       for( size_t i = 1 ; i < numNames ; ++i )
+      {
         var = GetVariable( var, names[ i ].data() );
+      }
       return var;
     }
 
@@ -70,7 +74,9 @@ namespace upywrap
     {
       const auto numNames = names.size();
       if( !numNames )
+      {
         throw std::runtime_error( "cannot get variable without a name" );
+      }
       if( numNames == 1 )
       {
         SetVariable( value, names[ 0 ].data() );
@@ -79,7 +85,9 @@ namespace upywrap
       {
         auto var = GetVariable( names[ 0 ].data() );
         for( size_t i = 1 ; i < numNames - 1 ; ++i )
+        {
           var = GetVariable( var, names[ i ].data() );
+        }
         SetVariable( var, value, names[ numNames - 1 ].data() );
       }
     }

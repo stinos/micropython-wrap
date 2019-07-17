@@ -83,7 +83,9 @@ namespace upywrap
     {
       mp_uint_t value;
       if( mpz_as_uint_checked( &self->mpz, &value ) )
+      {
         return value;
+      }
       RaiseOverflowException( "Value too large for integer" );
 #if !defined( _MSC_VER ) || defined( _DEBUG )
       return 0u;
@@ -162,7 +164,9 @@ namespace upywrap
 
       auto i = &arg->mpz;
       if( !is_signed && i->neg )
+      {
         RaiseTypeException( "Source integer must be unsigned" );
+      }
 
       auto d = i->dig + i->len;
       std::uint64_t val = 0;
@@ -170,7 +174,9 @@ namespace upywrap
       while( d-- > i->dig )
       {
         if( val > maxCalcThreshold )
+        {
           RaiseOverflowException( "Value too large for 64bit integer" );
+        }
         val = ( val << MPZ_DIG_SIZE ) | *d;
       }
 
@@ -178,7 +184,9 @@ namespace upywrap
   #pragma warning( disable : 4146 )
 #endif
       if( i->neg )
+      {
         val = -val;
+      }
 #ifdef _MSC_VER
   #pragma warning( default : 4146 )
 #endif
@@ -310,7 +318,9 @@ namespace upywrap
       mp_obj_t* items;
       mp_obj_get_array( arg, &len, &items );
       if( len != sizeof...( A ) )
+      {
         RaiseTypeException( "Not enough tuple elements" );
+      }
       return make_it( items, make_index_sequence< sizeof...( A ) >() );
     }
 
@@ -398,7 +408,9 @@ namespace upywrap
     static std_fun_type Convert( mp_obj_t arg )
     {
       if( arg == mp_const_none )
+      {
         return std_fun_type();
+      }
       const auto obj = reinterpret_cast< mp_obj_base_t* >( MP_OBJ_TO_PTR( arg ) );
       const auto type = obj->type;
       if( type == &mp_type_fun_builtin_0 ||

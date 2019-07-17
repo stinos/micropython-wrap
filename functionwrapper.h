@@ -53,7 +53,9 @@ namespace upywrap
 
       auto callerObject = call_type::CreateCaller( f );
       if( conv )
+      {
         callerObject->convert_retval = conv;
+      }
       functionPointers[ (void*) name ] = callerObject;
       mp_obj_dict_store( globals, new_qstr( name() ), call_type::CreateUPyFunction() );
     }
@@ -85,7 +87,9 @@ namespace upywrap
       static mp_obj_t CallN( mp_uint_t nargs, const mp_obj_t* args )
       {
         if( nargs != sizeof...( A ) )
+        {
           RaiseTypeException( "Wrong number of arguments" );
+        }
         auto f = (call_type*) FunctionWrapper::functionPointers[ (void*) index ];
         return CallVar( f, args, make_index_sequence< sizeof...( A ) >() );
       }

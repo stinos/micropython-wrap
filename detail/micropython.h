@@ -131,7 +131,9 @@ namespace upywrap
   {
     mp_obj_exception_t* o = m_new_obj_var( mp_obj_exception_t, mp_obj_t, 0 );
     if( !o )
+    {
       throw std::bad_alloc();
+    }
     o->base.type = exc_type;
     o->traceback_data = nullptr;
     o->args = reinterpret_cast< mp_obj_tuple_t* >( MP_OBJ_TO_PTR( mp_obj_new_tuple( 1, nullptr ) ) );
@@ -223,14 +225,18 @@ namespace upywrap
   static void IntegerBoundCheck( S src )
   {
     if( abs_all< S, std::is_unsigned< S >::value >::abs( src ) > static_cast< S >( std::numeric_limits< T >::max() ) )
+    {
       RaiseOverflowException( "Integer overflow" );
+    }
   }
 
   template< class T >
   static void PositiveIntegerCheck( T src )
   {
     if( src < 0 )
+    {
       RaiseTypeException( "Source integer must be unsigned" );
+    }
   }
 
   template<>
@@ -342,13 +348,17 @@ namespace upywrap
 
       static const size_t maxLen = 50;
       if( (*List())->len > maxLen )
+      {
         RaiseRuntimeException( "StaticPyObjectStore: list is full" );
+      }
     }
 
     static void Remove( mp_obj_t obj )
     {
       if( !Contains( obj ) )
+      {
         RaiseRuntimeException( "StaticPyObjectStore: item not added" );
+      }
       mp_obj_list_remove( *List(), obj );
     }
 
@@ -356,7 +366,9 @@ namespace upywrap
     {
       auto list = List();
       if( *list )
+      {
         RaiseRuntimeException( "StaticPyObjectStore: already initialized" );
+      }
       *list = m_new_obj( mp_obj_list_t );
       mp_obj_list_init( *list, 0 );
       return *list;
@@ -372,13 +384,19 @@ namespace upywrap
     {
       const auto list = *List();
       if( !list )
+      {
         RaiseRuntimeException( "StaticPyObjectStore: not initialized" );
+      }
       size_t len;
       mp_obj_t* items;
       mp_obj_list_get( list, &len, &items );
       for( size_t i = 0 ; i < len ; ++i )
+      {
         if( items[ i ] == obj )
+        {
           return true;
+        }
+      }
       return false;
     }
 
@@ -426,12 +444,16 @@ namespace upywrap
     const qstr qname = qstr_from_str( name );
     mp_obj_module_t* mod = (mp_obj_module_t*) mp_obj_new_module( qname );
     if( doRegister )
+    {
       mp_module_register( qname, mod );
+    }
     //Create StaticPyObjectStore instance and store it in the module's globals dict,
     //which ensures anything in the list will also not be sweeped by the GC.
     //Do this only once though, so all translation units in the binary use the same list.
     if( !StaticPyObjectStore::Initialized() )
+    {
       mp_obj_dict_store( mod->globals, new_qstr( "_StaticPyObjectStore" ), StaticPyObjectStore::InitBackEnd() );
+    }
     return mod;
   }
 

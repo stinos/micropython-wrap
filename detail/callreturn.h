@@ -29,7 +29,9 @@ namespace upywrap
     {
       UPYWRAP_TRY
       if( f->convert_retval )
+      {
         return f->convert_retval( f->Call( FromPy< A >( args )... ) );
+      }
       return ToPy( f->Call( FromPy< A >( args )... ) );
       UPYWRAP_CATCH
     }
@@ -39,7 +41,9 @@ namespace upywrap
     {
       UPYWRAP_TRY
       if( f->convert_retval )
+      {
         return f->convert_retval( f->Call( self, FromPy< A >( args )... ) );
+      }
       return ToPy( f->Call( self, FromPy< A >( args )... ) );
       UPYWRAP_CATCH
     }

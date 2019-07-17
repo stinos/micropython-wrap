@@ -220,7 +220,9 @@ namespace upywrap
     static mp_obj_t AsPyObj( T* p, bool own )
     {
       if( own )
+      {
         return AsPyObj( native_obj_t( p ) );
+      }
       return AsPyObj( native_obj_t( p, NoDelete ) );
     }
 #else
@@ -343,7 +345,9 @@ namespace upywrap
     {
       auto ret = map.find( attr );
       if( ret == map.end() )
+      {
         return nullptr;
+      }
       return ret->second;
     }
 
@@ -352,7 +356,9 @@ namespace upywrap
     {
       const auto attrValue = FindAttrMaybe( map, attr );
       if( !attrValue )
+      {
         RaiseAttributeException( type.name, attr );
+      }
       return attrValue;
     }
 
@@ -381,7 +387,9 @@ namespace upywrap
         this_type* self = (this_type*) self_in;
         const auto attrValue = FindAttrMaybe( self->getters, attr );
         if( attrValue )
+        {
           *dest = attrValue->Call( self );
+        }
       }
     }
 
@@ -405,7 +413,9 @@ namespace upywrap
       auto self = (this_type*) self_in;
       auto other = (this_type*) other_in;
       if( op != MP_BINARY_OP_EQUAL )
+      {
         return MP_OBJ_NULL; //not supported
+      }
       return ToPy( self->GetPtr() == other->GetPtr() );
     }
 
@@ -461,7 +471,9 @@ namespace upywrap
     static void CheckTypeIsRegistered()
     {
       if( type.base.type == nullptr )
+      {
         RaiseTypeException( (std::string( "Native type " ) + typeid( T ).name() + " has not been registered").data() );
+      }
     }
 
     void AddFunctionToTable( const qstr name, mp_obj_t fun )
@@ -480,7 +492,9 @@ namespace upywrap
       typedef NativeMemberCall< name, Ret, A... > call_type;
       auto callerObject = call_type::CreateCaller( f );
       if( conv )
+      {
         callerObject->convert_retval = conv;
+      }
       functionPointers[ (void*) name ] = callerObject;
       AddFunctionToTable( name(), call_type::CreateUPyFunction() );
     }
@@ -626,7 +640,9 @@ namespace upywrap
       static mp_obj_t MakeNew( const mp_obj_type_t*, mp_uint_t n_args, mp_uint_t, const mp_obj_t *args )
       {
         if( n_args != sizeof...( A ) )
+        {
           RaiseTypeException( "Wrong number of arguments for constructor" );
+        }
         auto f = (init_call_type*) this_type::functionPointers[ (void*) index ];
         UPYWRAP_TRY
         return AsPyObj( native_obj_t( Apply( f, args, make_index_sequence< sizeof...( A ) >() ) ) );
@@ -644,7 +660,9 @@ namespace upywrap
       static mp_obj_t CallN( mp_uint_t n_args, const mp_obj_t* args )
       {
         if( n_args != sizeof...( A ) + 1 )
+        {
           RaiseTypeException( "Wrong number of arguments" );
+        }
         auto self = (this_type*) args[ 0 ];
         auto firstArg = &args[ 1 ];
         auto f = (call_type*) this_type::functionPointers[ (void*) index ];
@@ -791,7 +809,9 @@ namespace upywrap
       //Return None instead which is either useful (e.g. used as 'optional' return value),
       //or will lead to an actual Python exception when used anyway.
       if( !p )
+      {
         return mp_const_none;
+      }
       return ClassWrapper< T >::AsPyObj( std::move( p ) );
     }
   };
