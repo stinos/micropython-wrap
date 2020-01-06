@@ -861,7 +861,7 @@ namespace upywrap
 //the first place it obviously must have been registered already somewhere
 #define UPYWRAP_REGISTER_OPAQUE( className, module ) \
   { \
-    upywrap::ClassWrapper< className > registerInstance( UPY_STRINGIZE( className ), module ); \
+    upywrap::ClassWrapper< className > registerInstance( MP_STRINGIFY( className ), module ); \
   }
 
 #endif //#ifndef MICROPYTHON_WRAP_CLASSWRAPPER
