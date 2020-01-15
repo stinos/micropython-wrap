@@ -60,12 +60,12 @@ namespace upywrap
       {
         return 1u;
       }
-      else if( MP_OBJ_IS_SMALL_INT( arg ) )
+      else if( mp_obj_is_small_int( arg ) )
       {
         using return_t = decltype( largeIntConv( nullptr ) );
         return safe_integer_cast< return_t >( MP_OBJ_SMALL_INT_VALUE( arg ) );
       }
-      else if( MP_OBJ_IS_TYPE( arg, &mp_type_int ) )
+      else if( mp_obj_is_type( arg, &mp_type_int ) )
       {
         return largeIntConv( (mp_obj_int_t*) arg );
       }
@@ -297,7 +297,7 @@ namespace upywrap
       //this is basically dict_iter_next but that isn't exposed as an API method
       for( size_t i = 0 ; i < map->alloc ; ++i )
       {
-        if( MP_MAP_SLOT_IS_FILLED( map, i ) )
+        if( mp_map_slot_is_filled( map, i ) )
         {
           ret.emplace( SelectFromPyObj< K >::type::Convert( map->table[ i ].key ),
                        SelectFromPyObj< V >::type::Convert( map->table[ i ].value ) );

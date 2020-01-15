@@ -251,13 +251,13 @@ namespace upywrap
     static ClassWrapper< T >* AsNativeObjChecked( mp_obj_t arg )
     {
       auto native = (this_type*) MP_OBJ_TO_PTR( arg );
-      if( !MP_OBJ_IS_TYPE( arg, &type ) )
+      if( !mp_obj_is_type( arg, &type ) )
       {
         //if whatever gets passed in doesn't remotely look like an object bail out
         //otherwise it's possible we're being passed an arbitrary 'opaque' ClassWrapper (so the cookie mathches)
         //which has not been registered or has been registered elsewhere (e.g. another dll, hence the uPy type check failure)
         //but if it's the same C++ type (or that check is disabled) we're good to go after all
-        if( MP_OBJ_IS_SMALL_INT( arg ) || MP_OBJ_IS_QSTR( arg ) || !MP_OBJ_IS_OBJ( arg ) ||
+        if( mp_obj_is_small_int( arg ) || mp_obj_is_qstr( arg ) || !mp_obj_is_obj( arg ) ||
             native->cookie != defCookie
 #if UPYWRAP_FULLTYPECHECK
             || typeid( T ) != *native->typeId
