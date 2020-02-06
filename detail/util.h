@@ -98,6 +98,24 @@ namespace upywrap
     return split_last( items... );
   }
 
+  //Overload resolution, can be used to select 1 overload using template parameters when registering functions.
+  //Suppose there's
+  //int A(in);
+  //int A(double);
+  //then resolve< int >( A ) returns the first one, whereas just using A won't compile (unless
+  //the template parameter is specified somewhere else)
+  template< class... Args, class R >
+  auto resolve( R( *m )( Args... ) ) -> decltype( m )
+  {
+    return m;
+  }
+
+  template< class... Args, class T, class R >
+  auto resolve( R( T::*m )( Args... ) ) -> decltype( m )
+  {
+    return m;
+  }
+
   template< class T >
   struct is_shared_ptr : std::false_type
   {
