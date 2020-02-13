@@ -19,14 +19,18 @@ RM = rm
 
 HASCPP17 = $(shell expr `$(CC) -dumpversion | cut -f1 -d.` \>= 7)
 CUR_DIR = $(shell pwd)
-MICROPYTHON_DIR = ../micropython
-CPPFLAGS = -Wall -Werror -I$(MICROPYTHON_DIR) -I$(MICROPYTHON_DIR)/py -I$(MICROPYTHON_DIR)/ports/unix -I$(MICROPYTHON_DIR)/ports/unix/build -DMICROPY_PY_THREAD=0
+MICROPYTHON_DIR ?= ../micropython
+MICROPYTHON_PORT_DIR ?= $(MICROPYTHON_DIR)/ports/unix
+CPPFLAGS = \
+	-Wall -Werror \
+ 	-I$(MICROPYTHON_DIR) -I$(MICROPYTHON_DIR)/py \
+ 	-I$(MICROPYTHON_PORT_DIR) -I$(MICROPYTHON_PORT_DIR)/build
 ifeq ($(HASCPP17), 1)
 	CPPFLAGS += -std=c++17
 else
 	CPPFLAGS += -std=c++11
 endif
-MAKEUPY = make -C $(MICROPYTHON_DIR)/ports/unix
+MAKEUPY = make -C $(MICROPYTHON_PORT_DIR)
 MAKEUPYCROSS = make -C $(MICROPYTHON_DIR)/mpy-cross
 UPYFLAGS = MICROPY_PY_BTREE=0 MICROPY_PY_FFI=0 MICROPY_PY_USSL=0 MICROPY_PY_AXTLS=0 MICROPY_FATFS=0 MICROPY_PY_THREAD=0
 
@@ -44,10 +48,10 @@ sharedlib: upyhdr
 	$(CP) tests/libupywraptest.so ~/.micropython/lib/upywraptest.so
 
 teststaticlib: staticlib
-	$(CD) $(MICROPYTHON_DIR)/ports/unix && $(PATCH) -i $(CUR_DIR)/main.diff
+	$(CD) $(MICROPYTHON_PORT_DIR) && $(PATCH) -i $(CUR_DIR)/main.diff
 	$(MAKEUPYCROSS)
 	$(MAKEUPY) $(UPYFLAGS) LDFLAGS_MOD="$(CUR_DIR)/tests/libupywraptest.a -ldl -lstdc++"
-	$(CD) $(MICROPYTHON_DIR)/ports/unix && $(PATCH) -R -i $(CUR_DIR)/main.diff
+	$(CD) $(MICROPYTHON_PORT_DIR) && $(PATCH) -R -i $(CUR_DIR)/main.diff
 	$(CD) $(MICROPYTHON_DIR)/tests && $(PYTHON) ./run-tests -d $(CUR_DIR)/tests/py
 
 testsharedlib: sharedlib
