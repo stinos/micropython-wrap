@@ -148,12 +148,12 @@ namespace upywrap
 
   inline void RaiseTypeException( mp_const_obj_t source, const char* target )
   {
-    nlr_raise( mp_obj_new_exception_msg_varg( &mp_type_TypeError, "can't convert %s to %s", mp_obj_get_type_str( source ), target ) );
+    mp_raise_msg_varg( &mp_type_TypeError, "can't convert %s to %s", mp_obj_get_type_str( source ), target );
   }
 
   inline void RaiseAttributeException( qstr name, qstr attr )
   {
-    nlr_raise( mp_obj_new_exception_msg_varg( &mp_type_AttributeError, "'%s' object has no attribute '%s'", qstr_str( name ), qstr_str( attr ) ) );
+    mp_raise_msg_varg( &mp_type_AttributeError, "'%s' object has no attribute '%s'", qstr_str( name ), qstr_str( attr ) );
   }
 
   inline mp_obj_t RaiseOverflowException( const char* msg )
