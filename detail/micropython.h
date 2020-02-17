@@ -440,6 +440,21 @@ namespace upywrap
     std::shared_ptr< mp_obj_t > obj;
   };
 
+
+    /**
+      * Initialize features for PinPyObj.
+      * This creates the StaticPyObjectStore instance and stores it in the module's globals dict,
+      * to ensure anything in the list will not be sweeped by the GC.
+      * Doesn't do anything if called already, so all translation units in the binary use the same instance.
+      */
+  inline void InitializePyObjectStore( mp_obj_module_t& mod )
+  {
+    if( !StaticPyObjectStore::Initialized() )
+    {
+      mp_obj_dict_store( mod.globals, new_qstr( "_StaticPyObjectStore" ), StaticPyObjectStore::InitBackEnd() );
+    }
+  }
+
     /**
       * Wrapper around mp_obj_new_module/mp_module_register.
       * Also creates the StaticPyObjectStore backend so PinPyObj can be used.
@@ -452,13 +467,7 @@ namespace upywrap
     {
       mp_module_register( qname, mod );
     }
-    //Create StaticPyObjectStore instance and store it in the module's globals dict,
-    //which ensures anything in the list will also not be sweeped by the GC.
-    //Do this only once though, so all translation units in the binary use the same list.
-    if( !StaticPyObjectStore::Initialized() )
-    {
-      mp_obj_dict_store( mod->globals, new_qstr( "_StaticPyObjectStore" ), StaticPyObjectStore::InitBackEnd() );
-    }
+    InitializePyObjectStore( *mod );
     return mod;
   }
 
