@@ -109,12 +109,9 @@ void TestVariables()
 
 extern "C"
 {
-#ifdef _MSC_VER
-  _declspec( dllexport )
-#endif
-  mp_obj_module_t* init_upywraptest()
+  void doinit_upywraptest( mp_obj_module_t* mod )
   {
-    auto mod = upywrap::CreateModule( "upywraptest", false );
+    upywrap::InitializePyObjectStore( *mod );
 
     upywrap::ClassWrapper< Simple > wrap1( "Simple", mod );
     wrap1.DefInit< int >();
@@ -226,7 +223,15 @@ extern "C"
     fn.Def< F::ReturnValue >( ReturnValue );
     fn.Def< F::ReturnConstReference >( ReturnConstReference );
 #endif
+  }
 
+#ifdef _MSC_VER
+  _declspec( dllexport )
+#endif
+  mp_obj_module_t* init_upywraptest()
+  {
+    auto mod = upywrap::CreateModule( "upywraptest", false );
+    doinit_upywraptest( mod );
     return mod;
   }
 }

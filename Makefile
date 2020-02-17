@@ -13,7 +13,6 @@ CD = cd
 CP = cp
 CXX = g++
 MKDIR = mkdir
-PATCH = patch
 PYTHON = python3
 RM = rm
 
@@ -33,25 +32,25 @@ endif
 MAKEUPY = make -C $(MICROPYTHON_PORT_DIR) BUILD=build
 MAKEUPYCROSS = make -C $(MICROPYTHON_DIR)/mpy-cross
 UPYFLAGS = MICROPY_PY_BTREE=0 MICROPY_PY_FFI=0 MICROPY_PY_USSL=0 MICROPY_PY_AXTLS=0 MICROPY_FATFS=0 MICROPY_PY_THREAD=0
+# For the static library the modules gets built as 'user C module'
+# so we need to instruct the build to do that (also see module.c).
+UPYFLAGSS = $(UPYFLAGS) USER_C_MODULES=$(CUR_DIR) CFLAGS_EXTRA="-DMODULE_UPYWRAPTEST_ENABLED=1 -DMICROPY_MODULE_BUILTIN_INIT=1"
 
-upyhdr:
-	$(MAKEUPY) $(UPYFLAGS) build/genhdr/qstrdefs.generated.h
-
-staticlib: upyhdr
+staticlib:
+	$(MAKEUPY) $(UPYFLAGSS) build/genhdr/qstrdefs.generated.h
 	$(CXX) $(CPPFLAGS) -c tests/module.cpp -o tests/module_static.o
 	$(AR) rcs tests/libupywraptest.a tests/module_static.o
 
-sharedlib: upyhdr
+sharedlib:
+	$(MAKEUPY) $(UPYFLAGS) build/genhdr/qstrdefs.generated.h
 	$(CXX) -fPIC $(CPPFLAGS) -c tests/module.cpp -o tests/module_shared.o
 	$(CXX) -shared -o tests/libupywraptest.so tests/module_shared.o
 	$(MKDIR) -p ~/.micropython/lib
 	$(CP) tests/libupywraptest.so ~/.micropython/lib/upywraptest.so
 
 teststaticlib: staticlib
-	$(CD) $(MICROPYTHON_PORT_DIR) && $(PATCH) -i $(CUR_DIR)/main.diff
 	$(MAKEUPYCROSS)
-	$(MAKEUPY) $(UPYFLAGS) LDFLAGS_MOD="$(CUR_DIR)/tests/libupywraptest.a -ldl -lstdc++"
-	$(CD) $(MICROPYTHON_PORT_DIR) && $(PATCH) -R -i $(CUR_DIR)/main.diff
+	$(MAKEUPY) $(UPYFLAGSS) all
 	$(CD) $(MICROPYTHON_DIR)/tests && $(PYTHON) ./run-tests -d $(CUR_DIR)/tests/py
 
 testsharedlib: sharedlib
