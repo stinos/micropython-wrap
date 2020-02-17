@@ -166,6 +166,11 @@ namespace upywrap
     return RaiseException( &mp_type_RuntimeError, msg );
   }
 
+  inline mp_obj_t ImportName( const char* moduleName )
+  {
+    return mp_import_name( qstr_from_str( moduleName ), mp_const_none, MP_OBJ_NEW_SMALL_INT( 0 ) );
+  }
+
 #ifdef UPYWRAP_NOEXCEPTIONS
   #define UPYWRAP_TRY
   #define UPYWRAP_CATCH
