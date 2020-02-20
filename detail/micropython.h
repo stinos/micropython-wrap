@@ -9,6 +9,7 @@ extern "C"
 #include <py/objfun.h>
 #include <py/objint.h>
 #include <py/objmodule.h>
+#include <py/objtype.h>
 #include <py/runtime.h>
 }
 #ifdef _MSC_VER

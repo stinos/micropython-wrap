@@ -248,7 +248,7 @@ namespace upywrap
       return o;
     }
 
-    static ClassWrapper< T >* AsNativeObjChecked( mp_obj_t arg )
+    static ClassWrapper< T >* AsNativeObjCheckedImpl( mp_obj_t arg )
     {
       auto native = (this_type*) MP_OBJ_TO_PTR( arg );
       if( !mp_obj_is_type( arg, &type ) )
@@ -263,11 +263,41 @@ namespace upywrap
 #endif
             )
         {
-          CheckTypeIsRegistered(); //since we want to access type.name
-          RaiseTypeException( arg, qstr_str( type.name ) );
+          return nullptr;
         }
       }
       return native;
+    }
+
+    static ClassWrapper< T >* AsNativeObjChecked( mp_obj_t arg )
+    {
+      if( auto native = AsNativeObjCheckedImpl( arg ) )
+      {
+        return native;
+      }
+      //Could be a Python class inheriting from us.
+      //Can't use something like mp_obj_cast_to_native_base because that will try to compare
+      //pointers to type and arg's type but those don't match if this_type is for a C++ class
+      //which is a parent of arg's class i.e. this is ClassWrapper<A> and arg is ClassWrapper<B>
+      //where B derives from A. Which also means this will never work if UPYWRAP_FULLTYPECHECK is
+      //enabled, and if it's not you have to take care to only use this for types which actually
+      //derive from each other else it's UB.
+      if( mp_obj_is_obj( arg ) )
+      {
+        mp_obj_base_t* base = (mp_obj_base_t*) MP_OBJ_TO_PTR( arg );
+        if( mp_obj_is_instance_type( base->type ) && base->type->parent != nullptr )
+        {
+          if( auto native = AsNativeObjCheckedImpl( ( (mp_obj_instance_t*) base )->subobj[ 0 ] ) )
+          {
+            return native;
+          }
+        }
+      }
+      CheckTypeIsRegistered(); //since we want to access type.name
+      RaiseTypeException( arg, qstr_str( type.name ) );
+#if !defined( _MSC_VER ) || defined( _DEBUG )
+      return nullptr;
+#endif
     }
 
     static T* AsNativeNonNullPtr( mp_obj_t arg )

@@ -48,12 +48,50 @@ except TypeError:
   print('TypeError')
 
 try:
+  # Simple2 wraps native NewSimple and the latter derives
+  # from native Simple but this is not allowed because with
+  # UPYWRAP_FULLTYPECHECK the base pointer types are not equal.
+  simple1.Plus(upywraptest.Simple2())
+except TypeError:
+  print('TypeError')
+
+try:
   simple1.SimpleFunc(None)
 except Exception:
   print('TypeError')
 
-print(upywraptest.Simple2(10).Value())
+print(upywraptest.Simple2().Value())
 print(upywraptest.Simple3(20).Value())
 
 print(upywraptest.IsNullPtr(None))
 print(upywraptest.IsNullSharedPtr(None))
+
+# Derive from native class.
+class Derived1(upywraptest.Simple):
+  def __init__(self, arg=0):
+    super().__init__(arg)
+
+  def Add(self, a):
+    return super().Add(a)
+
+# Derive from native class, omitting __init__, which is a different
+# code path (see where subobj[0] gets assigned in objtype.c).
+class Derived2(upywraptest.Simple2):
+  pass
+
+# One deeper in hierarchy.
+class Derived3(Derived1):
+  def __init__(self, arg=0):
+    super().__init__(arg)
+
+derived1 = Derived1(0)
+derived1.Add(1)
+derived2 = Derived2()
+derived3 = Derived3(3)
+print(derived1, derived2, derived3)
+
+derived1.Plus(derived3)
+derived3.Plus(derived1)
+simple1.Plus(derived1)
+simple1.Plus(derived3)
+print(derived1, derived3, simple1)

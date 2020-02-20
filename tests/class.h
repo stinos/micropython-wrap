@@ -38,7 +38,7 @@ namespace upywrap
       a += rh.a;
     }
 
-    std::string Str() const
+    virtual std::string Str() const
     {
       return "Simple " + std::to_string( a );
     }
@@ -60,11 +60,16 @@ namespace upywrap
       Simple( v )
     {
     }
+
+    std::string Str() const override
+    {
+      return "Simple2 " + std::to_string( Value() );
+    }
   };
 
-  NewSimple* ConstructNewSimple( int val )
+  NewSimple* ConstructNewSimple()
   {
-    return new NewSimple( val );
+    return new NewSimple( 33 );
   }
 
   class SharedSimple : public Simple

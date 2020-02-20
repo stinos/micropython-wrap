@@ -128,6 +128,7 @@ extern "C"
     upywrap::ClassWrapper< NewSimple > wrapNewSimple( "Simple2", mod );
     wrapNewSimple.DefInit( ConstructNewSimple );
     wrapNewSimple.Def< F::Value >( &NewSimple::Value );
+    wrapNewSimple.Def< upywrap::special_methods::__str__ >( &NewSimple::Str );
 
     upywrap::ClassWrapper< SharedSimple > wrapSharedSimple( "Simple3", mod );
     wrapSharedSimple.DefInit( ConstructSharedSimple );
