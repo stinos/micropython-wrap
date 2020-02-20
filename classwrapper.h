@@ -257,8 +257,7 @@ namespace upywrap
         //otherwise it's possible we're being passed an arbitrary 'opaque' ClassWrapper (so the cookie mathches)
         //which has not been registered or has been registered elsewhere (e.g. another dll, hence the uPy type check failure)
         //but if it's the same C++ type (or that check is disabled) we're good to go after all
-        if( mp_obj_is_small_int( arg ) || mp_obj_is_qstr( arg ) || !mp_obj_is_obj( arg ) ||
-            native->cookie != defCookie
+        if( !mp_obj_is_obj( arg ) || native->cookie != defCookie
 #if UPYWRAP_FULLTYPECHECK
             || typeid( T ) != *native->typeId
 #endif
