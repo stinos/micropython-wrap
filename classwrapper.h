@@ -101,6 +101,11 @@ namespace upywrap
       }
     }
 
+    const mp_obj_type_t& Type() const
+    {
+      return type;
+    }
+
     template< class A >
     void StoreClassVariable( const char* name, const A& value )
     {
