@@ -29,43 +29,47 @@ Consequently when running the [python test code](tests/py) using the standard Mi
 
 Just to get an idea here is a short sample of C++ code registration; code achieving the same using just the MicroPython API is not shown here but would likely be around 50 lines:
 
-    #include <micropython-wrap/functionwrapper.h>
+```c++
+#include <micropython-wrap/functionwrapper.h>
 
-    //function we want to call from within a MicroPython script
-    std::vector< std::string > SomeFunction( std::vector< std::string > vec )
-    {
-      for( auto& v : vec )
-        v += "TRANSFORM";
-      return vec;
-    }
+//function we want to call from within a MicroPython script
+std::vector< std::string > SomeFunction( std::vector< std::string > vec )
+{
+  for( auto& v : vec )
+    v += "TRANSFORM";
+  return vec;
+}
 
-    //function names are declared in structs
-    struct FunctionNames
-    {
-      func_name_def( TransformList )
-    };
+//function names are declared in structs
+struct FunctionNames
+{
+  func_name_def( TransformList )
+};
 
-    extern "C"
-    {
-      void RegisterMyModule(void)
-      {
-        //register a module named 'foo'
-        auto mod = upywrap::CreateModule( "foo" );
+extern "C"
+{
+  void RegisterMyModule(void)
+  {
+    //register a module named 'foo'
+    auto mod = upywrap::CreateModule( "foo" );
 
-        //register our function with the name 'TransformList'
-        //conversion of a MicroPython list of strings is done automatically
-        upywrap::FunctionWrapper wrapfunc( mod );
-        wrapfunc.Def< FunctionNames::TransformList >( SomeFunction );
-      }
-    }
+    //register our function with the name 'TransformList'
+    //conversion of a MicroPython list of strings is done automatically
+    upywrap::FunctionWrapper wrapfunc( mod );
+    wrapfunc.Def< FunctionNames::TransformList >( SomeFunction );
+  }
+}
 
-    //now call RegisterMyModule() in MicroPython's main() for example
+//now call RegisterMyModule() in MicroPython's main() for example
+```
 
 And the MicroPython code making use of this looks like:
 
-    import foo
+```python
+import foo
 
-    print(foo.TransformList(['a', 'b']))  # Prints ['aTRANSFORM', 'bTRANSFORM']
+print(foo.TransformList(['a', 'b']))  # Prints ['aTRANSFORM', 'bTRANSFORM']
+```
 
 Type Conversion
 ---------------
