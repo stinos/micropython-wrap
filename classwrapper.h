@@ -85,17 +85,18 @@ namespace upywrap
     using native_obj_t = T*;
 #endif
 
-    ClassWrapper( const char* name, mp_obj_module_t* mod ) :
-      ClassWrapper( name, mod->globals )
+    ClassWrapper( const char* name, mp_obj_module_t* mod, decltype( mp_obj_type_t::flags ) flags = 0 ) :
+      ClassWrapper( name, mod->globals, flags )
     {
     }
 
-    ClassWrapper( const char* name, mp_obj_dict_t* dict )
+    ClassWrapper( const char* name, mp_obj_dict_t* dict, decltype( mp_obj_type_t::flags ) flags = 0 )
     {
       static bool init = false;
       if( !init )
       {
         OneTimeInit( name, dict );
+        type.flags |= flags;
         init = true;
       }
     }
@@ -439,6 +440,20 @@ namespace upywrap
 
     static mp_obj_t binary_op( mp_binary_op_t op, mp_obj_t self_in, mp_obj_t other_in )
     {
+      //First check if the type defines the op and call it if so.
+      auto locals_map = &( (mp_obj_dict_t*) type.locals_dict )->map;
+      auto elem = mp_map_lookup( locals_map, new_qstr( mp_binary_op_method_name[ op ] ), MP_MAP_LOOKUP );
+      if( elem != nullptr )
+      {
+        mp_obj_t args[] = { elem->value, self_in, other_in };
+        auto res = mp_call_method_n_kw( 1, 0, args );
+        if( res != MP_OBJ_NULL )
+        {
+          return res;
+        }
+      }
+
+      //Otherwise just fall back to comparing pointers.
       auto self = (this_type*) self_in;
       auto other = (this_type*) other_in;
       if( op != MP_BINARY_OP_EQUAL )

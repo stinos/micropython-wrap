@@ -1,6 +1,7 @@
 #ifndef MICROPYTHON_WRAP_TESTS_CLASS_H
 #define MICROPYTHON_WRAP_TESTS_CLASS_H
 
+#include <iostream>
 #include <memory>
 #include <string>
 
@@ -41,6 +42,17 @@ namespace upywrap
     virtual std::string Str() const
     {
       return "Simple " + std::to_string( a );
+    }
+
+    bool operator == ( const Simple& rh ) const
+    {
+      return a == rh.a;
+    }
+
+    bool operator != ( const Simple& rh ) const
+    {
+      std::cout << "__ne__" << std::endl;
+      return !this->operator == ( rh );
     }
 
   private:

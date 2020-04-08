@@ -19,6 +19,9 @@ using namespace upywrap;
 
 struct F
 {
+  func_name_def( __eq__ )
+  func_name_def( __ne__ )
+
   func_name_def( Pair )
   func_name_def( Tuple1 )
   func_name_def( Tuple2 )
@@ -113,8 +116,10 @@ extern "C"
   {
     upywrap::InitializePyObjectStore( *mod );
 
-    upywrap::ClassWrapper< Simple > wrap1( "Simple", mod );
+    upywrap::ClassWrapper< Simple > wrap1( "Simple", mod, MP_TYPE_FLAG_EQ_HAS_NEQ_TEST ); //Need this flag since we implement __ne__
     wrap1.DefInit< int >();
+    wrap1.Def< F::__eq__ >( &Simple::operator == );
+    wrap1.Def< F::__ne__ >( &Simple::operator != );
     wrap1.Def< F::Add >( &Simple::Add );
     wrap1.Def< F::Value >( &Simple::Value );
     wrap1.Def< F::Plus >( &Simple::Plus );

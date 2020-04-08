@@ -11,6 +11,11 @@ False
 True
 False
 True
+__ne__
+False
+False
+False
+True
 0
 0.0
 z
@@ -25,3 +30,6 @@ True
 True
 Simple 1 Simple2 33 Simple 3
 Simple 4 Simple 7 Simple 16
+True
+False
+True
