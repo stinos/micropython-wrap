@@ -14,3 +14,6 @@ before_script:
 
 script:
   - make test CC=gcc-7 CXX=g++-7
+
+after_failure:
+  - ../micropython/tests/run-tests --print-failures

@@ -18,7 +18,7 @@ platform:
 
 build_script:
 - cmd: >-
-    git clone -q --depth 10 --branch=windows-pyd https://github.com/stinos/micropython ../micropython
+    git clone -q --depth 1 --branch=windows-pyd https://github.com/stinos/micropython ../micropython
 
     msbuild ../micropython/ports/windows/micropythoncore.vcxproj /p:platform=%platform%;configuration=%configuration%
 
@@ -28,9 +28,11 @@ build_script:
 
 test_script:
 - cmd: >-
-    cd ../micropython/tests
+    %MICROPY_CPYTHON3% ../micropython/tests/run-tests --keep-path -d tests/py
 
-    %MICROPY_CPYTHON3% run-tests --keep-path -d ../../micropython-wrap/tests/py
+on_failure:
+- cmd: >-
+    %MICROPY_CPYTHON3% ../micropython/tests/run-tests --print-failures
 
 skip_tags: true
 

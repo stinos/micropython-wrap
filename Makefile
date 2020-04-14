@@ -9,7 +9,6 @@
 # Builds with MICROPY_PY_THREAD=0 to allow finaliser, see gc.c
 
 AR = ar
-CD = cd
 CP = cp
 CXX = g++
 MKDIR = mkdir
@@ -51,14 +50,16 @@ sharedlib:
 teststaticlib: staticlib
 	$(MAKEUPYCROSS)
 	$(MAKEUPY) $(UPYFLAGSS) all
-	$(CD) $(MICROPYTHON_DIR)/tests && $(PYTHON) ./run-tests -d $(CUR_DIR)/tests/py
+	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/micropython \
+	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests -d $(CUR_DIR)/tests/py
 
 testsharedlib: sharedlib
 	$(MAKEUPYCROSS)
 	# Only works with MicroPython windows-pyd branch, which already has the correct linker options
 	# so there's no need to add anything here.
 	$(MAKEUPY) $(UPYFLAGS)
-	$(CD) $(MICROPYTHON_DIR)/tests && $(PYTHON) ./run-tests --keep-path -d $(CUR_DIR)/tests/py
+	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/micropython \
+	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests --keep-path -d $(CUR_DIR)/tests/py
 
 test: teststaticlib testsharedlib
 
