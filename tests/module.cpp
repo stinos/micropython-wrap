@@ -67,6 +67,7 @@ struct F
   func_name_def( Get )
   func_name_def( Address )
   func_name_def( HasExceptions )
+  func_name_def( FullTypeCheck )
   func_name_def( Throw )
   func_name_def( StdString )
   func_name_def( HasCharString )
@@ -87,6 +88,7 @@ struct F
 
   func_name_def( Add )
   func_name_def( Value )
+  func_name_def( Name )
   func_name_def( Plus )
   func_name_def( SimpleFunc )
 
@@ -133,11 +135,18 @@ extern "C"
     upywrap::ClassWrapper< NewSimple > wrapNewSimple( "Simple2", mod );
     wrapNewSimple.DefInit( ConstructNewSimple );
     wrapNewSimple.Def< F::Value >( &NewSimple::Value );
+    wrapNewSimple.Def< F::Name >( &NewSimple::Name );
     wrapNewSimple.Def< upywrap::special_methods::__str__ >( &NewSimple::Str );
 
     upywrap::ClassWrapper< SharedSimple > wrapSharedSimple( "Simple3", mod );
     wrapSharedSimple.DefInit( ConstructSharedSimple );
     wrapSharedSimple.Def< F::Value >( &SharedSimple::Value );
+
+    upywrap::ClassWrapper< SimpleCollection > wrapSimpleCollection( "SimpleCollection", mod );
+    wrapSimpleCollection.DefInit();
+    wrapSimpleCollection.Def< F::Add >( &SimpleCollection::Add );
+    wrapSimpleCollection.Def< F::Get >( &SimpleCollection::At );
+    wrapSimpleCollection.Def< F::Reference >( &SimpleCollection::RefCount );
 
     upywrap::ClassWrapper< Context > wrap2( "Context", mod );
     wrap2.DefInit<>();
@@ -190,6 +199,7 @@ extern "C"
     fn.Def< F::ReturnSharedPointer >( ReturnSharedPointer );
     fn.Def< F::ReturnNullPtr >( ReturnNullPtr );
     fn.Def< F::HasExceptions >( HasExceptions );
+    fn.Def< F::FullTypeCheck >( FullTypeCheck );
 #ifndef UPYWRAP_NOEXCEPTIONS
     fn.Def< F::Throw >( Throw );
 #endif

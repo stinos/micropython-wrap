@@ -14,6 +14,8 @@ before_script:
 
 script:
   - make test CC=gcc-7 CXX=g++-7
+  - make clean
+  - make test CC=gcc-7 CXX=g++-7 CPPFLAGS_EXTRA="-DUPYWRAP_FULLTYPECHECK=0"
 
 after_failure:
   - ../micropython/tests/run-tests --print-failures

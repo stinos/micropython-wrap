@@ -3,6 +3,9 @@ image: Visual Studio 2017
 environment:
   MICROPY_CPYTHON3: c:/python34/python.exe
   MICROPYPATH: c:/projects/micropython/ports/windows
+  matrix:
+    - FullTypeCheck: 0
+    - FullTypeCheck: 1
 
 init:
 - ps: |
@@ -23,8 +26,8 @@ build_script:
 
     git clone -q --depth 1 --branch=windows-pyd https://github.com/stinos/micropython ../micropython
 
-    # Not 100% sure why this is needed in Powershell build scripts but not when
-    # running cmd scripts or when building projects directly. But without it result is
+    # Not 100% sure why WindowsTargetPlatformVersion etc are needed in Powershell build scripts,
+    # but not when running cmd scripts or when building projects directly. But without it result is
     # "The build tools for Visual Studio 2010 (Platform Toolset = 'v100') cannot be found"
     foreach ($projectDir in @('../micropython/ports/windows', './')) {
     @"
@@ -33,6 +36,11 @@ build_script:
         <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
         <PlatformToolset>v141</PlatformToolset>
       </PropertyGroup>
+      <ItemDefinitionGroup>
+        <ClCompile>
+          <PreProcessorDefinitions>UPYWRAP_FULLTYPECHECK=$env:FullTypeCheck;%(PreProcessorDefinitions)</PreProcessorDefinitions>
+        </ClCompile>
+      </ItemDefinitionGroup>
     </Project>
     "@ | Set-Content (Join-Path $projectDir 'directory.build.props')
     }

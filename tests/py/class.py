@@ -51,17 +51,23 @@ try:
 except TypeError:
   print('TypeError')
 
-try:
-  simple1.Plus(upywraptest.NargsTest())
-except TypeError:
-  print('TypeError')
+if upywraptest.FullTypeCheck():
+  try:
+    # Drawback of current implementation without UPYWRAP_FULLTYPECHECK:
+    # this is allowed, causing undefined behavior.
+    simple1.Plus(upywraptest.NargsTest())
+  except TypeError:
+    print('TypeError')
 
-try:
-  # Simple2 wraps native NewSimple and the latter derives
-  # from native Simple but this is not allowed because with
-  # UPYWRAP_FULLTYPECHECK the base pointer types are not equal.
-  simple1.Plus(upywraptest.Simple2())
-except TypeError:
+  try:
+    # Simple2 wraps native NewSimple and the latter derives
+    # from native Simple but this is not allowed because with
+    # UPYWRAP_FULLTYPECHECK the base pointer types are not equal.
+    simple1.Plus(upywraptest.Simple2())
+  except TypeError:
+    print('TypeError')
+else:
+  print('TypeError')
   print('TypeError')
 
 try:

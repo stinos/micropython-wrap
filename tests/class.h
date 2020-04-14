@@ -77,6 +77,11 @@ namespace upywrap
     {
       return "Simple2 " + std::to_string( Value() );
     }
+
+    std::string Name() const
+    {
+      return "Simple2";
+    }
   };
 
   NewSimple* ConstructNewSimple()
@@ -107,6 +112,34 @@ namespace upywrap
   {
     return p == nullptr;
   }
+
+  class SimpleCollection
+  {
+  public:
+    using simple_t = std::shared_ptr< Simple >;
+
+    SimpleCollection()
+    {
+    }
+
+    void Add( simple_t s )
+    {
+      simples.push_back( s );
+    }
+
+    simple_t At( size_t index )
+    {
+      return simples.at( index );
+    }
+
+    int RefCount( size_t index )
+    {
+      return simples.at( index ).use_count();
+    }
+
+  private:
+    std::vector< simple_t > simples;
+  };
 }
 
 #endif //#ifndef MICROPYTHON_WRAP_TESTS_CLASS_H

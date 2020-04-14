@@ -20,7 +20,7 @@ CUR_DIR = $(shell pwd)
 MICROPYTHON_DIR ?= ../micropython
 MICROPYTHON_PORT_DIR ?= $(MICROPYTHON_DIR)/ports/unix
 CPPFLAGS = \
-	-Wall -Werror \
+	-Wall -Werror $(CPPFLAGS_EXTRA)\
  	-I$(MICROPYTHON_DIR) -I$(MICROPYTHON_DIR)/py \
  	-I$(MICROPYTHON_PORT_DIR) -I$(MICROPYTHON_PORT_DIR)/build -I$(MICROPYTHON_PORT_DIR)/variants/standard
 ifeq ($(HASCPP17), 1)

@@ -45,6 +45,11 @@
 
 namespace upywrap
 {
+  inline bool FullTypeCheck()
+  {
+    return UPYWRAP_FULLTYPECHECK == 1;
+  }
+
   //Main logic for registering classes and their functions.
   //Usage:
   //
@@ -259,10 +264,27 @@ namespace upywrap
       auto native = (this_type*) MP_OBJ_TO_PTR( arg );
       if( !mp_obj_is_type( arg, &type ) )
       {
-        //if whatever gets passed in doesn't remotely look like an object bail out
-        //otherwise it's possible we're being passed an arbitrary 'opaque' ClassWrapper (so the cookie mathches)
-        //which has not been registered or has been registered elsewhere (e.g. another dll, hence the uPy type check failure)
-        //but if it's the same C++ type (or that check is disabled) we're good to go after all
+        //If whatever gets passed in doesn't remotely look like an object bail out.
+        //Otherwise it's possible we're being passed an arbitrary 'opaque' ClassWrapper (so the cookie mathches)
+        //which has not been registered or has been registered elsewhere (e.g. another dll, which makes
+        //mp_obj_is_type fail since that just compares pointers)
+        //but if it's the same C++ type (or that check is disabled) we're good to go after all.
+        //With UPYWRAP_FULLTYPECHECK off, another possibility which makes sense is this gets called from
+        //ClassWrapper< B > and arg is actually a ClassWrapper< A >, but B derives from A or vice-versa:
+        //in that case, as long as the memory layout of A and B is similar, i.e. for
+        //auto b = new B();
+        //auto a = static_cast< A* >( b );
+        //auto c = static_cast< B* >( a );
+        //all 3 pointers are the same, this actually also works as tested with both gcc and msvc.
+        //Still, it's not exactly the safest option: AFAICT it's still UB but just happens to work, plus
+        //in multiple inheritance cases where B derives from C and A - in that order - it will segfault
+        //in no time because in that case the 3 pointers shown above will not be the same.
+        //Eventually we might fix this which requires doing it at compile-time because the C++ type
+        //system doesn't have anything at runtime to check if one type_info has a relationship to another.
+        //An option would be to have an std::map< type_info, custom_dynamic_cast_fun > which gets populated
+        //in the constructor by passing the type_info of the class(es) from which T derives - or in
+        //case of an opaque wrapper, which effectively is the same as T - and a function for casting,
+        //preferrably using dynamic_cast or dynamic_pointer_cast to double-check errors.
         if( !mp_obj_is_obj( arg ) || native->cookie != defCookie
 #if UPYWRAP_FULLTYPECHECK
             || typeid( T ) != *native->typeId
