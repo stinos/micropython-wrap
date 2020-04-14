@@ -1,4 +1,6 @@
-Simple2 33
-Simple2 33
+<class 'Simple'> Simple2 33
+<class 'Simple'> Simple2 33
 ref count 3
+<class 'Simple2'> Simple2 33
+<class 'Simple2'> Simple2 33
 collect did reclaim object 1

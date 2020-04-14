@@ -227,6 +227,19 @@ namespace upywrap
       ExitImpl< FixedFuncNames::Exit, decltype( f ) >( f );
     }
 
+    //If argument looks like a ClassWrapper< T > return it as such.
+    //With UPYWRAP_SHAREDPTROBJ this will essentially increase ref count and return
+    //a new ClassWrapper with the same shared_ptr control block as another one,
+    //but possibly with different functions registered.
+    //As such it's useful if you e.g. have an instance of ClassWrapper< A > and this is
+    //type ClassWrapper< B > and B derives from A, then B.Cast(a) gives the expected thing.
+    //Also see classnt.py test.
+    //Use with caution: see comments in AsNativeObjChecked.
+    static mp_obj_t Cast( mp_obj_t other )
+    {
+      return AsPyObj( AsNativeObjChecked( other )->obj );
+    }
+
 #if UPYWRAP_SHAREDPTROBJ
     static mp_obj_t AsPyObj( T* p, bool own )
     {
@@ -537,6 +550,10 @@ namespace upywrap
       mp_obj_dict_store( dict, new_qstr( ( name + "_locals" ).data() ), type.locals_dict );
 
       AddFunctionToTable( MP_QSTR___del__, MakeFunction( del ) );
+      auto caster = m_new_obj( mp_rom_obj_static_class_method_t );
+      caster->base.type = &mp_type_staticmethod;
+      caster->fun = MakeFunction( Cast );
+      StoreClassVariable( "Cast", MP_OBJ_FROM_PTR( caster ) );
     }
 
     static void CheckTypeIsRegistered()
