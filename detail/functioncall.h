@@ -17,6 +17,25 @@ namespace upywrap
     typedef void* (*type)();
   };
 
+  //Return value 'converter' which ignores the C++ return value and just returns None.
+  //Use to set convert_retval when the return value isn't needed and/or isn't registered,
+  //instead of having to write a wrapper function. For example if your C++ function is
+  //Foo& Bar();
+  //and Foo is not a registered ClassWrapper this results in
+  //"TypeError: Native type class Foo has not been registered" at runtime.
+  //So if you don't need the return value anyway you can make a wrapper
+  //void VoidVersionOfBar()
+  //{
+  //  Bar();
+  //}
+  //and register that instead, or skip that and instead just use
+  //Def<Name>( Bar, upywrap::Ignore );
+  template< class Ret >
+  mp_obj_t Ignore( Ret&& )
+  {
+    return mp_const_none;
+  }
+
   //Base function object for instance function calls
   template< class T, class Ret, class... A >
   struct InstanceFunctionCall
