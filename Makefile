@@ -23,13 +23,13 @@ MICROPYTHON_PORT_DIR ?= $(MICROPYTHON_DIR)/ports/unix
 CPPFLAGS = \
 	-Wall -Werror $(CPPFLAGS_EXTRA)\
  	-I$(MICROPYTHON_DIR) -I$(MICROPYTHON_DIR)/py \
- 	-I$(MICROPYTHON_PORT_DIR) -I$(MICROPYTHON_PORT_DIR)/build -I$(MICROPYTHON_PORT_DIR)/variants/standard
+ 	-I$(MICROPYTHON_PORT_DIR) -I$(MICROPYTHON_PORT_DIR)/variants/standard
 ifeq ($(HASCPP17), 1)
 	CPPFLAGS += -std=c++17
 else
 	CPPFLAGS += -std=c++11
 endif
-MAKEUPY = make -C $(MICROPYTHON_PORT_DIR) BUILD=build
+MAKEUPY = make -C $(MICROPYTHON_PORT_DIR)
 UPYFLAGS = MICROPY_PY_BTREE=0 MICROPY_PY_FFI=0 MICROPY_PY_USSL=0 MICROPY_PY_AXTLS=0 MICROPY_FATFS=0 MICROPY_PY_THREAD=0
 # For the static library the modules gets built as 'user C module'
 # so we need to instruct the build to do that (also see module.c).
@@ -39,26 +39,26 @@ $(MPY_CROSS):
 	make -C $(MICROPYTHON_DIR)/mpy-cross
 
 staticlib:
-	$(MAKEUPY) $(UPYFLAGSS) build/genhdr/qstrdefs.generated.h
-	$(CXX) $(CPPFLAGS) -c tests/module.cpp -o tests/module_static.o
+	$(MAKEUPY) $(UPYFLAGSS) BUILD=build-static build-static/genhdr/qstrdefs.generated.h
+	$(CXX) $(CPPFLAGS) -I$(MICROPYTHON_PORT_DIR)/build-static -c tests/module.cpp -o tests/module_static.o
 	$(AR) rcs tests/libupywraptest.a tests/module_static.o
 
 sharedlib:
-	$(MAKEUPY) $(UPYFLAGS) build/genhdr/qstrdefs.generated.h
-	$(CXX) -fPIC $(CPPFLAGS) -c tests/module.cpp -o tests/module_shared.o
+	$(MAKEUPY) $(UPYFLAGS) BUILD=build-shared build-shared/genhdr/qstrdefs.generated.h
+	$(CXX) -fPIC $(CPPFLAGS) -I$(MICROPYTHON_PORT_DIR)/build-shared -c tests/module.cpp -o tests/module_shared.o
 	$(CXX) -shared -o tests/libupywraptest.so tests/module_shared.o
 	$(MKDIR) -p ~/.micropython/lib
 	$(CP) tests/libupywraptest.so ~/.micropython/lib/upywraptest.so
 
 teststaticlib: $(MPY_CROSS) staticlib
-	$(MAKEUPY) $(UPYFLAGSS) all
+	$(MAKEUPY) $(UPYFLAGSS) BUILD=build-static all
 	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/micropython \
 	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests -d $(CUR_DIR)/tests/py
 
 testsharedlib: $(MPY_CROSS) sharedlib
 	# Only works with MicroPython windows-pyd branch, which already has the correct linker options
 	# so there's no need to add anything here.
-	$(MAKEUPY) $(UPYFLAGS)
+	$(MAKEUPY) $(UPYFLAGS) BUILD=build-shared
 	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/micropython \
 	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests --keep-path -d $(CUR_DIR)/tests/py
 
@@ -68,5 +68,6 @@ clean:
 	# Just clean everything: we use different flags than the default so to avoid
 	# surprises (typically: not all qstrs being detected) make sure everything
 	# gets built again after we touched it.
-	$(MAKEUPY) clean
+	$(MAKEUPY) BUILD=build-static clean
+	$(MAKEUPY) BUILD=build-shared clean
 	$(RM) -f tests/*.o tests/*.a tests/*.so
