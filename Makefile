@@ -18,6 +18,7 @@ RM = rm
 HASCPP17 = $(shell expr `$(CC) -dumpversion | cut -f1 -d.` \>= 7)
 CUR_DIR = $(shell pwd)
 MICROPYTHON_DIR ?= ../micropython
+MPY_CROSS ?= $(MICROPYTHON_DIR)/mpy-cross/mpy-cross
 MICROPYTHON_PORT_DIR ?= $(MICROPYTHON_DIR)/ports/unix
 CPPFLAGS = \
 	-Wall -Werror $(CPPFLAGS_EXTRA)\
@@ -29,11 +30,13 @@ else
 	CPPFLAGS += -std=c++11
 endif
 MAKEUPY = make -C $(MICROPYTHON_PORT_DIR) BUILD=build
-MAKEUPYCROSS = make -C $(MICROPYTHON_DIR)/mpy-cross
 UPYFLAGS = MICROPY_PY_BTREE=0 MICROPY_PY_FFI=0 MICROPY_PY_USSL=0 MICROPY_PY_AXTLS=0 MICROPY_FATFS=0 MICROPY_PY_THREAD=0
 # For the static library the modules gets built as 'user C module'
 # so we need to instruct the build to do that (also see module.c).
 UPYFLAGSS = $(UPYFLAGS) USER_C_MODULES=$(CUR_DIR) CFLAGS_EXTRA="-DMODULE_UPYWRAPTEST_ENABLED=1 -DMICROPY_MODULE_BUILTIN_INIT=1"
+
+$(MPY_CROSS):
+	make -C $(MICROPYTHON_DIR)/mpy-cross
 
 staticlib:
 	$(MAKEUPY) $(UPYFLAGSS) build/genhdr/qstrdefs.generated.h
@@ -47,14 +50,12 @@ sharedlib:
 	$(MKDIR) -p ~/.micropython/lib
 	$(CP) tests/libupywraptest.so ~/.micropython/lib/upywraptest.so
 
-teststaticlib: staticlib
-	$(MAKEUPYCROSS)
+teststaticlib: $(MPY_CROSS) staticlib
 	$(MAKEUPY) $(UPYFLAGSS) all
 	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/micropython \
 	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests -d $(CUR_DIR)/tests/py
 
-testsharedlib: sharedlib
-	$(MAKEUPYCROSS)
+testsharedlib: $(MPY_CROSS) sharedlib
 	# Only works with MicroPython windows-pyd branch, which already has the correct linker options
 	# so there's no need to add anything here.
 	$(MAKEUPY) $(UPYFLAGS)
