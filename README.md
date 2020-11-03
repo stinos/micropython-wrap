@@ -83,10 +83,12 @@ Currently these conversions are supported:
     uPy bool <-> bool
     uPy str <-> std::string
     uPy str <-> const char* (optional)
-    uPy tuple <-> std::tuple
+    uPy tuple <-> std::tuple/std::pair
     uPy list <-> std::vector (each element must be of the same type)
     uPy dict <-> std::map (each key/value must be of the same type)
     uPy callable -> std::function
+    uPy None <-> std::optional (i.e. std::nullopt <-> None, otherwise value gets converted)
+    uPy None <- empty std::shared_ptr
 
 Function and class wrapping
 ---------------------------
