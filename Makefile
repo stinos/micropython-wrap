@@ -29,14 +29,16 @@ ifeq ($(HASCPP17), 1)
 else
 	CPPFLAGS += -std=c++11
 endif
-MAKEUPY = make -C $(MICROPYTHON_PORT_DIR)
+V ?= 0
+MAKEOPTS ?= -j4 V=$(V)
+MAKEUPY = make -C $(MICROPYTHON_PORT_DIR) $(MAKEOPTS)
 UPYFLAGS = MICROPY_PY_BTREE=0 MICROPY_PY_FFI=0 MICROPY_PY_USSL=0 MICROPY_PY_AXTLS=0 MICROPY_FATFS=0 MICROPY_PY_THREAD=0
 # For the static library the modules gets built as 'user C module'
 # so we need to instruct the build to do that (also see module.c).
 UPYFLAGSS = $(UPYFLAGS) USER_C_MODULES=$(CUR_DIR) CFLAGS_EXTRA="-DMODULE_UPYWRAPTEST_ENABLED=1 -DMICROPY_MODULE_BUILTIN_INIT=1"
 
 $(MPY_CROSS):
-	make -C $(MICROPYTHON_DIR)/mpy-cross
+	make -C $(MICROPYTHON_DIR)/mpy-cross $(MAKEOPTS)
 
 staticlib:
 	$(MAKEUPY) $(UPYFLAGSS) BUILD=build-static build-static/genhdr/qstrdefs.generated.h
