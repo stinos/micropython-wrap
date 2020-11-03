@@ -19,7 +19,8 @@ Furthermore the actual integration at the build level is not too straightforward
 
 Platforms
 ---------
-Has been tested under Unix with gcc and Windows with msvc; Windows with msys should be no problem either.
+In principle any MicroPython port which has a working C++ compiler should work since the code is just standard C++.
+Has been tested for the unix port with gcc, the esp32 port with ESP-IDF sdk v4, and the windows port with gcc (from MSYS2) and msvc.
 
 Example
 -------
@@ -116,12 +117,21 @@ First clone this repository alongside the MicroPython repository, then refer to 
 is built and create your own modules in the same way: see [Travis config](.travis.yml) and [Makefile](Makefile) for Unix,
 and the [Appveyor config](.appveyor.yml) and [Project file](micropython-wrap.vcxproj) for Windows.
 
-- the [Unix Makefile](Makefile) shows two ways way of integration:
-    - with a static library: all native test code (including class/function registration) is compiled into a static library.
-      MicroPython's main() function is modified to call the module registration function and then built.
-      Alternatively, instead of building a static library, one could modify the MicroPython Makefile to allow C++ compilation and add all C++ source and wrapper code directly to it.
+- the [Unix Makefile](Makefile) shows three ways way of integration:
+    - combination of a static library and 'user C module': the C++ test code is compiled into a static library
+      and tests/cmodule.c is built with MicroPython as a 'user C module', linking to the static library.
+    - as a 'user C module': same as above but MicroPython builds both .c and .cpp files.
     - with a shared library: using [this MicroPython fork](https://github.com/stinos/micropython/tree/windows-pyd) adds CPython-like
-      support for loading dynamic modules. This way we don't have to explicitly initialize the module in main().
+      support for loading dynamic modules.
+- the Makefile is also a starting point for other gcc-based ports, e.g.
+  ```
+  make usercmodule MICROPYTHON_PORT_DIR=../micropython/ports/esp32
+  ```
+  will build the tests into a user C module. Note this might require changing ports/esp32/partitions.csv to make room for the C++ code like
+  ```
+  factory,  app,  factory, 0x10000, 0x200000,
+  vfs,      data, fat,     0x210000, 0x1F0000,
+  ```
 - for Windows with Visual Studio (2013 or up) some extra work has already been done in [this MicroPython fork](https://github.com/stinos/micropython/tree/windows-pyd).
   Create an empty C++ dll project, import [extmodule.props](https://github.com/stinos/micropython/blob/windows-pyd/windows/msvc/extmodule.props)
   and all code is built into a dll with a .pyd extension which is discovered automatically by the fork's micropython.exe when using
