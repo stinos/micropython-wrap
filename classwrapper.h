@@ -227,6 +227,16 @@ namespace upywrap
       ExitImpl< FixedFuncNames::Exit, decltype( f ) >( f );
     }
 
+    void DefExit( void( *f ) ( T* ) )
+    {
+      ExitImpl< FixedFuncNames::Exit, decltype( f ) >( f );
+    }
+
+    void DefExit( void( *f ) ( T& ) )
+    {
+      ExitImpl< FixedFuncNames::Exit, decltype( f ) >( f );
+    }
+
     //If argument looks like a ClassWrapper< T > return it as such.
     //With UPYWRAP_SHAREDPTROBJ this will essentially increase ref count and return
     //a new ClassWrapper with the same shared_ptr control block as another one,
