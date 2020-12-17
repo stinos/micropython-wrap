@@ -245,6 +245,17 @@ namespace upywrap
   };
 
   template<>
+  struct FromPyObj< std::string_view > : std::true_type
+  {
+    static std::string_view Convert( mp_obj_t arg )
+    {
+      size_t len;
+      auto chars = mp_obj_str_get_data( arg, &len );
+      return std::string_view( chars, len );
+    }
+  };
+
+  template<>
   struct FromPyObj< const char* > : std::true_type
   {
     static const char* Convert( mp_obj_t arg )

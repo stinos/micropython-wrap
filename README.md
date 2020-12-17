@@ -82,7 +82,7 @@ Currently these conversions are supported:
     uPy double <-> double/float
     uPy int <-> std::int16_t/std::int32_t/std::int64_t/std::uint16_t/std::uint32_t/std::uint64_t with overflow checks
     uPy bool <-> bool
-    uPy str <-> std::string
+    uPy str <-> std::string/std::string_view
     uPy str <-> const char* (optional)
     uPy tuple <-> std::tuple/std::pair
     uPy list <-> std::vector (each element must be of the same type)

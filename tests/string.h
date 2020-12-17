@@ -10,6 +10,11 @@ namespace upywrap
     return a;
   }
 
+  std::string_view StdStringView( std::string_view a )
+  {
+    return a;
+  }
+
   const char* CharString( const char* a )
   {
     return a;

@@ -164,6 +164,15 @@ namespace upywrap
   };
 
   template<>
+  struct ToPyObj< std::string_view > : std::true_type
+  {
+    static mp_obj_t Convert( const std::string_view& a )
+    {
+      return mp_obj_new_str( a.data(), a.length() );
+    }
+  };
+
+  template<>
   struct ToPyObj< const char* > : std::true_type
   {
     static mp_obj_t Convert( const char* a )

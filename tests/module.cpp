@@ -70,6 +70,7 @@ struct F
   func_name_def( FullTypeCheck )
   func_name_def( Throw )
   func_name_def( StdString )
+  func_name_def( StdStringView )
   func_name_def( HasCharString )
   func_name_def( CharString )
   func_name_def( HasFinaliser )
@@ -204,6 +205,7 @@ extern "C"
     fn.Def< F::Throw >( Throw );
 #endif
     fn.Def< F::StdString >( StdString );
+    fn.Def< F::StdStringView >( StdStringView );
     fn.Def< F::HasCharString >( HasCharString );
 #ifndef UPYWRAP_NOCHARSTRING
     fn.Def< F::CharString >( CharString );
