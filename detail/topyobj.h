@@ -13,6 +13,9 @@
 #if UPYWRAP_HAS_CPP17
 #include <optional>
 #endif
+#if UPYWRAP_THROW_ERROR_CODE
+#include <system_error>
+#endif
 
 namespace upywrap
 {
@@ -190,6 +193,21 @@ namespace upywrap
       if( arg )
       {
         return SelectToPyObj< T >::type::Convert( *arg );
+      }
+      return mp_const_none;
+    }
+  };
+  #endif
+
+  #if UPYWRAP_THROW_ERROR_CODE
+  template<>
+  struct ToPyObj< std::error_code > : std::true_type
+  {
+    static mp_obj_t Convert( const std::error_code& ec )
+    {
+      if( ec )
+      {
+        throw std::runtime_error( ec.message() );
       }
       return mp_const_none;
     }

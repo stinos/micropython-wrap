@@ -15,6 +15,9 @@
 #if UPYWRAP_HAS_CPP17
 #include "optional.h"
 #endif
+#if UPYWRAP_THROW_ERROR_CODE
+#include "errorcode.h"
+#endif
 using namespace upywrap;
 
 struct F
@@ -97,6 +100,8 @@ struct F
   func_name_def( OptionalInt )
   func_name_def( OptionalVector )
   func_name_def( OptionalArgument )
+  func_name_def( NoErrorCode )
+  func_name_def( SomeErrorCode )
 
   func_name_def( TestVariables )
 };
@@ -228,6 +233,11 @@ extern "C"
     fn.Def< F::OptionalInt >( OptionalInt );
     fn.Def< F::OptionalVector >( OptionalVector );
     fn.Def< F::OptionalArgument >( OptionalArgument );
+#endif
+
+#if UPYWRAP_THROW_ERROR_CODE
+    fn.Def< F::NoErrorCode >( NoErrorCode );
+    fn.Def< F::SomeErrorCode >( SomeErrorCode );
 #endif
 
     //these are all not suported so should yield compiler errors

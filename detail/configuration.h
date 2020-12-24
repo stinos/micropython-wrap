@@ -34,6 +34,14 @@
 #define UPYWRAP_USE_CHARSTRING (1)
 #endif
 
+#if UPYWRAP_HAS_CPP17
+//Whether to support std::error_code conversion.
+//If error_code is zero it is converted to None, otherwise an exception is thrown with the code's message.
+#ifndef UPYWRAP_THROW_ERROR_CODE
+#define UPYWRAP_THROW_ERROR_CODE (1)
+#endif
+#endif
+
 //Whether const references can be converted into uPy objects.
 //Conversion to a uPy object is normally the case only if it's returned/passed by value
 //since that properly mathces the copy semantics: everytime we convert a supported type from

@@ -90,6 +90,7 @@ Currently these conversions are supported:
     uPy callable -> std::function
     uPy None <-> std::optional (i.e. std::nullopt <-> None, otherwise value gets converted)
     uPy None <- empty std::shared_ptr
+    uPy None <- std::error_code (if empty, otherwise throws runtime_error)
 
 Function and class wrapping
 ---------------------------

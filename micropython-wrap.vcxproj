@@ -164,6 +164,7 @@
   <ItemGroup>
     <ClInclude Include="detail\configuration.h" />
     <ClInclude Include="module.h" />
+    <ClInclude Include="tests\errorcode.h" />
     <ClInclude Include="util.h" />
     <ClInclude Include="variable.h" />
     <ClInclude Include="classwrapper.h" />
