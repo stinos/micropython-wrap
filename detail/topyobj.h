@@ -263,20 +263,6 @@ namespace upywrap
     }
   };
 
-
-  //Check if a qualifier for one of the supported ToPyObj types is supported -
-  //this is the normally the case only if it's returned/passed by value since that
-  //properly mathces the copy semantics: everytime we convert a supported type from
-  //it's native value into a uPy object we effectively make a distinct copy.
-  //However for performance reasons we allow const references as well when UPYWRAP_PASSCONSTREF is 1:
-  //this allows not having to make the extra unused copy of the native argument which is made
-  //when passing by value.
-  //Note this does kinda breaks semantics: the uPy object does not reference the native object
-  //in any way so users have to take care not to use it as such
-#ifndef UPYWRAP_PASSCONSTREF
-  #define UPYWRAP_PASSCONSTREF 1
-#endif
-
 #if UPYWRAP_PASSCONSTREF
   template< class T >
   struct IsSupportedToPyObjQualifier : std::integral_constant
@@ -311,7 +297,7 @@ namespace upywrap
     typedef typename std::conditional< builtin_type::value, builtin_type, class_type >::type type;
   };
 
-#ifndef UPYWRAP_NOCHARSTRING
+#if UPYWRAP_USE_CHARSTRING
   template<>
   struct SelectToPyObj< const char* >
   {
@@ -331,7 +317,7 @@ namespace upywrap
     return SelectToPyObj< T >::type::Convert( arg );
   }
 
-#ifndef UPYWRAP_NOCHARSTRING
+#if UPYWRAP_USE_CHARSTRING
   inline mp_obj_t ToPy( const char* arg )
   {
     return SelectToPyObj< const char* >::type::Convert( arg );

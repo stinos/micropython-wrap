@@ -480,8 +480,7 @@ namespace upywrap
     typedef typename std::conditional< builtin_type::value, builtin_type, class_type >::type type;
   };
 
-#ifndef UPYWRAP_NOCHARSTRING
-  //we don't know yet where uPy is going with unicode support etc, so make this an option
+#if UPYWRAP_USE_CHARSTRING
   template<>
   struct SelectFromPyObj< const char* >
   {

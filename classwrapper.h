@@ -1,38 +1,6 @@
 #ifndef MICROPYTHON_WRAP_CLASSWRAPPER
 #define MICROPYTHON_WRAP_CLASSWRAPPER
 
-//This flags enables the use of shared_ptr instead of raw pointers
-//for the actual storage of all native types.
-//Per default this is on since passing around raw pointers quickly
-//leads to undefined behavior when garbage collection comes into play.
-//For example, consider this, where X and Y are both created With ClassWrapper,
-//and Y::Store() takes an X* or X& and keeps a pointer to it internally:
-//
-//  y = Y()
-//  y.Store( X() )
-//  gc.collect()
-//
-//The last line will get rid of the ClassWrapper instance for the X object
-//(since gc can't find a corresponding py object anymore as that was not stored;
-//with actual py objects this wouldn't happen), so now y has a pointer to a deleted X.
-//The only proper way around is using shared_ptr instead: if ClassWrapper has a
-//shared_ptr< X >, Store takes a shared_ptr< X > (which it should do after all
-//if it's planning to keep the argument longer then the function scope) and
-//we pass a copy of ClassWrapper's object to Store, all is fine: when deleting
-//the garbage collected object, shared_ptr's destructor is called but the object
-//is not deleted unless there are no references anymore.
-#ifndef UPYWRAP_SHAREDPTROBJ
-  #define UPYWRAP_SHAREDPTROBJ (1)
-#endif
-
-//Require exact type matches when converting uPy objects into native ones.
-//By default this is on in order to get proper error messages when passing mismatching types.
-//However when your application wants to passs pointers to derived classes to functions
-//taking base class pointers this has to be turned off.
-#ifndef UPYWRAP_FULLTYPECHECK
-  #define UPYWRAP_FULLTYPECHECK (1)
-#endif
-
 #include "detail/callreturn.h"
 #include "detail/functioncall.h"
 #include "detail/index.h"

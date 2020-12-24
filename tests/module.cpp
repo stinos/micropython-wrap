@@ -201,13 +201,13 @@ extern "C"
     fn.Def< F::ReturnNullPtr >( ReturnNullPtr );
     fn.Def< F::HasExceptions >( HasExceptions );
     fn.Def< F::FullTypeCheck >( FullTypeCheck );
-#ifndef UPYWRAP_NOEXCEPTIONS
+#if UPYWRAP_USE_EXCEPTIONS
     fn.Def< F::Throw >( Throw );
 #endif
     fn.Def< F::StdString >( StdString );
     fn.Def< F::StdStringView >( StdStringView );
     fn.Def< F::HasCharString >( HasCharString );
-#ifndef UPYWRAP_NOCHARSTRING
+#if UPYWRAP_USE_CHARSTRING
     fn.Def< F::CharString >( CharString );
 #endif
     fn.Def< F::Four >( Four );

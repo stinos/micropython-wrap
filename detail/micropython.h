@@ -1,6 +1,8 @@
 #ifndef MICROPYTHON_WRAP_DETAIL_MICROPYTHON_H
 #define MICROPYTHON_WRAP_DETAIL_MICROPYTHON_H
 
+#include "configuration.h"
+
 #ifdef _MSC_VER
 #pragma warning ( disable : 4200 ) //nonstandard extension used : zero-sized array in struct/union
 #endif
@@ -14,12 +16,6 @@ extern "C"
 }
 #ifdef _MSC_VER
 #pragma warning ( default : 4200 )
-#endif
-
-#if ((__cplusplus > 201402L) || (_MSVC_LANG >= 201703L))
-#define UPYWRAP_HAS_CPP17 (1)
-#else
-#define UPYWRAP_HAS_CPP17 (0)
 #endif
 
 #include <cmath>
@@ -172,19 +168,19 @@ namespace upywrap
     return mp_import_name( qstr_from_str( moduleName ), mp_const_none, MP_OBJ_NEW_SMALL_INT( 0 ) );
   }
 
-#ifdef UPYWRAP_NOEXCEPTIONS
-  #define UPYWRAP_TRY
-  #define UPYWRAP_CATCH
-  inline bool HasExceptions()
-  {
-    return false;
-  }
-#else
+#if UPYWRAP_USE_EXCEPTIONS
   #define UPYWRAP_TRY try {
   #define UPYWRAP_CATCH } catch( const std::exception& e ) { return upywrap::RaiseRuntimeException( e.what() ); }
   inline bool HasExceptions()
   {
     return true;
+  }
+#else
+  #define UPYWRAP_TRY
+  #define UPYWRAP_CATCH
+  inline bool HasExceptions()
+  {
+    return false;
   }
 #endif
 

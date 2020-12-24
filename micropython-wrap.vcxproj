@@ -162,6 +162,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="detail\configuration.h" />
     <ClInclude Include="module.h" />
     <ClInclude Include="util.h" />
     <ClInclude Include="variable.h" />
