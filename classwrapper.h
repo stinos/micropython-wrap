@@ -410,6 +410,12 @@ namespace upywrap
       return attrValue;
     }
 
+    static mp_map_elem_t* LookupLocal( qstr attr )
+    {
+      auto locals_map = &( (mp_obj_dict_t*) type.locals_dict )->map;
+      return mp_map_lookup( locals_map, new_qstr( attr ), MP_MAP_LOOKUP );
+    }
+
     static bool store_attr( mp_obj_t self_in, qstr attr, mp_obj_t value )
     {
       this_type* self = (this_type*) self_in;
@@ -422,9 +428,7 @@ namespace upywrap
       //uPy calls load_attr to find methods as well, so we have no choice but to go through them.
       //However if we find one, it's more performant than uPy's lookup (see mp_load_method_maybe)
       //because we know we have a proper map with only functions so we don't need x checks
-      auto locals_map = &( (mp_obj_dict_t*) type.locals_dict )->map;
-      auto elem = mp_map_lookup( locals_map, new_qstr( attr ), MP_MAP_LOOKUP );
-      if( elem != nullptr )
+      if( auto elem = LookupLocal( attr ) )
       {
         //assert( mp_obj_is_callable( elem->value ) )
         dest[ 0 ] = elem->value;
@@ -459,9 +463,7 @@ namespace upywrap
     static mp_obj_t binary_op( mp_binary_op_t op, mp_obj_t self_in, mp_obj_t other_in )
     {
       //First check if the type defines the op and call it if so.
-      auto locals_map = &( (mp_obj_dict_t*) type.locals_dict )->map;
-      auto elem = mp_map_lookup( locals_map, new_qstr( mp_binary_op_method_name[ op ] ), MP_MAP_LOOKUP );
-      if( elem != nullptr )
+      if( auto elem = LookupLocal( mp_binary_op_method_name[ op ] ) )
       {
         mp_obj_t args[] = { elem->value, self_in, other_in };
         auto res = mp_call_method_n_kw( 1, 0, args );
