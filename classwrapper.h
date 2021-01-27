@@ -430,7 +430,6 @@ namespace upywrap
       //because we know we have a proper map with only functions so we don't need x checks
       if( auto elem = LookupLocal( attr ) )
       {
-        //assert( mp_obj_is_callable( elem->value ) )
         dest[ 0 ] = elem->value;
         dest[ 1 ] = self_in;
       }
