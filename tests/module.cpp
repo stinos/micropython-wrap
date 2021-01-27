@@ -133,6 +133,7 @@ extern "C"
     wrap1.Def< F::Plus >( &Simple::Plus );
     wrap1.Def< F::SimpleFunc >( SimpleFunc );
     wrap1.Def< upywrap::special_methods::__str__ >( &Simple::Str );
+    wrap1.Def< upywrap::special_methods::__call__ >( &Simple::operator bool );
     wrap1.Property( "val", &Simple::SetValue, &Simple::Value );
     wrap1.StoreClassVariable( "x", 0 );
     wrap1.StoreClassVariable( "y", 0.0 );

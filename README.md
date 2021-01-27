@@ -101,6 +101,7 @@ Wrapping code is provided for:
     uPy __init__ <-> C++ class constructor or factory function of choice
     uPy __del__ <-> C++ class destructor (called only when instance is grabage collected!)
     uPy __exit__ <-> C++ class method with void() signature
+    uPy __call__ <-> any C++ class method
     uPy class methods <-> C++ class methods
     uPy class attributes <-> C++ class methods
 

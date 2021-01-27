@@ -55,6 +55,11 @@ namespace upywrap
       return !this->operator == ( rh );
     }
 
+    explicit operator bool() const
+    {
+      return a != 0;
+    }
+
   private:
     int a;
   };

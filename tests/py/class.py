@@ -1,8 +1,10 @@
 import upywraptest
 
 simple1 = upywraptest.Simple(0)
+print(simple1())
 simple1.Add(1)
 print(simple1.Value())
+print(simple1())
 print(simple1)
 
 simple2 = upywraptest.Simple(2)

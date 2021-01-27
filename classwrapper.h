@@ -499,6 +499,18 @@ namespace upywrap
       mp_printf( print, "<%s object at %p>", mp_obj_get_type_str( self_in ), MP_OBJ_TO_PTR( self_in ) );
     }
 
+    static mp_obj_t instance_call( mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args )
+    {
+      if( auto elem = LookupLocal( MP_QSTR___call__ ) )
+      {
+        return mp_call_method_self_n_kw( elem->value, self_in, n_args, n_kw, args );
+      }
+      RaiseTypeException( "object isn't callable" );
+#if !defined( _MSC_VER ) || defined( _DEBUG )
+      return mp_const_none;
+#endif
+    }
+
     static mp_obj_t del( mp_obj_t self_in )
     {
       auto self = (this_type*) self_in;
@@ -521,6 +533,7 @@ namespace upywrap
       type.binary_op = binary_op;
       type.unary_op = mp_generic_unary_op;
       type.print = instance_print;
+      type.call = instance_call;
 
       mp_obj_dict_store( dict, new_qstr( qname ), &type );
       //store our dict in the module's dict so it's reachable by the GC mark phase,
@@ -916,6 +929,7 @@ namespace upywrap
     func_name_def( __iter__ )
     func_name_def( __next__ )
     func_name_def( __reversed__ )
+    func_name_def( __call__ )
   };
 }
 
