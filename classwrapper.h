@@ -473,18 +473,17 @@ namespace upywrap
       }
 
       //Otherwise just fall back to comparing pointers.
-      auto self = (this_type*) self_in;
-      auto other = (this_type*) other_in;
       if( op != MP_BINARY_OP_EQUAL )
       {
         return MP_OBJ_NULL; //not supported
       }
+      const auto self = (this_type*) self_in;
+      const auto other = (this_type*) other_in;
       return ToPy( self->GetPtr() == other->GetPtr() );
     }
 
     static void instance_print( const mp_print_t* print, mp_obj_t self_in, mp_print_kind_t kind )
     {
-      auto self = (this_type*) self_in;
       mp_obj_t member[ 2 ] = { MP_OBJ_NULL };
       load_attr( self_in, ( kind == PRINT_STR ) ? MP_QSTR___str__ : MP_QSTR___repr__, member );
       if( member[ 0 ] == MP_OBJ_NULL && kind == PRINT_STR )
@@ -497,7 +496,7 @@ namespace upywrap
         mp_obj_print_helper( print, r, PRINT_STR );
         return;
       }
-      mp_printf( print, "<%s object at %p>", mp_obj_get_type_str( self_in ), self );
+      mp_printf( print, "<%s object at %p>", mp_obj_get_type_str( self_in ), MP_OBJ_TO_PTR( self_in ) );
     }
 
     static mp_obj_t del( mp_obj_t self_in )
