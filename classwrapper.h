@@ -57,6 +57,11 @@ namespace upywrap
 #else
     using native_obj_t = T*;
 #endif
+    //Just to make it clear what the intent is.
+    enum class ConstructorOptions
+    {
+      RegisterInStaticPyObjectStore
+    };
 
     //Initialize the type and store it in the module's globals dict so it's accessible as <mod>.<name>.
     ClassWrapper( const char* name, mp_obj_module_t* mod, decltype( mp_obj_type_t::flags ) flags = 0 ) :
@@ -73,6 +78,13 @@ namespace upywrap
     {
       mp_obj_dict_store( dict, new_qstr( name ), &type );
       mp_obj_dict_store( dict, new_qstr( ( std::string( name ) + "_locals" ).data() ), MP_OBJ_FROM_PTR( type.locals_dict ) );
+    }
+
+    //Initialize the type, storing the locals in StaticPyObjectStore to prevent GC collection.
+    ClassWrapper( const char* name, ConstructorOptions, decltype( mp_obj_type_t::flags ) flags = 0 ) :
+      ClassWrapper( name, flags )
+    {
+      StaticPyObjectStore::Store( MP_OBJ_FROM_PTR( type.locals_dict ) );
     }
 
     const mp_obj_type_t& Type() const
@@ -816,6 +828,22 @@ namespace upywrap
   const std::int64_t ClassWrapper< T >::defCookie = 0x12345678908765;
 
 
+  /**
+    * Declare a bunch of common special method names.
+    */
+  struct special_methods
+  {
+    func_name_def( __str__ )
+    func_name_def( __repr__ )
+    func_name_def( __bytes__ )
+    func_name_def( __format__ )
+    func_name_def( __iter__ )
+    func_name_def( __next__ )
+    func_name_def( __reversed__ )
+    func_name_def( __call__ )
+  };
+
+
   //Get instance pointer (or nullptr) out of mp_obj_t.
   template< class T >
   struct ClassFromPyObj< T* >
@@ -934,19 +962,38 @@ namespace upywrap
     }
   };
 
-  /**
-    * Declare a bunch of common special method names.
-    */
-  struct special_methods
+  //Convert std::function into a callable.
+  //Just forwards to ClassWrapper since that already contains the complete mechanism
+  //for argument conversion and doing the actual call.
+  //The type name is the std::type_info::name() value which might be affected by C++ name mangling.
+  template< class R, class... Args >
+  struct ClassToPyObj< std::function< R( Args... ) > >
   {
-    func_name_def( __str__ )
-    func_name_def( __repr__ )
-    func_name_def( __bytes__ )
-    func_name_def( __format__ )
-    func_name_def( __iter__ )
-    func_name_def( __next__ )
-    func_name_def( __reversed__ )
-    func_name_def( __call__ )
+    using funct_t = std::function< R( Args... ) >;
+    using wrapper_t = ClassWrapper< funct_t >;
+
+    static mp_obj_t Convert( funct_t p )
+    {
+      if( !p )
+      {
+        return mp_const_none;
+      }
+      InitWrapper();
+      return wrapper_t::AsPyObj( std::make_shared< funct_t >( std::move( p ) ) );
+    }
+
+    static void InitWrapper()
+    {
+      //Note: registered once, stays forever. Alternative would be to have a finalizer
+      //but then when a new function is needed it again has to go through initialization.
+      static wrapper_t reg( typeid( funct_t ).name(), wrapper_t::ConstructorOptions::RegisterInStaticPyObjectStore );
+      static bool init = false;
+      if( !init )
+      {
+        reg.template Def< special_methods::__call__ >( &funct_t::operator () );
+        init = true;
+      }
+    }
   };
 }
 

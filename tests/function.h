@@ -58,6 +58,26 @@ namespace upywrap
     callback( s );
     return s.Value();
   }
+
+  std::function< void() > NoFunc()
+  {
+    return std::function< void() >();
+  }
+
+  std::function< void() > ToFunc1()
+  {
+    return [] () { std::cout << "Func1" << std::endl; };
+  }
+
+  std::function< int( Simple& ) > ToFunc2()
+  {
+    return [] ( Simple& a ) { return a.Value(); };
+  }
+
+  std::function< bool( std::function< void() > ) > ToFunc3()
+  {
+    return IsEmptyFunction;
+  }
 }
 
 #endif //#ifndef MICROPYTHON_WRAP_TESTS_FUNCTION_H

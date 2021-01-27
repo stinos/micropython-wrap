@@ -40,6 +40,10 @@ struct F
   func_name_def( Func6 )
   func_name_def( Func7 )
   func_name_def( Func8 )
+  func_name_def( NoFunc )
+  func_name_def( ToFunc1 )
+  func_name_def( ToFunc2 )
+  func_name_def( ToFunc3 )
   func_name_def( IsNullPtr )
   func_name_def( IsNullSharedPtr )
   func_name_def( IsEmptyFunction )
@@ -185,6 +189,10 @@ extern "C"
     fn.Def< F::Func6 >( Func6 );
     fn.Def< F::Func7 >( Func7 );
     fn.Def< F::Func8 >( Func8 );
+    fn.Def< F::NoFunc >( NoFunc );
+    fn.Def< F::ToFunc1 >( ToFunc1 );
+    fn.Def< F::ToFunc2 >( ToFunc2 );
+    fn.Def< F::ToFunc3 >( ToFunc3 );
     fn.Def< F::IsNullPtr >( IsNullPtr );
     fn.Def< F::IsNullSharedPtr >( IsNullSharedPtr );
     fn.Def< F::IsEmptyFunction >( IsEmptyFunction );

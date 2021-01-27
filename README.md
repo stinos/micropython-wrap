@@ -86,7 +86,7 @@ Currently these conversions are supported:
     uPy tuple <-> std::tuple/std::pair
     uPy list <-> std::vector (each element must be of the same type)
     uPy dict <-> std::map (each key/value must be of the same type)
-    uPy callable -> std::function
+    uPy callable <-> std::function (None maps to empty std::function)
     uPy None <-> std::optional (i.e. std::nullopt <-> None, otherwise value gets converted)
     uPy None <- empty std::shared_ptr
     uPy None <- std::error_code (if empty, otherwise throws runtime_error)

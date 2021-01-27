@@ -48,3 +48,10 @@ def ModifyNative(s):
   s.val = 45
 
 print(upywraptest.CallbackWithNativeArg(ModifyNative))
+
+print(upywraptest.NoFunc())
+upywraptest.ToFunc1()()
+print(upywraptest.ToFunc2()(upywraptest.Simple(33)))
+isEmpty = upywraptest.ToFunc3()
+print(isEmpty(None))
+print(isEmpty(lambda: 0))
