@@ -484,16 +484,14 @@ namespace upywrap
 
     static void instance_print( const mp_print_t* print, mp_obj_t self_in, mp_print_kind_t kind )
     {
-      mp_obj_t member[ 2 ] = { MP_OBJ_NULL };
-      load_attr( self_in, ( kind == PRINT_STR ) ? MP_QSTR___str__ : MP_QSTR___repr__, member );
-      if( member[ 0 ] == MP_OBJ_NULL && kind == PRINT_STR )
+      auto elem = LookupLocal( ( kind == PRINT_STR ) ? MP_QSTR___str__ : MP_QSTR___repr__ );
+      if( !elem && kind == PRINT_STR )
       {
-        load_attr( self_in, MP_QSTR___repr__, member );  //fall back to __repr__ if __str__ not found
+        elem = LookupLocal( MP_QSTR___repr__ );  //fall back to __repr__ if __str__ not found
       }
-      if( member[ 0 ] != MP_OBJ_NULL )
+      if( elem )
       {
-        mp_obj_t r = mp_call_function_1( member[ 0 ], self_in );
-        mp_obj_print_helper( print, r, PRINT_STR );
+        mp_obj_print_helper( print, mp_call_function_1( elem->value, self_in ), PRINT_STR );
         return;
       }
       mp_printf( print, "<%s object at %p>", mp_obj_get_type_str( self_in ), MP_OBJ_TO_PTR( self_in ) );
