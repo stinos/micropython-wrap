@@ -346,7 +346,12 @@ namespace upywrap
   public:
     static void Store( mp_obj_t obj )
     {
-      mp_obj_list_append( *List(), obj );
+      const auto list = *List();
+      if( !list )
+      {
+        RaiseRuntimeException( "StaticPyObjectStore: not initialized" );
+      }
+      mp_obj_list_append( list, obj );
 
       static const size_t maxLen = 50;
       if( (*List())->len > maxLen )
