@@ -1,11 +1,21 @@
-image: Visual Studio 2017
-
 environment:
-  MICROPY_CPYTHON3: c:/python34/python.exe
-  MICROPYPATH: c:/projects/micropython/ports/windows
+  # we need different environments per image but matrices cannot
+  # be combined so need to spell out the image/env combinations manually.
   matrix:
-    - FullTypeCheck: 0
-    - FullTypeCheck: 1
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      MICROPY_CPYTHON3: c:/python34/python.exe
+      MICROPYPATH: c:/projects/micropython/ports/windows
+      FullTypeCheck: 0
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      MICROPY_CPYTHON3: c:/python34/python.exe
+      MICROPYPATH: c:/projects/micropython/ports/windows
+      FullTypeCheck: 1
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      MICROPY_CPYTHON3: python3
+      FullTypeCheck: 0
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      MICROPY_CPYTHON3: python3
+      FullTypeCheck: 1
 
 configuration:
 - Debug
@@ -17,6 +27,12 @@ platform:
 
 matrix:
   fast_finish: true
+  # Only build 64bit release builds for unix.
+  exclude:
+    - configuration: Debug
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+    - platform: Win32
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
 
 skip_tags: true
 
@@ -29,36 +45,51 @@ before_build:
 - ps: |
     git clone -q --depth 1 --branch=windows-pyd https://github.com/stinos/micropython ../micropython
 
-build_script:
-- ps: |
-    Write-Host "platform=$env:platform configuration=$env:configuration"
+for:
+-
+  matrix:
+    only:
+      - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 
-    # Not 100% sure why WindowsTargetPlatformVersion etc are needed in Powershell build scripts,
-    # but not when running cmd scripts or when building projects directly. But without it result is
-    # "The build tools for Visual Studio 2010 (Platform Toolset = 'v100') cannot be found"
-    foreach ($projectDir in @('../micropython/ports/windows', './')) {
-    @"
-    <Project>
-      <PropertyGroup>
-        <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
-        <PlatformToolset>v141</PlatformToolset>
-      </PropertyGroup>
-      <ItemDefinitionGroup>
-        <ClCompile>
-          <PreProcessorDefinitions>UPYWRAP_FULLTYPECHECK=$env:FullTypeCheck;%(PreProcessorDefinitions)</PreProcessorDefinitions>
-        </ClCompile>
-      </ItemDefinitionGroup>
-    </Project>
-    "@ | Set-Content (Join-Path $projectDir 'directory.build.props')
-    }
+  build_script:
+  - ps: |
+      Write-Host "platform=$env:platform configuration=$env:configuration"
 
-    msbuild ../micropython/ports/windows/micropythoncore.vcxproj "/p:platform=$env:platform;configuration=$env:configuration"
-    msbuild ../micropython/ports/windows/micropython.vcxproj "/p:platform=$env:platform;configuration=$env:configuration"
-    msbuild micropython-wrap.vcxproj "/p:platform=$env:platform;configuration=$env:configuration"
+      # Not 100% sure why WindowsTargetPlatformVersion etc are needed in Powershell build scripts,
+      # but not when running cmd scripts or when building projects directly. But without it result is
+      # "The build tools for Visual Studio 2010 (Platform Toolset = 'v100') cannot be found"
+      foreach ($projectDir in @('../micropython/ports/windows', './')) {
+      @"
+      <Project>
+        <PropertyGroup>
+          <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+          <PlatformToolset>v141</PlatformToolset>
+        </PropertyGroup>
+        <ItemDefinitionGroup>
+          <ClCompile>
+            <PreProcessorDefinitions>UPYWRAP_FULLTYPECHECK=$env:FullTypeCheck;%(PreProcessorDefinitions)</PreProcessorDefinitions>
+          </ClCompile>
+        </ItemDefinitionGroup>
+      </Project>
+      "@ | Set-Content (Join-Path $projectDir 'directory.build.props')
+      }
 
-test_script:
-- ps: |
-    & $env:MICROPY_CPYTHON3 ../micropython/tests/run-tests --keep-path -d tests/py
+      msbuild ../micropython/ports/windows/micropythoncore.vcxproj "/p:platform=$env:platform;configuration=$env:configuration"
+      msbuild ../micropython/ports/windows/micropython.vcxproj "/p:platform=$env:platform;configuration=$env:configuration"
+      msbuild micropython-wrap.vcxproj "/p:platform=$env:platform;configuration=$env:configuration"
+
+  test_script:
+  - ps: |
+      & $env:MICROPY_CPYTHON3 ../micropython/tests/run-tests --keep-path -d tests/py
+
+-
+  matrix:
+    only:
+      - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+
+  build_script:
+  - ps: |
+      make test CC=gcc-7 CXX=g++-7 CPPFLAGS_EXTRA="-DUPYWRAP_FULLTYPECHECK=$env:FullTypeCheck"
 
 on_failure:
 - ps: |

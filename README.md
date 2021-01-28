@@ -1,5 +1,4 @@
-[![Unix Build Status](https://travis-ci.org/stinos/micropython-wrap.svg?branch=master)](https://travis-ci.org/stinos/micropython-wrap)
-[![Windows Build status](https://ci.appveyor.com/api/projects/status/3a7gmffr0mpfv9va?svg=true)](https://ci.appveyor.com/project/stinos/micropython-wrap)
+[![Build status](https://ci.appveyor.com/api/projects/status/3a7gmffr0mpfv9va?svg=true)](https://ci.appveyor.com/project/stinos/micropython-wrap)
 
 MicroPython-Wrap
 ================
@@ -116,8 +115,8 @@ and re-raise it as a uPy RuntimeError
 Integrating and Building
 ------------------------
 First clone this repository alongside the MicroPython repository, then refer to the way the tests module
-is built and create your own modules in the same way: see [Travis config](.travis.yml) and [Makefile](Makefile) for Unix,
-and the [Appveyor config](.appveyor.yml) and [Project file](micropython-wrap.vcxproj) for Windows.
+is built and create your own modules in the same way. Also see the [Makefile](Makefile) for Unix and
+[Project file](micropython-wrap.vcxproj) for Windows, and the [Appveyor config](.appveyor.yml) for how builds are done.
 
 - the [Unix Makefile](Makefile) shows three ways way of integration:
     - combination of a static library and 'user C module': the C++ test code is compiled into a static library
