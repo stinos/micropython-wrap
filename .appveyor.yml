@@ -7,11 +7,6 @@ environment:
     - FullTypeCheck: 0
     - FullTypeCheck: 1
 
-init:
-- ps: |
-    # Set build version number to commit to be travis-like
-    Update-AppveyorBuild -Version $env:appveyor_repo_commit.substring(0,8)
-
 configuration:
 - Debug
 - Release
@@ -20,11 +15,23 @@ platform:
 - Win32
 - x64
 
+matrix:
+  fast_finish: true
+
+skip_tags: true
+
+deploy: off
+
+nuget:
+  disable_publish_on_pr: true
+
+before_build:
+- ps: |
+    git clone -q --depth 1 --branch=windows-pyd https://github.com/stinos/micropython ../micropython
+
 build_script:
 - ps: |
     Write-Host "platform=$env:platform configuration=$env:configuration"
-
-    git clone -q --depth 1 --branch=windows-pyd https://github.com/stinos/micropython ../micropython
 
     # Not 100% sure why WindowsTargetPlatformVersion etc are needed in Powershell build scripts,
     # but not when running cmd scripts or when building projects directly. But without it result is
@@ -56,13 +63,3 @@ test_script:
 on_failure:
 - ps: |
     & $env:MICROPY_CPYTHON3 ../micropython/tests/run-tests --print-failures
-
-skip_tags: true
-
-deploy: off
-
-nuget:
-  disable_publish_on_pr: true
-
-matrix:
-  fast_finish: true
