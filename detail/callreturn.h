@@ -9,13 +9,13 @@ namespace upywrap
   template< class Ret >
   struct SelectRetvalConverter
   {
-    typedef mp_obj_t( *type )( Ret ); 
+    typedef mp_obj_t( *type )( Ret );
   };
 
   template<>
   struct SelectRetvalConverter< void >
   {
-    typedef mp_obj_t( *type )(); 
+    typedef mp_obj_t( *type )();
   };
 
   //Convert arguments, call native function and return converted return value - handles void properly

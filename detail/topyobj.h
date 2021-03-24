@@ -286,7 +286,7 @@ namespace upywrap
   struct IsSupportedToPyObjQualifier : std::integral_constant
     <
       bool,
-      std::is_same< T, typename remove_all< T >::type >::value || 
+      std::is_same< T, typename remove_all< T >::type >::value ||
       std::is_same< T, const T& >::value
     >
   {

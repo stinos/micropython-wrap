@@ -437,7 +437,7 @@ namespace upywrap
     {
       return *obj.get();
     }
-  
+
   private:
     std::shared_ptr< mp_obj_t > obj;
   };

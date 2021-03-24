@@ -91,7 +91,7 @@ namespace upywrap
   {
     return t;
   }
-  
+
   template< class First, class... Rest >
   First split_last( First, Rest... items )
   {
