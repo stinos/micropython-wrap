@@ -80,7 +80,7 @@ for:
 
   test_script:
   - ps: |
-      & $env:MICROPY_CPYTHON3 ../micropython/tests/run-tests --keep-path -d tests/py
+      & $env:MICROPY_CPYTHON3 ../micropython/tests/run-tests.py --keep-path -d tests/py
 
 -
   matrix:
@@ -93,4 +93,4 @@ for:
 
 on_failure:
 - ps: |
-    & $env:MICROPY_CPYTHON3 ../micropython/tests/run-tests --print-failures
+    & $env:MICROPY_CPYTHON3 ../micropython/tests/run-tests.py --print-failures

@@ -70,18 +70,18 @@ usercmodule: $(MPY_CROSS)
 teststaticlib: $(MPY_CROSS) staticlib
 	$(MAKEUPY) $(UPYFLAGSUSERMOD) BUILD=build-static all
 	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/micropython \
-	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests -d $(CUR_DIR)/tests/py
+	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests.py -d $(CUR_DIR)/tests/py
 
 testsharedlib: $(MPY_CROSS) sharedlib
 	# Only works with MicroPython windows-pyd branch, which already has the correct linker options
 	# so there's no need to add anything here.
 	$(MAKEUPY) $(UPYFLAGS) BUILD=build-shared
 	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/micropython \
-	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests --keep-path -d $(CUR_DIR)/tests/py
+	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests.py --keep-path -d $(CUR_DIR)/tests/py
 
 testusercmodule: usercmodule
 	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/micropython \
-	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests -d $(CUR_DIR)/tests/py
+	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests.py -d $(CUR_DIR)/tests/py
 
 test: teststaticlib testsharedlib testusercmodule
 
