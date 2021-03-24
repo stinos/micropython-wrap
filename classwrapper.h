@@ -531,7 +531,6 @@ namespace upywrap
       type.binary_op = binary_op;
       type.unary_op = mp_generic_unary_op;
       type.print = instance_print;
-      type.call = instance_call;
 
       mp_obj_dict_store( dict, new_qstr( qname ), &type );
       //store our dict in the module's dict so it's reachable by the GC mark phase,
@@ -574,6 +573,10 @@ namespace upywrap
       }
       functionPointers[ (void*) name ] = callerObject;
       AddFunctionToTable( name(), call_type::CreateUPyFunction() );
+      if( std::string( name() ) == "__call__" )
+      {
+        type.call = instance_call;
+      }
     }
 
     template< class Fun, class A >

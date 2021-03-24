@@ -1,5 +1,8 @@
 import upywraptest
 
+print(callable(upywraptest.Simple(0)))
+print(callable(upywraptest.Simple2()))
+
 simple1 = upywraptest.Simple(0)
 print(simple1())
 simple1.Add(1)
