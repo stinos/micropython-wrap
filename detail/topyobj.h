@@ -214,15 +214,22 @@ namespace upywrap
   };
   #endif
 
+  //Generic conversion of pair of iterators to uPy list, so external code
+  //can use this to build converters for more types than just vector.
+  template< class It, class Transform >
+  static mp_obj_t ConvertToList( It begin, size_t numItems, Transform transform )
+  {
+    auto list = reinterpret_cast< mp_obj_list_t* >( MP_OBJ_TO_PTR( mp_obj_new_list( numItems, nullptr ) ) );
+    std::transform( begin, begin + numItems, list->items, transform );
+    return list;
+  }
+
   template< class T >
   struct ToPyObj< std::vector< T > > : std::true_type
   {
     static mp_obj_t Convert( const std::vector< T >& a )
     {
-      const auto numItems = a.size();
-      std::vector< mp_obj_t > items( numItems );
-      std::transform( a.cbegin(), a.cend(), items.begin(), SelectToPyObj< T >::type::Convert );
-      return mp_obj_new_list( numItems, items.data() );
+      return ConvertToList( a.cbegin(), a.size(), SelectToPyObj< T >::type::Convert );
     }
   };
 
@@ -245,13 +252,22 @@ namespace upywrap
   {
     struct AddConvertedToVec
     {
-      std::vector< mp_obj_t > items;
+      AddConvertedToVec( mp_obj_t* items ) :
+        items( items ),
+        next( 0 )
+      {
+      }
 
       template< class T >
       void operator ()( const T& a )
       {
-        items.push_back( SelectToPyObj< T >::type::Convert( a ) );
+        items[ next ] = SelectToPyObj< T >::type::Convert( a );
+        ++next;
       }
+
+    private:
+      mp_obj_t* items;
+      size_t next;
     };
   }
 
@@ -263,9 +279,10 @@ namespace upywrap
     static mp_obj_t Convert( const tuple_type& a )
     {
       const auto numItems = sizeof...( A );
-      detail::AddConvertedToVec addtoVec;
+      auto tuple = reinterpret_cast< mp_obj_tuple_t* >( MP_OBJ_TO_PTR( mp_obj_new_tuple( numItems, nullptr ) ) );
+      detail::AddConvertedToVec addtoVec( tuple->items );
       apply( addtoVec, a );
-      return mp_obj_new_tuple( numItems, addtoVec.items.data() );
+      return tuple;
     }
   };
 
@@ -274,10 +291,7 @@ namespace upywrap
   {
     static mp_obj_t Convert( const std::pair< A, B >& p )
     {
-      detail::AddConvertedToVec addtoVec;
-      addtoVec( p.first );
-      addtoVec( p.second );
-      return mp_obj_new_tuple( 2, addtoVec.items.data() );
+      return ToPyObj< std::tuple< A, B > >::Convert( p );
     }
   };
 
