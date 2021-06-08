@@ -12,6 +12,10 @@ def func1gen(a):
 upywraptest.Func1(func1)
 upywraptest.Func1(func1gen('func1'))
 upywraptest.Func1(lambda: print('func1'))
+# Special case because it will pass around the std::function
+# directly, see FromPyObj< std::function >, but there's no way
+# to test that specifically.
+upywraptest.Func1(upywraptest.ToFunc1())
 
 
 def func2(a):

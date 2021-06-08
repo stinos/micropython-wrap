@@ -10,6 +10,14 @@ namespace upywrap
   template< class T >
   struct SelectFromPyObj;
 
+  //Test if the given type is a ClassWrapper< T >'s type
+  template< class T >
+  bool IsClassWrapperOfType( const mp_obj_type_t& type );
+
+  //Retrieve ClassWrapper from mp_obj_t
+  template< class T >
+  struct ClassFromPyObj;
+
   //Extract Arg from mp_obj_t
   template< class Arg >
   struct FromPyObj : std::false_type
@@ -437,6 +445,21 @@ namespace upywrap
         const auto nativeFun = reinterpret_cast< mp_obj_fun_builtin_var_t* >( obj );
         return make_fun::Native( nativeFun );
       }
+      else if( IsClassWrapperOfType< std_fun_type >( *type ) )
+      {
+        //If the argument is a ClassWrapper< std_fun_type > just get the function object
+        //without any conversion. This is simpler and more performant than wrapping it as
+        //a callable with PythonFun. But there's also another important aspect: it enables
+        //passing std::function around between native methods without any uPy API calls
+        //in between. Which is essential when the std::function is going to be used by
+        //another thread: PythonFun creates an std::function using mp_call_function_n_kw.
+        //That means it might allocate from the uPy heap and/or pystack and that is
+        //undefined behavior when done from a different thread than the one running the
+        //interpreter. Also the actual call of the std::function is done by CallReturn so
+        //C++ exceptions get translated into nlr_jump, but that just crashes because there
+        //is no corresponding nlr_push call first.
+        return ClassFromPyObj< std_fun_type >::Convert( obj );
+      }
       else
       {
         return make_fun::PythonFun( arg );
@@ -462,10 +485,6 @@ namespace upywrap
   struct IsSupportedFromPyObjQualifier< const T& > : std::true_type
   {
   };
-
-  //Retrieve ClassWrapper from mp_obj_t
-  template< class T >
-  struct ClassFromPyObj;
 
   //Select bewteen FromPyObj and ClassFromPyObj
   template< class T >

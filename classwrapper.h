@@ -87,7 +87,7 @@ namespace upywrap
       StaticPyObjectStore::Store( MP_OBJ_FROM_PTR( type.locals_dict ) );
     }
 
-    const mp_obj_type_t& Type() const
+    static const mp_obj_type_t& Type()
     {
       return type;
     }
@@ -843,6 +843,12 @@ namespace upywrap
     func_name_def( __call__ )
   };
 
+
+  template< class T >
+  bool IsClassWrapperOfType( const mp_obj_type_t& type )
+  {
+    return &ClassWrapper< T >::Type() == &type;
+  }
 
   //Get instance pointer (or nullptr) out of mp_obj_t.
   template< class T >
