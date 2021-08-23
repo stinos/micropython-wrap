@@ -10,6 +10,19 @@ namespace upywrap
     return mp_print_t{ &dest, [] ( void* data, const char* str, mp_uint_t len ) { ( (std::string*) data )->append( str, len ); } };
   }
 
+#if MICROPY_PY_UJSON_SEPARATORS
+  inline mp_print_ext_t PrintToJSonString( std::string& dest, const char* itemSeparator, const char* keySeparator )
+  {
+    mp_print_ext_t printExt;
+    const auto printToString( PrintToString( dest ) );
+    printExt.base.data = printToString.data;
+    printExt.base.print_strn = printToString.print_strn;
+    printExt.item_separator = itemSeparator;
+    printExt.key_separator = keySeparator;
+    return printExt;
+  }
+#endif
+
   inline std::string ExceptionToString( mp_obj_t ex )
   {
     std::string exMessage;
@@ -25,6 +38,16 @@ namespace upywrap
     mp_obj_print_helper( &mp_my_print, obj, kind );
     return var;
   }
+
+#if MICROPY_PY_UJSON_SEPARATORS
+  inline std::string VariableValueToJSonString( mp_obj_t obj, const char* itemSeparator, const char* keySeparator )
+  {
+    std::string var;
+    const auto mp_my_print( PrintToJSonString( var, itemSeparator, keySeparator ) );
+    mp_obj_print_helper( &mp_my_print.base, obj, PRINT_JSON );
+    return var;
+  }
+#endif MICROPY_PY_UJSON_SEPARATORS
 
   /**
     * Wrap a function Call to uPy code in nlr_push/nlr_pop: use this to safely invoke
