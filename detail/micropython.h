@@ -458,17 +458,13 @@ namespace upywrap
   }
 
     /**
-      * Wrapper around mp_obj_new_module/mp_module_register.
+      * Wrapper around mp_obj_new_module.
       * Also creates the StaticPyObjectStore backend so PinPyObj can be used.
       */
-  inline mp_obj_module_t* CreateModule( const char* name, bool doRegister = false )
+  inline mp_obj_module_t* CreateModule( const char* name )
   {
     const qstr qname = qstr_from_str( name );
-    mp_obj_module_t* mod = (mp_obj_module_t*) mp_obj_new_module( qname );
-    if( doRegister )
-    {
-      mp_module_register( qname, mod );
-    }
+    auto mod = (mp_obj_module_t*) mp_obj_new_module( qname );
     InitializePyObjectStore( *mod );
     return mod;
   }

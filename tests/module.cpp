@@ -267,7 +267,7 @@ extern "C"
 #endif
   mp_obj_module_t* init_upywraptest()
   {
-    auto mod = upywrap::CreateModule( "upywraptest", false );
+    auto mod = upywrap::CreateModule( "upywraptest" );
     doinit_upywraptest( mod );
     return mod;
   }
