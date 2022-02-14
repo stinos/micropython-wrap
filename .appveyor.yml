@@ -2,7 +2,7 @@ environment:
   # we need different environments per image but matrices cannot
   # be combined so need to spell out the image/env combinations manually.
   matrix:
-    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
       MICROPY_CPYTHON3: c:/python34/python.exe
       MICROPYPATH: c:/projects/micropython/ports/windows
       FullTypeCheck: 0
@@ -50,6 +50,7 @@ for:
   matrix:
     only:
       - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
 
   build_script:
   - ps: |
@@ -89,7 +90,7 @@ for:
 
   build_script:
   - ps: |
-      make test CC=gcc-7 CXX=g++-7 CPPFLAGS_EXTRA="-DUPYWRAP_FULLTYPECHECK=$env:FullTypeCheck"
+      make test CC=gcc-9 CXX=g++-9 CPPFLAGS_EXTRA="-DUPYWRAP_FULLTYPECHECK=$env:FullTypeCheck"
 
 on_failure:
 - ps: |

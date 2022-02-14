@@ -16,6 +16,7 @@ PYTHON = python3
 RM = rm
 
 HASCPP17 = $(shell expr `$(CXX) -dumpversion | cut -f1 -d.` \>= 7)
+HASGCC8 = $(shell expr `$(CXX) -dumpversion | cut -f1 -d.` \>= 8)
 CUR_DIR = $(shell pwd)
 MICROPYTHON_DIR ?= ../micropython
 MPY_CROSS ?= $(MICROPYTHON_DIR)/mpy-cross/mpy-cross
@@ -25,7 +26,10 @@ CPPFLAGS = \
  	-I$(MICROPYTHON_DIR) -I$(MICROPYTHON_DIR)/py \
  	-I$(MICROPYTHON_PORT_DIR) -I$(MICROPYTHON_PORT_DIR)/variants/standard
 UPYFLAGSUSERCPPMOD = -Wno-missing-field-initializers
-ifeq ($(HASCPP17), 1)
+ifeq ($(HASGCC8), 1)
+	UPYFLAGSUSERCPPMOD += -Wno-cast-function-type -std=c++2a
+	CPPFLAGS += -std=c++2a
+else ifeq ($(HASCPP17), 1)
 	UPYFLAGSUSERCPPMOD += -std=c++17
 	CPPFLAGS += -std=c++17
 else

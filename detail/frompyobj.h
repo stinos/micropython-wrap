@@ -58,7 +58,12 @@ namespace upywrap
     //If arg is an mp_obj_int_t conversion is done via largeIntConv since the
     //implementation is different for 32bit and 64bit builds.
     template< class LargeIntToT >
-    auto mp_obj_get_uint( mp_const_obj_t arg, LargeIntToT largeIntConv ) -> typename std::result_of< decltype( largeIntConv )( mp_obj_int_t* ) >::type
+    auto mp_obj_get_uint( mp_const_obj_t arg, LargeIntToT largeIntConv ) ->
+#if UPYWRAP_HAS_CPP20
+      typename std::invoke_result_t< decltype( largeIntConv ), mp_obj_int_t* >
+#else
+      typename std::result_of< decltype( largeIntConv )( mp_obj_int_t* ) >::type
+#endif
     {
       if( arg == mp_const_false )
       {
