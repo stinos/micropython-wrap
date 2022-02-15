@@ -10,10 +10,12 @@ namespace upywrap
     return a;
   }
 
+#if UPYWRAP_HAS_CPP17
   std::string_view StdStringView( std::string_view a )
   {
     return a;
   }
+#endif
 
   const char* CharString( const char* a )
   {

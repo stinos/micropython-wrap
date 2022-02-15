@@ -76,7 +76,7 @@ Type Conversion
 Conversion between standard native types and `mp_obj_t`, the MicroPython opaque object type
 is declared in two template classes aptly named [ToPyObj](detail/topyobj.h) and [FromPyObj](detail/frompyobj.h).
 
-Currently these conversions are supported:
+Currently these conversions are supported (depending on C++ standard used):
 
     uPy double <-> double/float
     uPy int <-> std::int16_t/std::int32_t/std::int64_t/std::uint16_t/std::uint32_t/std::uint64_t with overflow checks

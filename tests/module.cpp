@@ -226,7 +226,9 @@ extern "C"
     fn.Def< F::Throw >( Throw );
 #endif
     fn.Def< F::StdString >( StdString );
+#if UPYWRAP_HAS_CPP17
     fn.Def< F::StdStringView >( StdStringView );
+#endif
     fn.Def< F::HasCharString >( HasCharString );
 #if UPYWRAP_USE_CHARSTRING
     fn.Def< F::CharString >( CharString );

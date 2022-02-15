@@ -166,6 +166,7 @@ namespace upywrap
     }
   };
 
+#if UPYWRAP_HAS_CPP17
   template<>
   struct ToPyObj< std::string_view > : std::true_type
   {
@@ -174,6 +175,7 @@ namespace upywrap
       return mp_obj_new_str( a.data(), a.length() );
     }
   };
+#endif
 
   template<>
   struct ToPyObj< const char* > : std::true_type

@@ -252,6 +252,7 @@ namespace upywrap
     }
   };
 
+#if UPYWRAP_HAS_CPP17
   template<>
   struct FromPyObj< std::string_view > : std::true_type
   {
@@ -262,6 +263,7 @@ namespace upywrap
       return std::string_view( chars, len );
     }
   };
+#endif
 
   template<>
   struct FromPyObj< const char* > : std::true_type
