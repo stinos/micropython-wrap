@@ -6,7 +6,10 @@ ifeq ($(UPYWRAP_BUILD_CPPMODULE), 1)
 	ifneq (,$(filter %ports/esp32, $(UPYWRAP_PORT_DIR)))
 		CXXFLAGS_USERMOD += -I$(BOARD_DIR) -Wno-error=cpp -Wno-error=sign-compare
 	endif
-	CXXFLAGS_USERMOD += -Wno-missing-field-initializers
+	# Use CXXFLAGS_MOD instead of CXXFLAGS_USERMOD because the unix MakeFile
+	# adds its own -std=c++... to CXXFLAGS_MOD if it's not there yet, and then
+	# adds it to CXXFLAGS_USERMOD. But we want to specify our own -std=c++ version.
+	CXXFLAGS_MOD += $(UPYFLAGSUSERCPPMOD)
 	LDFLAGS_USERMOD += -lstdc++
 else
 	LDFLAGS_USERMOD += $(EXAMPLE_MOD_DIR)/libupywraptest.a -lstdc++

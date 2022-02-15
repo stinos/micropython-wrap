@@ -15,7 +15,7 @@ MKDIR = mkdir
 PYTHON = python3
 RM = rm
 
-HASCPP17 = $(shell expr `$(CC) -dumpversion | cut -f1 -d.` \>= 7)
+HASCPP17 = $(shell expr `$(CXX) -dumpversion | cut -f1 -d.` \>= 7)
 CUR_DIR = $(shell pwd)
 MICROPYTHON_DIR ?= ../micropython
 MPY_CROSS ?= $(MICROPYTHON_DIR)/mpy-cross/mpy-cross
@@ -24,9 +24,12 @@ CPPFLAGS = \
 	-Wall -Werror $(CPPFLAGS_EXTRA)\
  	-I$(MICROPYTHON_DIR) -I$(MICROPYTHON_DIR)/py \
  	-I$(MICROPYTHON_PORT_DIR) -I$(MICROPYTHON_PORT_DIR)/variants/standard
+UPYFLAGSUSERCPPMOD = -Wno-missing-field-initializers
 ifeq ($(HASCPP17), 1)
+	UPYFLAGSUSERCPPMOD += -std=c++17
 	CPPFLAGS += -std=c++17
 else
+	UPYFLAGSUSERCPPMOD += -std=c++11
 	CPPFLAGS += -std=c++11
 endif
 V ?= 0
@@ -65,7 +68,7 @@ sharedlib:
 	$(CP) tests/libupywraptest.so ~/.micropython/lib/upywraptest.so
 
 usercmodule: $(MPY_CROSS)
-	$(MAKEUPY) $(UPYFLAGSUSERMOD) BUILD=build-usercmod UPYWRAP_BUILD_CPPMODULE=1 UPYWRAP_PORT_DIR=$(MICROPYTHON_PORT_DIR) all
+	$(MAKEUPY) $(UPYFLAGSUSERMOD) BUILD=build-usercmod UPYWRAP_BUILD_CPPMODULE=1 UPYFLAGSUSERCPPMOD="$(UPYFLAGSUSERCPPMOD)" UPYWRAP_PORT_DIR=$(MICROPYTHON_PORT_DIR) all
 
 teststaticlib: $(MPY_CROSS) staticlib
 	$(MAKEUPY) $(UPYFLAGSUSERMOD) BUILD=build-static all
