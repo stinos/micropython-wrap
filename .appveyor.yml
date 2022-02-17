@@ -6,10 +6,12 @@ environment:
       MICROPY_CPYTHON3: c:/python34/python.exe
       MICROPYPATH: c:/projects/micropython/ports/windows
       FullTypeCheck: 0
+      BuildMsys2Version: 1
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       MICROPY_CPYTHON3: c:/python34/python.exe
       MICROPYPATH: c:/projects/micropython/ports/windows
       FullTypeCheck: 1
+      BuildMsys2Version: 0
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
       MICROPY_CPYTHON3: python3
       FullTypeCheck: 0
@@ -82,6 +84,18 @@ for:
   test_script:
   - ps: |
       & $env:MICROPY_CPYTHON3 ../micropython/tests/run-tests.py --keep-path -d tests/py
+
+      if ($env:BuildMsys2Version -eq 1 -and $env:platform -eq 'x64' -and $env:configuration -eq 'Release') {
+        $env:MSYSTEM = 'MINGW64'
+        $env:CHERE_INVOKING = 'enabled_from_arguments'
+        $env:LIB=''
+        C:\msys64\usr\bin\bash.exe -l -c "gcc --version"
+        C:\msys64\usr\bin\bash.exe -l -c "make V=1 MICROPYTHON_PORT_DIR=../micropython/ports/windows clean"
+        C:\msys64\usr\bin\bash.exe -l -c "make V=1 PYTHON=/usr/bin/python3 MICROPYTHON_PORT_DIR=../micropython/ports/windows test"
+        if ($LASTEXITCODE -ne 0) {
+          throw "MSYS2 build exited with code $LASTEXITCODE"
+        }
+      }
 
 -
   matrix:
