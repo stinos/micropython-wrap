@@ -381,6 +381,11 @@ namespace upywrap
       return *list;
     }
 
+    static mp_obj_list_t* BackEnd()
+    {
+      return *List();
+    }
+
     static bool Initialized()
     {
       return !!*List();
@@ -423,14 +428,45 @@ namespace upywrap
     * and X's destructor gets called because it gets finalized in gc_collect, the stored object might already have
     * been marked if it happens to be at a lower memory address than X. As such only the second gc_collect call
     * will sweep it.
+    * Note operator bool returns true only if the object hasn't been moved from and contains an actual object, not nullptr.
     */
   class PinPyObj
   {
   public:
-    PinPyObj( mp_obj_t obj ) :
-      obj( new mp_obj_t( obj ), [] ( mp_obj_t* o ) { StaticPyObjectStore::Remove( *o ); } )
+    explicit PinPyObj( mp_obj_t obj = nullptr ) :
+      obj( new mp_obj_t( obj ), Deleter )
     {
-      StaticPyObjectStore::Store( Get() );
+      if( obj )
+      {
+        StaticPyObjectStore::Store( obj );
+      }
+    }
+
+    PinPyObj( PinPyObj&& rh ) :
+      obj( std::move( rh.obj ) )
+    {
+    }
+
+    PinPyObj( const PinPyObj& rh ) :
+      obj( rh.obj )
+    {
+    }
+
+    PinPyObj& operator = ( PinPyObj&& rh )
+    {
+      obj = std::move( rh.obj );
+      return *this;
+    }
+
+    PinPyObj& operator = ( const PinPyObj& rh )
+    {
+      obj = rh.obj;
+      return *this;
+    }
+
+    mp_obj_t operator * () const
+    {
+      return Get();
     }
 
     mp_obj_t Get() const
@@ -438,7 +474,20 @@ namespace upywrap
       return *obj.get();
     }
 
+    explicit operator bool() const
+    {
+      return obj && Get() != nullptr;
+    }
+
   private:
+    static void Deleter( mp_obj_t* o )
+    {
+      if( *o )
+      {
+        StaticPyObjectStore::Remove( *o );
+      }
+    }
+
     std::shared_ptr< mp_obj_t > obj;
   };
 

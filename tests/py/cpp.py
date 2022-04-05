@@ -1,0 +1,3 @@
+import upywraptest
+
+upywraptest.RunCppTests()

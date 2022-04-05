@@ -9,6 +9,7 @@
 #include "class.h"
 #include "context.h"
 #include "string.h"
+#include "pinpyobj.h"
 #include "qualifier.h"
 #include "nargs.h"
 #include "numeric.h"
@@ -108,6 +109,7 @@ struct F
   func_name_def( SomeErrorCode )
 
   func_name_def( TestVariables )
+  func_name_def( RunCppTests )
 };
 
 void TestVariables()
@@ -118,6 +120,11 @@ void TestVariables()
   SetVariable( 2, "x", "a" );
   std::cout << GetVariable< int >( "x2", "x", "a" ) << std::endl;
   SetVariable( 4, "x2", "x", "a" );
+}
+
+void RunCppTests()
+{
+  TestPinPyObj();
 }
 
 //#define TEST_STATIC_ASSERTS_FOR_UNSUPPORTED_TYPES
@@ -236,6 +243,7 @@ extern "C"
     fn.Def< F::Double >( Double );
 
     fn.Def< F::TestVariables >( TestVariables );
+    fn.Def< F::RunCppTests >(RunCppTests);
 
 #if UPYWRAP_HAS_CPP17
     fn.Def< F::NullOpt >( NullOpt );
