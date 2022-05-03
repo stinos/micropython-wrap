@@ -28,7 +28,7 @@ MICROPYTHON_PORT_DIR ?= $(MICROPYTHON_DIR)/ports/unix
 CPPFLAGS = \
 	-Wall -Werror $(CPPFLAGS_EXTRA)\
  	-I$(MICROPYTHON_DIR) -I$(MICROPYTHON_DIR)/py \
- 	-I$(MICROPYTHON_PORT_DIR) -I$(MICROPYTHON_PORT_DIR)/variants/standard
+ 	-I$(MICROPYTHON_PORT_DIR)
 UPYFLAGSUSERCPPMOD = -Wno-missing-field-initializers
 ifeq ($(HASGCC8), 1)
 	UPYFLAGSUSERCPPMOD += -Wno-cast-function-type -std=c++2a
@@ -46,12 +46,23 @@ MAKEUPY = make -C $(MICROPYTHON_PORT_DIR) $(MAKEOPTS)
 UPYFLAGS = MICROPY_PY_BTREE=0 MICROPY_PY_FFI=0 MICROPY_PY_USSL=0 MICROPY_PY_AXTLS=0 MICROPY_FATFS=0 MICROPY_PY_THREAD=0
 
 # Flags instructing MicroPython to build the 'user C module'.
-# Slightly different per port unfortunately, just spell out those ports we've tested so far.
 CFLAGS_EXTRA = -DMODULE_UPYWRAPTEST_ENABLED=1
-ifneq (,$(filter %ports/unix %ports/windows, $(MICROPYTHON_PORT_DIR)))
+# Slightly different per port unfortunately, just spell out those ports we've tested so far:
+# esp32 port has this one enabled already, unix port explicitly disables this but not wrapped in #ifndef
+# so supply our own variant to fix that.
+ifneq (,$(filter %ports/windows, $(MICROPYTHON_PORT_DIR)))
 	CFLAGS_EXTRA += -DMICROPY_MODULE_BUILTIN_INIT=1
+else ifneq (,$(filter %ports/unix, $(MICROPYTHON_PORT_DIR)))
+	THIS_DIR = $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+	VARIANT_DIR = $(THIS_DIR)/build/unixvariant
 endif
 UPYFLAGSUSERMOD = $(UPYFLAGS) USER_C_MODULES=$(CUR_DIR) CFLAGS_EXTRA="$(CFLAGS_EXTRA)"
+ifdef VARIANT_DIR
+	UPYFLAGSUSERMOD += VARIANT_DIR=$(VARIANT_DIR)
+	CPPFLAGS += -I$(VARIANT_DIR)
+else
+	CPPFLAGS += -I$(MICROPYTHON_PORT_DIR)/variants/standard
+endif
 
 $(MPY_CROSS):
 	make -C $(MICROPYTHON_DIR)/mpy-cross $(MAKEOPTS)
