@@ -566,8 +566,7 @@ namespace upywrap
       type.print = instance_print;
 
       AddFunctionToTable( MP_QSTR___del__, MakeFunction( del ) );
-      auto caster = m_new_obj( mp_rom_obj_static_class_method_t );
-      caster->base.type = &mp_type_staticmethod;
+      auto caster = mp_obj_malloc( mp_rom_obj_static_class_method_t, &mp_type_staticmethod );
       caster->fun = MakeFunction( Cast );
       StoreClassVariable( "Cast", MP_OBJ_FROM_PTR( caster ) );
     }

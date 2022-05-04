@@ -39,40 +39,35 @@ namespace upywrap
 
   inline mp_obj_t MakeFunction( mp_obj_t (*fun) ( void ) )
   {
-    auto o = m_new_obj( mp_obj_fun_builtin_fixed_t );
-    o->base.type = &mp_type_fun_builtin_0;
+    auto o = mp_obj_malloc( mp_obj_fun_builtin_fixed_t, &mp_type_fun_builtin_0 );
     o->fun._0 = fun;
     return o;
   }
 
   inline mp_obj_t MakeFunction( mp_obj_t (*fun) ( mp_obj_t ) )
   {
-    auto o = m_new_obj( mp_obj_fun_builtin_fixed_t );
-    o->base.type = &mp_type_fun_builtin_1;
+    auto o = mp_obj_malloc( mp_obj_fun_builtin_fixed_t, &mp_type_fun_builtin_1 );
     o->fun._1 = fun;
     return o;
   }
 
   inline mp_obj_t MakeFunction( mp_obj_t (*fun) ( mp_obj_t, mp_obj_t ) )
   {
-    auto o = m_new_obj( mp_obj_fun_builtin_fixed_t );
-    o->base.type = &mp_type_fun_builtin_2;
+    auto o = mp_obj_malloc( mp_obj_fun_builtin_fixed_t, &mp_type_fun_builtin_2 );
     o->fun._2 = fun;
     return o;
   }
 
   inline mp_obj_t MakeFunction( mp_obj_t (*fun) ( mp_obj_t, mp_obj_t, mp_obj_t ) )
   {
-    auto o = m_new_obj( mp_obj_fun_builtin_fixed_t );
-    o->base.type = &mp_type_fun_builtin_3;
+    auto o = mp_obj_malloc( mp_obj_fun_builtin_fixed_t, &mp_type_fun_builtin_3 );
     o->fun._3 = fun;
     return o;
   }
 
   inline mp_obj_t MakeFunction( mp_uint_t numArgs, mp_obj_t (*fun) ( mp_uint_t, const mp_obj_t* ) )
   {
-    auto o = m_new_obj( mp_obj_fun_builtin_var_t );
-    o->base.type = &mp_type_fun_builtin_var;
+    auto o = mp_obj_malloc( mp_obj_fun_builtin_var_t, &mp_type_fun_builtin_var );
     o->sig = static_cast< uint32_t >( MP_OBJ_FUN_MAKE_SIG( numArgs, numArgs, false ) );
     o->fun.var = fun;
     return o;
@@ -80,8 +75,7 @@ namespace upywrap
 
   inline mp_obj_t MakeFunction( mp_uint_t numArgsMin, mp_uint_t numArgsMax, mp_obj_t( *fun ) ( mp_uint_t, const mp_obj_t* ) )
   {
-    auto o = m_new_obj( mp_obj_fun_builtin_var_t );
-    o->base.type = &mp_type_fun_builtin_var;
+    auto o = mp_obj_malloc( mp_obj_fun_builtin_var_t, &mp_type_fun_builtin_var );
     o->sig = static_cast< uint32_t >( MP_OBJ_FUN_MAKE_SIG( numArgsMin, numArgsMax, false ) );
     o->fun.var = fun;
     return o;
@@ -126,12 +120,7 @@ namespace upywrap
     */
   inline mp_obj_t RaiseException( const mp_obj_type_t* exc_type, const char* msg )
   {
-    mp_obj_exception_t* o = m_new_obj_var( mp_obj_exception_t, mp_obj_t, 0 );
-    if( !o )
-    {
-      throw std::bad_alloc();
-    }
-    o->base.type = exc_type;
+    mp_obj_exception_t* o = mp_obj_malloc_var( mp_obj_exception_t, mp_obj_t, 0, exc_type );
     o->traceback_data = nullptr;
     o->args = reinterpret_cast< mp_obj_tuple_t* >( MP_OBJ_TO_PTR( mp_obj_new_tuple( 1, nullptr ) ) );
     o->args->items[ 0 ] = mp_obj_new_str( msg, std::strlen( msg ) );
