@@ -1,9 +1,9 @@
+# VS/msbuild
 *.suo
 *.user
-Debug/
-Release/
-*.sh
 *.VC.*db
+Directory.build.props
+# Unix build
 *.o
 *.a
 *.so
