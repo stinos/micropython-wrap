@@ -14,7 +14,7 @@
 //Whether to support C++20 features.
 //Default is on if the compiler supports it.
 #ifndef UPYWRAP_HAS_CPP20
-#if ((__cplusplus >= 202002L) || (_MSVC_LANG >= 202003L))
+#if ((__cplusplus >= 202002L) || (_MSVC_LANG >= 202002L))
 #define UPYWRAP_HAS_CPP20 (1)
 #else
 #define UPYWRAP_HAS_CPP20 (0)
