@@ -57,19 +57,17 @@ namespace upywrap
     * Returns true if no exception was raised.
     */
 #ifdef _MSC_VER
-  //In release builds the compiler/optimizer sometimes is able to figure
+  //4611: interaction between '_setjmp' and C++ object destruction is non-portable
+  //4702: In release builds the compiler/optimizer sometimes is able to figure
   //out the call to ex() will lead to this code never being reached in cases
   //where ex() contains nlr_jump or a throw statement.
   //Moreover, disabling this warning only works for VS2013 when this pragma is
   //outside of the function.
-  #pragma warning ( disable : 4702 )
+  #pragma warning ( disable : 4702 4611 )
 #endif
   template< class Call, class HandleEx >
   bool WrapMicroPythonCall( Call f, HandleEx ex )
   {
-#ifdef _MSC_VER
-  #pragma warning ( disable : 4611 ) //interaction between '_setjmp' and C++ object destruction is non-portable
-#endif
     nlr_buf_t nlr;
     if( nlr_push( &nlr ) == 0 )
     {
@@ -82,12 +80,9 @@ namespace upywrap
       ex( nlr.ret_val );
     }
     return false;
-#ifdef _MSC_VER
-  #pragma warning ( default : 4611 )
-#endif
   }
 #ifdef _MSC_VER
-  #pragma warning ( default : 4702 )
+  #pragma warning ( default : 4702 4611 )
 #endif
 
   /**
