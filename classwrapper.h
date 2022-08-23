@@ -266,12 +266,12 @@ namespace upywrap
     static ClassWrapper< T >* AsNativeObjCheckedImpl( mp_obj_t arg )
     {
       auto native = (this_type*) MP_OBJ_TO_PTR( arg );
-      if( !mp_obj_is_type( arg, &type ) )
+      if( !mp_obj_is_exact_type( arg, &type ) )
       {
         //If whatever gets passed in doesn't remotely look like an object bail out.
         //Otherwise it's possible we're being passed an arbitrary 'opaque' ClassWrapper (so the cookie mathches)
         //which has not been registered or has been registered elsewhere (e.g. another dll, which makes
-        //mp_obj_is_type fail since that just compares pointers)
+        //mp_obj_is_exact_type fail since that just compares pointers)
         //but if it's the same C++ type (or that check is disabled) we're good to go after all.
         //With UPYWRAP_FULLTYPECHECK off, another possibility which makes sense is this gets called from
         //ClassWrapper< B > and arg is actually a ClassWrapper< A >, but B derives from A or vice-versa:

@@ -78,7 +78,7 @@ namespace upywrap
         using return_t = decltype( largeIntConv( nullptr ) );
         return safe_integer_cast< return_t >( MP_OBJ_SMALL_INT_VALUE( arg ) );
       }
-      else if( mp_obj_is_type( arg, &mp_type_int ) )
+      else if( mp_obj_is_exact_type( arg, &mp_type_int ) )
       {
         return largeIntConv( (mp_obj_int_t*) arg );
       }
