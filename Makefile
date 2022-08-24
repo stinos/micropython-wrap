@@ -64,6 +64,9 @@ else
 	CPPFLAGS += -I$(MICROPYTHON_PORT_DIR)/variants/standard
 endif
 
+submodules:
+	$(MAKEUPY) submodules
+
 $(MPY_CROSS):
 	make -C $(MICROPYTHON_DIR)/mpy-cross $(MAKEOPTS)
 
@@ -74,30 +77,32 @@ $(MPY_CROSS):
 # linker so it finds the init_upywraptest function.
 # The usercmodule target on the other hand lets MicroPython build both cmodule.c
 # and module.cpp in one go. Also see tests/micropython.mk.
-staticlib:
+staticlib: submodules
 	$(MAKEUPY) $(UPYFLAGSUSERMOD) BUILD=build-static build-static/genhdr/qstrdefs.generated.h
+	$(MAKEUPY) $(UPYFLAGSUSERMOD) BUILD=build-static build-static/genhdr/root_pointers.h
 	$(CXX) $(CPPFLAGS) -I$(MICROPYTHON_PORT_DIR)/build-static -c tests/module.cpp -o tests/module_static.o
 	$(AR) rcs tests/libupywraptest.a tests/module_static.o
 
-sharedlib:
+sharedlib: submodules
 	$(MAKEUPY) $(UPYFLAGS) BUILD=build-shared build-shared/genhdr/qstrdefs.generated.h
+	$(MAKEUPY) $(UPYFLAGS) BUILD=build-shared build-shared/genhdr/root_pointers.h
 	$(CXX) -fPIC $(CPPFLAGS) -I$(MICROPYTHON_PORT_DIR)/build-shared -c tests/module.cpp -o tests/module_shared.o
 	$(MKDIR) -p ~/.micropython/lib
 ifneq (,$(filter %ports/windows, $(MICROPYTHON_PORT_DIR)))
-	$(MAKEUPY) BUILD=build-shared micropythoncore.dll
-	$(CXX) -shared -o tests/upywraptest.pyd tests/module_shared.o -L$(MICROPYTHON_PORT_DIR) -lmicropythoncore
+	$(MAKEUPY) BUILD=build-shared build-shared/micropythoncore.dll
+	$(CXX) -shared -o tests/upywraptest.pyd tests/module_shared.o -L$(MICROPYTHON_PORT_DIR)/build-shared -lmicropythoncore
 	$(CP) tests/upywraptest.pyd ~/.micropython/lib/upywraptest.pyd
 else
 	$(CXX) -shared -o tests/libupywraptest.so tests/module_shared.o
 	$(CP) tests/libupywraptest.so ~/.micropython/lib/upywraptest.so
 endif
 
-usercmodule: $(MPY_CROSS)
+usercmodule: $(MPY_CROSS) submodules
 	$(MAKEUPY) $(UPYFLAGSUSERMOD) BUILD=build-usercmod UPYWRAP_BUILD_CPPMODULE=1 UPYFLAGSUSERCPPMOD="$(UPYFLAGSUSERCPPMOD)" UPYWRAP_PORT_DIR=$(MICROPYTHON_PORT_DIR) all
 
 teststaticlib: $(MPY_CROSS) staticlib
 	$(MAKEUPY) $(UPYFLAGSUSERMOD) BUILD=build-static all
-	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/micropython \
+	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/build-static/micropython \
 	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests.py -d $(CUR_DIR)/tests/py
 
 testsharedlib: $(MPY_CROSS) sharedlib
@@ -107,11 +112,11 @@ ifeq (,$(filter %ports/windows, $(MICROPYTHON_PORT_DIR)))
 	# already, it's needed to link the module against, and that automatically creates the .exe as well.
 	$(MAKEUPY) $(UPYFLAGS) BUILD=build-shared
 endif
-	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/micropython \
+	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/build-shared/micropython \
 	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests.py --keep-path -d $(CUR_DIR)/tests/py
 
 testusercmodule: usercmodule
-	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/micropython \
+	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/build-usercmod/micropython \
 	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests.py -d $(CUR_DIR)/tests/py
 
 test: teststaticlib testsharedlib testusercmodule

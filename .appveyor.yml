@@ -91,7 +91,9 @@ for:
         $env:LIB=''
         C:\msys64\usr\bin\bash.exe -l -c "gcc --version"
         C:\msys64\usr\bin\bash.exe -l -c "make V=1 MICROPYTHON_PORT_DIR=../micropython/ports/windows clean"
-        C:\msys64\usr\bin\bash.exe -l -c "make V=1 PYTHON=/usr/bin/python3 MICROPYTHON_PORT_DIR=../micropython/ports/windows test"
+        # The redirection is because 'make submodules' might get called, which in turn calls git commands which write to stderr
+        # and that is considered an error on Appveyor. And GIT_REDIRECT_STDERR seems to have no effect on the git version used in this msys2.
+        &{C:\msys64\usr\bin\bash.exe -l -c "make V=1 PYTHON=/usr/bin/python3 MICROPYTHON_PORT_DIR=../micropython/ports/windows test"} 2>&1
         if ($LASTEXITCODE -ne 0) {
           throw "MSYS2 build exited with code $LASTEXITCODE"
         }

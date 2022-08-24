@@ -47,4 +47,4 @@ mp_obj_module_t module = {
     .globals = (mp_obj_dict_t*)&module_globals,
 };
 
-MP_REGISTER_MODULE(MP_QSTR_upywraptest, module, MODULE_UPYWRAPTEST_ENABLED);
+MP_REGISTER_MODULE(MP_QSTR_upywraptest, module);
