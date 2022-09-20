@@ -77,25 +77,25 @@ namespace upywrap
       ClassWrapper( name, flags )
     {
       mp_obj_dict_store( dict, new_qstr( name ), &type );
-      mp_obj_dict_store( dict, new_qstr( ( std::string( name ) + "_locals" ).data() ), MP_OBJ_FROM_PTR( type.locals_dict ) );
+      mp_obj_dict_store( dict, new_qstr( ( std::string( name ) + "_locals" ).data() ), MP_OBJ_FROM_PTR( MP_OBJ_TYPE_GET_SLOT( &type, locals_dict ) ) );
     }
 
     //Initialize the type, storing the locals in StaticPyObjectStore to prevent GC collection.
     ClassWrapper( const char* name, ConstructorOptions, decltype( mp_obj_type_t::flags ) flags = 0 ) :
       ClassWrapper( name, flags )
     {
-      StaticPyObjectStore::Store( MP_OBJ_FROM_PTR( type.locals_dict ) );
+      StaticPyObjectStore::Store( MP_OBJ_FROM_PTR( MP_OBJ_TYPE_GET_SLOT( &type, locals_dict ) ) );
     }
 
     static const mp_obj_type_t& Type()
     {
-      return type;
+      return *((const mp_obj_type_t*) &type);
     }
 
     template< class A >
     void StoreClassVariable( const char* name, const A& value )
     {
-      mp_obj_dict_store( MP_OBJ_FROM_PTR( type.locals_dict ), new_qstr( name ), ToPy( value ) );
+      mp_obj_dict_store( MP_OBJ_FROM_PTR( MP_OBJ_TYPE_GET_SLOT( &type, locals_dict ) ), new_qstr( name ), ToPy( value ) );
     }
 
     template< index_type name, class Ret, class... A >
@@ -252,7 +252,7 @@ namespace upywrap
       assert( p );
       CheckTypeIsRegistered();
       auto o = m_new_obj_with_finaliser( this_type );
-      o->base.type = &type;
+      o->base.type = (const mp_obj_type_t*) & type;
       o->cookie = defCookie;
       o->typeId = &typeid( T );
 #if UPYWRAP_SHAREDPTROBJ
@@ -266,7 +266,7 @@ namespace upywrap
     static ClassWrapper< T >* AsNativeObjCheckedImpl( mp_obj_t arg )
     {
       auto native = (this_type*) MP_OBJ_TO_PTR( arg );
-      if( !mp_obj_is_exact_type( arg, &type ) )
+      if( !mp_obj_is_exact_type( arg, (const mp_obj_type_t*) &type ) )
       {
         //If whatever gets passed in doesn't remotely look like an object bail out.
         //Otherwise it's possible we're being passed an arbitrary 'opaque' ClassWrapper (so the cookie mathches)
@@ -317,7 +317,7 @@ namespace upywrap
       if( mp_obj_is_obj( arg ) )
       {
         mp_obj_base_t* base = (mp_obj_base_t*) MP_OBJ_TO_PTR( arg );
-        if( mp_obj_is_instance_type( base->type ) && base->type->parent != nullptr )
+        if( mp_obj_is_instance_type( base->type ) && MP_OBJ_TYPE_GET_SLOT( base->type, parent ) != nullptr )
         {
           if( auto native = AsNativeObjCheckedImpl( ( (mp_obj_instance_t*) base )->subobj[ 0 ] ) )
           {
@@ -362,7 +362,7 @@ namespace upywrap
       //stored type. It is allowed so the other constructors can always delegate to this one,
       //making it possible to store the same type with different names in another dict for instance.
       //Explicitly disable calling this with different flags though since that yields
-      //tield a type which is actually different.
+      //a type which is actually different.
       static bool init = false;
       if( !init )
       {
@@ -446,7 +446,7 @@ namespace upywrap
 
     static mp_map_elem_t* LookupLocal( qstr attr )
     {
-      auto locals_map = &( (mp_obj_dict_t*) type.locals_dict )->map;
+      auto locals_map = &( (mp_obj_dict_t*) MP_OBJ_TYPE_GET_SLOT( &type, locals_dict ) )->map;
       return mp_map_lookup( locals_map, new_qstr( attr ), MP_MAP_LOOKUP );
     }
 
@@ -558,12 +558,20 @@ namespace upywrap
     {
       type.base.type = &mp_type_type;
       type.name = static_cast< decltype( type.name ) >( qstr_from_str( name ) );
-      type.locals_dict = (mp_obj_dict_t*) mp_obj_new_dict( 0 );
-      type.make_new = nullptr;
-      type.attr = attr;
-      type.binary_op = binary_op;
-      type.unary_op = mp_generic_unary_op;
-      type.print = instance_print;
+      //The ones we use here (so make sure the other locations stay in sync!).
+      MP_OBJ_TYPE_SET_SLOT( &type, make_new, nullptr, 0 );
+      MP_OBJ_TYPE_SET_SLOT( &type, locals_dict, mp_obj_new_dict( 0 ), 1 );
+      MP_OBJ_TYPE_SET_SLOT( &type, attr, attr, 2 );
+      MP_OBJ_TYPE_SET_SLOT( &type, binary_op, binary_op, 3 );
+      MP_OBJ_TYPE_SET_SLOT( &type, unary_op, mp_generic_unary_op, 4 );
+      MP_OBJ_TYPE_SET_SLOT( &type, call, nullptr, 5 );
+      MP_OBJ_TYPE_SET_SLOT( &type, print, instance_print, 6 );
+      //The ones we don't use, for completeness.
+      type.slot_index_subscr = 0;
+      type.slot_index_iter = 0;
+      type.slot_index_buffer = 0;
+      type.slot_index_protocol = 0;
+      type.slot_index_parent = 0;
 
       AddFunctionToTable( MP_QSTR___del__, MakeFunction( del ) );
       auto caster = mp_obj_malloc( mp_rom_obj_static_class_method_t, &mp_type_staticmethod );
@@ -581,7 +589,7 @@ namespace upywrap
 
     void AddFunctionToTable( const qstr name, mp_obj_t fun )
     {
-      mp_obj_dict_store( type.locals_dict, new_qstr( name ), fun );
+      mp_obj_dict_store( MP_OBJ_TYPE_GET_SLOT( &type, locals_dict ), new_qstr( name ), fun );
     }
 
     void AddFunctionToTable( const char* name, mp_obj_t fun )
@@ -602,7 +610,7 @@ namespace upywrap
       AddFunctionToTable( name(), call_type::CreateUPyFunction() );
       if( std::string( name() ) == "__call__" )
       {
-        type.call = instance_call;
+        MP_OBJ_TYPE_SET_SLOT( &type, call, instance_call, 5 );
       }
     }
 
@@ -623,7 +631,7 @@ namespace upywrap
     {
       typedef NativeMemberCall< name, Ret, A... > call_type;
       functionPointers[ (void*) name ] = call_type::CreateCaller( f );
-      type.make_new = call_type::MakeNew;
+      MP_OBJ_TYPE_SET_SLOT( &type, make_new, call_type::MakeNew, 0 );
     }
 
     template< index_type name, class Fun >
@@ -799,7 +807,7 @@ namespace upywrap
     std::int64_t cookie; //we'll use this to check if a pointer really points to a ClassWrapper
     const std::type_info* typeId; //and this will be used to check if types aren't being mixed
     native_obj_t obj;
-    static mp_obj_type_t type;
+    static mp_obj_full_type_t type;
     static function_ptrs functionPointers;
     static store_attr_map setters;
     static load_attr_map getters;
@@ -807,7 +815,7 @@ namespace upywrap
   };
 
   template< class T >
-  mp_obj_type_t ClassWrapper< T >::type =
+  mp_obj_full_type_t ClassWrapper< T >::type =
 #ifdef __GNUC__
     { { nullptr } }; //GCC bug 53119
 #else
