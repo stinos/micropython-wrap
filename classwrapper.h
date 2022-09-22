@@ -25,7 +25,7 @@ namespace upywrap
   //{
   //  SomeClass();
   //  int Foo( int );
-  //  double Bar( const std::string& );
+  //  double Bar( const std::string&, int );
   //};
   //
   //struct Funcs
@@ -36,7 +36,7 @@ namespace upywrap
   //
   //ClassWrapper< SomeClass > wrap( "SomeClass", dict );
   //wrap.Def< Funcs::Foo >( &SomeClass::Foo );
-  //wrap.Def< Funcs::Bar >( &SomeClass::Bar );
+  //wrap.Def< Funcs::Bar >( &SomeClass::Bar, Kwargs( "a", mp_const_none )( "b", 0 ) );
   //
   //This will register type "SomeClass" and given functions in dict,
   //so if dict is the global dict of a module "mod", the class
@@ -46,6 +46,7 @@ namespace upywrap
   //x = mod.SomeClass();
   //x.Foo();
   //x.Bar();
+  //x.Bar(a="a", b=2);
   //
   //For supported arguments and return values see FromPyObj and ToPyObj classes.
   template< class T >
@@ -140,6 +141,48 @@ namespace upywrap
       DefImpl< name, Ret, decltype( f ), A... >( f, conv );
     }
 
+    template< index_type name, class Ret, class... A >
+    void Def( Ret ( *f )( T*, A... ), Arguments arguments, typename SelectRetvalConverter< Ret >::type conv = nullptr )
+    {
+      DefImpl< name, Ret, decltype( f ), A... >( f, std::move( arguments ), conv );
+    }
+
+    template< index_type name, class Ret, class... A >
+    void Def( Ret ( *f )( T&, A... ), Arguments arguments, typename SelectRetvalConverter< Ret >::type conv = nullptr )
+    {
+      DefImpl< name, Ret, decltype( f ), A... >( f, std::move( arguments ), conv );
+    }
+
+    template< index_type name, class Ret, class... A >
+    void Def( Ret ( *f )( const T&, A... ), Arguments arguments, typename SelectRetvalConverter< Ret >::type conv = nullptr )
+    {
+      DefImpl< name, Ret, decltype( f ), A... >( f, std::move( arguments ), conv );
+    }
+
+    template< index_type name, class Ret, class... A >
+    void Def( Ret ( T::*f )( A... ), Arguments arguments, typename SelectRetvalConverter< Ret >::type conv = nullptr )
+    {
+      DefImpl< name, Ret, decltype( f ), A... >( f, std::move( arguments ), conv );
+    }
+
+    template< index_type name, class Ret, class... A >
+    void Def( Ret ( T::*f )( A... ) const, Arguments arguments, typename SelectRetvalConverter< Ret >::type conv = nullptr )
+    {
+      DefImpl< name, Ret, decltype( f ), A... >( f, std::move( arguments ), conv );
+    }
+
+    template< index_type name, class Base, class Ret, class... A >
+    typename std::enable_if< std::is_base_of< Base, T >::value >::type Def( Ret ( Base::*f )( A... ), Arguments arguments, typename SelectRetvalConverter< Ret >::type conv = nullptr )
+    {
+      DefImpl< name, Ret, decltype( f ), A... >( f, std::move( arguments ), conv );
+    }
+
+    template< index_type name, class Base, class Ret, class... A >
+    typename std::enable_if< std::is_base_of< Base, T >::value >::type Def( Ret ( Base::*f )( A... ) const, Arguments arguments, typename SelectRetvalConverter< Ret >::type conv = nullptr )
+    {
+      DefImpl< name, Ret, decltype( f ), A... >( f, std::move( arguments ), conv );
+    }
+
     template< class A >
     void Setter( const char* name, void( *f )( T*, A ) )
     {
@@ -190,9 +233,21 @@ namespace upywrap
     }
 
     template< class... A >
+    void DefInit( Arguments arguments )
+    {
+      DefInit( ConstructorFactoryFunc< A... >, std::move( arguments ) );
+    }
+
+    template< class... A >
     void DefInit( T*( *f ) ( A... ) )
     {
       InitImpl< FixedFuncNames::Init, decltype( f ), T*, A... >( f );
+    }
+
+    template< class... A >
+    void DefInit( T* ( *f )( A... ), Arguments arguments )
+    {
+      InitImpl< FixedFuncNames::Init, decltype( f ), T*, A... >( f, std::move( arguments ) );
     }
 
 #if UPYWRAP_SHAREDPTROBJ
@@ -200,6 +255,12 @@ namespace upywrap
     void DefInit( std::shared_ptr< T >( *f ) ( A... ) )
     {
       InitImpl< FixedFuncNames::Init, decltype( f ), std::shared_ptr< T >, A... >( f );
+    }
+
+    template< class... A >
+    void DefInit( std::shared_ptr< T >( *f ) ( A... ), Arguments arguments )
+    {
+      InitImpl< FixedFuncNames::Init, decltype( f ), std::shared_ptr< T >, A... >( f, std::move( arguments ) );
     }
 #endif
 
@@ -605,20 +666,24 @@ namespace upywrap
     }
 
     template< index_type name, class Ret, class Fun, class... A >
-    void DefImpl( Fun f, typename SelectRetvalConverter< Ret >::type conv )
+    void DefImpl( Fun f, Arguments&& arguments, typename SelectRetvalConverter< Ret >::type conv )
     {
       typedef NativeMemberCall< name, Ret, A... > call_type;
       auto callerObject = call_type::CreateCaller( f );
-      if( conv )
-      {
-        callerObject->convert_retval = conv;
-      }
+      callerObject->convert_retval = conv;
+      callerObject->arguments = std::move( arguments );
       functionPointers[ (void*) name ] = callerObject;
-      AddFunctionToTable( name(), call_type::CreateUPyFunction() );
+      AddFunctionToTable( name(), call_type::CreateUPyFunction( *callerObject ) );
       if( std::string( name() ) == "__call__" )
       {
         MP_OBJ_TYPE_SET_SLOT( &type, call, instance_call, 5 );
       }
+    }
+
+    template< index_type name, class Ret, class Fun, class... A >
+    void DefImpl( Fun f, typename SelectRetvalConverter< Ret >::type conv )
+    {
+      DefImpl< name, Ret, Fun, A... >( f, Arguments(), conv );
     }
 
     template< class Fun, class A >
@@ -634,11 +699,19 @@ namespace upywrap
     }
 
     template< index_type name, class Fun, class Ret, class... A >
-    void InitImpl( Fun f )
+    void InitImpl( Fun f, Arguments&& arguments )
     {
       typedef NativeMemberCall< name, Ret, A... > call_type;
-      functionPointers[ (void*) name ] = call_type::CreateCaller( f );
+      auto caller = call_type::CreateCaller( f );
+      caller->arguments = std::move( arguments );
+      functionPointers[ (void*) name ] = caller;
       MP_OBJ_TYPE_SET_SLOT( &type, make_new, call_type::MakeNew, 0 );
+    }
+
+    template< index_type name, class Fun, class Ret, class... A >
+    void InitImpl( Fun f )
+    {
+      InitImpl< name, Fun, Ret, A... >( f, Arguments() );
     }
 
     template< index_type name, class Fun >
@@ -745,8 +818,16 @@ namespace upywrap
         return new init_call_type( f );
       }
 
-      static mp_obj_t CreateUPyFunction()
+      static mp_obj_t CreateUPyFunction( const call_type& caller )
       {
+        if( caller.arguments.HasArguments() )
+        {
+          if( caller.arguments.NumberOfArguments() != sizeof...( A ) )
+          {
+            RaiseTypeException( ( std::string( "Wrong number of arguments in definition of " ) + index() ).data() );
+          }
+          return MakeFunction( caller.arguments.MimimumNumberOfArguments(), CallKw );
+        }
         return CreateFunction< mp_obj_t, A... >::Create( Call, CallN );
       }
 
@@ -759,13 +840,25 @@ namespace upywrap
         return CallReturn< Ret, A... >::Call( f, self->GetPtr() );
       }
 
-      static mp_obj_t MakeNew( const mp_obj_type_t*, mp_uint_t n_args, mp_uint_t, const mp_obj_t *args )
+      static mp_obj_t MakeNew( const mp_obj_type_t*, mp_uint_t n_args, mp_uint_t n_kw, const mp_obj_t* args )
       {
-        if( n_args != sizeof...( A ) )
-        {
-          RaiseTypeException( "Wrong number of arguments for constructor" );
-        }
         auto f = (init_call_type*) this_type::functionPointers[ (void*) index ];
+        if( f->arguments.HasArguments() )
+        {
+          if( f->arguments.NumberOfArguments() != sizeof...( A ) )
+          {
+            RaiseTypeException( ( std::string( "Wrong number of arguments in definition of " ) + index() ).data() );
+          }
+          Arguments::parsed_obj_t parsedArgs{};
+          f->arguments.Parse( n_args, n_kw, args, parsedArgs );
+          UPYWRAP_TRY
+          return AsPyObj( native_obj_t( Apply( f, parsedArgs.data(), make_index_sequence< sizeof...( A ) >() ) ) );
+          UPYWRAP_CATCH
+        }
+        else if( n_args != sizeof...( A ) || n_kw )
+        {
+          RaiseTypeException( ( std::string( "Wrong number of arguments in definition of " ) + index() ).data() );
+        }
         UPYWRAP_TRY
         return AsPyObj( native_obj_t( Apply( f, args, make_index_sequence< sizeof...( A ) >() ) ) );
         UPYWRAP_CATCH
@@ -789,6 +882,20 @@ namespace upywrap
         auto firstArg = &args[ 1 ];
         auto f = (call_type*) this_type::functionPointers[ (void*) index ];
         return CallVar( f, self->GetPtr(), firstArg, make_index_sequence< sizeof...( A ) >() );
+      }
+
+      static mp_obj_t CallKw( size_t n_args, const mp_obj_t* pos_args, mp_map_t* kw_args )
+      {
+        //Self is required.
+        if( n_args < 1 )
+        {
+          RaiseTypeException( "Wrong number of arguments" );
+        }
+        auto f = (call_type*) this_type::functionPointers[ (void*) index ];
+        Arguments::parsed_obj_t parsedArgs{};
+        f->arguments.Parse( n_args - 1, pos_args + 1, kw_args, parsedArgs );
+        auto self = (this_type*) pos_args[ 0 ];
+        return CallVar( f, self->GetPtr(), parsedArgs.data(), make_index_sequence< sizeof...( A ) >() );
       }
 
       template< size_t... Indices >

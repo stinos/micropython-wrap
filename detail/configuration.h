@@ -120,4 +120,11 @@
 #endif
 #endif
 
+//Maximum number of keyword arguments a wrapped function call can support.
+//When parsing the arguments are stack-allocated for speed, and instead of fiddling with alloca()
+//we use std::array. Could instead resort to std::pmr::vector but that has extra overhead.
+#ifndef UPYWRAP_MAXNUMKWARGS
+#define UPYWRAP_MAXNUMKWARGS (8)
+#endif
+
 #endif

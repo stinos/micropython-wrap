@@ -1,6 +1,7 @@
 #include "../classwrapper.h"
 #include "../functionwrapper.h"
 #include "../variable.h"
+#include "../util.h"
 #include "exception.h"
 #include "map.h"
 #include "function.h"
@@ -86,6 +87,8 @@ struct F
   func_name_def( StdStringView )
   func_name_def( CharString )
   func_name_def( Three )
+  func_name_def( TwoKw1 )
+  func_name_def( TwoKw2 )
   func_name_def( Four )
   func_name_def( Eight )
   func_name_def( Int )
@@ -125,8 +128,32 @@ void TestVariables()
   SetVariable( 4, "x2", "x", "a" );
 }
 
+template< class Func >
+void TestUpyExctpionThrown( Func f )
+{
+  bool caught = false;
+  WrapMicroPythonCall( f, [&caught] ( auto ) { caught = true; } );
+  if( !caught )
+  {
+    RaiseRuntimeException( "expected exception not thrown" );
+  }
+}
+
+//These exceptions are thrown during registration of the functions already so test them in C++ code.
+void TestKwargsConstruction( mp_obj_module_t* mod )
+{
+  FunctionWrapper fn( mod );
+  //Can't have required argument after non-required argument.
+  TestUpyExctpionThrown( [&fn] () { fn.Def< F::TwoKw1 >( Two, Kwargs( "a", 1 )( "b" ) ); } );
+  //Either no kwargs, or all.
+  TestUpyExctpionThrown( [&fn] () { fn.Def< F::TwoKw1 >( Two, Kwargs( "a" ) ); } );
+  TestUpyExctpionThrown( [&fn] () { fn.Def< F::TwoKw1 >( Two, Kwargs( "a" )( "b" )( "c" ) ); } );
+}
+
 void RunCppTests()
 {
+  auto mod = upywrap::CreateModule( "upywrapcpptest" );
+  TestKwargsConstruction( mod );
   TestPinPyObj();
 }
 
@@ -136,6 +163,8 @@ extern "C"
 {
   void doinit_upywraptest( mp_obj_dict_t* mod )
   {
+    //Note this one must stay because this function can get called directly,
+    //so without CreateModule() already calling InitializePyObjectStore(). 
     upywrap::InitializePyObjectStore( *mod );
 
     upywrap::ClassWrapper< Simple > wrap1( "Simple", mod, MP_TYPE_FLAG_EQ_HAS_NEQ_TEST ); //Need this flag since we implement __ne__
@@ -182,6 +211,11 @@ extern "C"
     nargs.DefInit();
     nargs.Def< F::Three >( &NargsTest::Three );
     nargs.Def< F::Four >( &NargsTest::Four );
+
+    upywrap::ClassWrapper< KwargsTest > kwargs( "KwargsTest", mod );
+    kwargs.DefInit< int, std::string, int >( Kwargs( "a", 1 )( "b", "b" )( "c", 2 ) );
+    kwargs.Def< F::TwoKw1 >( &KwargsTest::Two, Kwargs( "a" )( "b", 2 ) );
+    kwargs.Def< F::TwoKw2 >( &KwargsTest::Two, Kwargs( "a", 1 )( "b", 2 ) );
 
     upywrap::FunctionWrapper fn( mod );
     fn.Def< F::HasExceptions >( HasExceptions );
@@ -249,6 +283,8 @@ extern "C"
     fn.Def< F::Unsigned64 >( Unsigned64 );
     fn.Def< F::Float >( Float );
     fn.Def< F::Double >( Double );
+    fn.Def< F::TwoKw1 >( Two, Kwargs( "a" )( "b", 2 ) );
+    fn.Def< F::TwoKw2 >( Two, Kwargs( "a", 1 )( "b", 2 ) );
 
     fn.Def< F::TestVariables >( TestVariables );
     fn.Def< F::RunCppTests >(RunCppTests);

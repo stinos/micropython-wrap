@@ -112,6 +112,40 @@ reference or std::shared_ptr. See tests for ownership rules.
 Furthermore there is optional support for wrapping each native call in a try/catch for std::exception,
 and re-raise it as a uPy RuntimeError
 
+Optional and keyword argument support
+-------------------------------------
+This is supported by naming the arguments and eventually supplying defaults when registering the function in the C++ code, example:
+
+```c++
+void Foo( int, std::string, const std::vector< int >& );
+
+struct FunctionNames
+{
+  func_name_def( Foo )
+};
+
+extern "C"
+{
+  void RegisterMyModule(void)
+  {
+    upywrap::FunctionWrapper wrapfunc( upywrap::CreateModule( "foo" ) );
+    //Make the first argument required and the rest optional.
+    wrapfunc.Def< FunctionNames::Foo >( Foo, upywrap::Kwargs( "a" )( "b", "default" )( "c", {0, 1} ) );
+  }
+}
+
+```
+
+Calling code:
+
+```python
+import foo
+
+foo.Foo(0)  # Calls Foo( 0, "default", std::vector< int >{ 0, 1 } ) in C++.
+foo.Foo(a=1, c=[2])  # Calls Foo( 1, "default", std::vector< int >{ 2 } ) in C++.
+```
+
+
 Integrating and Building
 ------------------------
 First clone this repository alongside the MicroPython repository, then refer to the way the tests module

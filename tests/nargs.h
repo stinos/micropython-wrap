@@ -23,6 +23,27 @@ namespace upywrap
     }
   };
 
+  class KwargsTest
+  {
+  public:
+    //Note this is just for testing keyword behavior; actual argument conversion uses
+    //the same calls as 'normal' functions so no need to test all of that again.
+    KwargsTest( int a, std::string b, int c )
+    {
+      std::cout << a << b << c << std::endl;
+    }
+
+    void Two( int a, int b )
+    {
+      std::cout << a << b << std::endl;
+    }
+  };
+
+  void Two( int a, int b )
+  {
+    std::cout << a << b << std::endl;
+  }
+
   void Four( int a, int b, int c, int d )
   {
     std::cout << a << b << c << d << std::endl;

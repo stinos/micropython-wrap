@@ -47,7 +47,7 @@ namespace upywrap
     mp_obj_print_helper( &mp_my_print.base, obj, PRINT_JSON );
     return var;
   }
-#endif MICROPY_PY_UJSON_SEPARATORS
+#endif
 
   /**
     * Wrap a function Call to uPy code in nlr_push/nlr_pop: use this to safely invoke

@@ -19,7 +19,7 @@ namespace upywrap
   //
   //FunctionWrapper wrap( dict );
   //wrap.Def< Funcs::Foo >( Foo );
-  //wrap.Def< Funcs::Bar >( Bar );
+  //wrap.Def< Funcs::Bar >( Bar, Kwargs( "c", "str" );
   //
   //This will register given functions in dict,
   //so if dict is the global dict of a module "mod"
@@ -27,7 +27,7 @@ namespace upywrap
   //
   //import mod;
   //mod.Foo();
-  //mod.Bar();
+  //mod.Bar(c="bar");
   //
   //For supported arguments and return values see FromPyObj and ToPyObj classes.
   class FunctionWrapper
@@ -44,17 +44,21 @@ namespace upywrap
     }
 
     template< index_type name, class Ret, class... A >
-    void Def( Ret( *f ) ( A... ), typename SelectRetvalConverter< Ret >::type conv = nullptr )
+    void Def( Ret( *f ) ( A... ), Arguments arguments, typename SelectRetvalConverter< Ret >::type conv = nullptr )
     {
       typedef NativeCall< name, Ret, A... > call_type;
 
       auto callerObject = call_type::CreateCaller( f );
-      if( conv )
-      {
-        callerObject->convert_retval = conv;
-      }
+      callerObject->convert_retval = conv;
+      callerObject->arguments = std::move( arguments );
       functionPointers[ (void*) name ] = callerObject;
-      mp_obj_dict_store( globals, new_qstr( name() ), call_type::CreateUPyFunction() );
+      mp_obj_dict_store( globals, new_qstr( name() ), call_type::CreateUPyFunction( *callerObject ) );
+    }
+
+    template< index_type name, class Ret, class... A >
+    void Def( Ret ( *f )( A... ), typename SelectRetvalConverter< Ret >::type conv = nullptr )
+    {
+      Def< name, Ret, A... >( f, Arguments(), conv );
     }
 
   private:
@@ -70,8 +74,16 @@ namespace upywrap
         return new call_type( f );
       }
 
-      static mp_obj_t CreateUPyFunction()
+      static mp_obj_t CreateUPyFunction( const call_type& caller )
       {
+        if( caller.arguments.HasArguments() )
+        {
+          if( caller.arguments.NumberOfArguments() != sizeof...( A ) )
+          {
+            RaiseTypeException( ( std::string( "Wrong number of arguments in definition of " ) + index() ).data()  );
+          }
+          return MakeFunction( caller.arguments.MimimumNumberOfArguments(), CallKw );
+        }
         return CreateFunction< A... >::Create( Call, CallN );
       }
 
@@ -89,6 +101,14 @@ namespace upywrap
         }
         auto f = (call_type*) FunctionWrapper::functionPointers[ (void*) index ];
         return CallVar( f, args, make_index_sequence< sizeof...( A ) >() );
+      }
+
+      static mp_obj_t CallKw( size_t n_args, const mp_obj_t* pos_args, mp_map_t* kw_args )
+      {
+        auto f = (call_type*) FunctionWrapper::functionPointers[ (void*) index ];
+        Arguments::parsed_obj_t parsedArgs{};
+        f->arguments.Parse( n_args, pos_args, kw_args, parsedArgs );
+        return CallVar( f, parsedArgs.data(), make_index_sequence< sizeof...( A ) >() );
       }
 
       template< size_t... Indices >
