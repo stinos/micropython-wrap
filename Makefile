@@ -112,7 +112,12 @@ ifeq (,$(filter %ports/windows, $(MICROPYTHON_PORT_DIR)))
 	# already, it's needed to link the module against, and that automatically creates the .exe as well.
 	$(MAKEUPY) $(UPYFLAGS) BUILD=build-shared
 endif
+	# Note that ~/ intentionally is used without quotes here: when running in an MSYS2 shell there's
+	# https://www.msys2.org/docs/filesystem-paths/#environment-variables which would lead to in quoted
+	# "~/.micropython" the root (/) being expanded to something like "~c:/msys64/.micropython" which
+	# is not the intent. Without quotes bash will just expand it normally.
 	MICROPY_MICROPYTHON=$(MICROPYTHON_PORT_DIR)/build-shared/micropython \
+	MICROPYPATH=~/.micropython/lib \
 	$(PYTHON) $(MICROPYTHON_DIR)/tests/run-tests.py --keep-path -d $(CUR_DIR)/tests/py
 
 testusercmodule: usercmodule
