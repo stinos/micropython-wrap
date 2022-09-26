@@ -131,7 +131,7 @@ void RunCppTests()
 
 extern "C"
 {
-  void doinit_upywraptest( mp_obj_module_t* mod )
+  void doinit_upywraptest( mp_obj_dict_t* mod )
   {
     upywrap::InitializePyObjectStore( *mod );
 
@@ -278,7 +278,7 @@ extern "C"
   mp_obj_module_t* init_upywraptest()
   {
     auto mod = upywrap::CreateModule( "upywraptest" );
-    doinit_upywraptest( mod );
+    doinit_upywraptest( mod->globals );
     return mod;
   }
 }

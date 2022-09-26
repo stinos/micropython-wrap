@@ -483,16 +483,24 @@ namespace upywrap
 
     /**
       * Initialize features for PinPyObj.
-      * This creates the StaticPyObjectStore instance and stores it in the module's globals dict,
-      * to ensure anything in the list will not be sweeped by the GC.
+      * This creates the StaticPyObjectStore instance and stores it in the given dict,
+      * so that if this dict is a root pointer or similar, anything in the list will not be sweeped by the GC.
       * Doesn't do anything if called already, so all translation units in the binary use the same instance.
       */
-  inline void InitializePyObjectStore( mp_obj_module_t& mod )
+  inline void InitializePyObjectStore( mp_obj_dict_t& dict )
   {
     if( !StaticPyObjectStore::Initialized() )
     {
-      mp_obj_dict_store( mod.globals, new_qstr( "_StaticPyObjectStore" ), StaticPyObjectStore::InitBackEnd() );
+      mp_obj_dict_store( &dict, new_qstr( "_StaticPyObjectStore" ), StaticPyObjectStore::InitBackEnd() );
     }
+  }
+
+    /**
+      * Initialize PinPyObj with the module's globals dict.
+      */
+  inline void InitializePyObjectStore( mp_obj_module_t& mod )
+  {
+    InitializePyObjectStore( *mod.globals );
   }
 
     /**

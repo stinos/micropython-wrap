@@ -14,13 +14,13 @@ So what we do is:
   doinit_upywraptest from module.cpp to populate it
 */
 
-extern void doinit_upywraptest(mp_obj_module_t*);
+extern void doinit_upywraptest(mp_obj_dict_t *);
 extern mp_obj_module_t module;
 
 STATIC mp_obj_t init_module() {
     mp_map_init(&module.globals->map, 1);
     mp_obj_dict_store(MP_OBJ_FROM_PTR(module.globals), MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_upywraptest));
-    doinit_upywraptest(&module);
+    doinit_upywraptest(module.globals);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(init_module_obj, init_module);
