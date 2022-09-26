@@ -133,4 +133,4 @@ clean:
 	$(MAKEUPY) BUILD=build-static clean
 	$(MAKEUPY) BUILD=build-shared clean
 	$(MAKEUPY) BUILD=build-usercmod clean
-	$(RM) -f tests/*.o tests/*.a tests/*.so tests/*.pyd
+	$(RM) -f tests/*.o tests/*.a tests/*.so tests/*.pyd ~/.micropython/lib/upywraptest.so
