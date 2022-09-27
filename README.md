@@ -118,7 +118,7 @@ First clone this repository alongside the MicroPython repository, then refer to 
 is built and create your own modules in the same way. Also see the [Makefile](Makefile) for Unix and
 [Project file](micropython-wrap.vcxproj) for Windows, and the [Appveyor config](.appveyor.yml) for how builds are done.
 
-- the [Unix Makefile](Makefile) shows three ways way of integration:
+- the [Unix Makefile](Makefile) shows three ways way of integration (also explained in [the module code](module.h)):
     - combination of a static library and 'user C module': the C++ test code is compiled into a static library
       and tests/cmodule.c is built with MicroPython as a 'user C module', linking to the static library.
     - as a 'user C module': same as above but MicroPython builds both .c and .cpp files.

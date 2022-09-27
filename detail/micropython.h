@@ -1,23 +1,7 @@
 #ifndef MICROPYTHON_WRAP_DETAIL_MICROPYTHON_H
 #define MICROPYTHON_WRAP_DETAIL_MICROPYTHON_H
 
-#include "configuration.h"
-
-#ifdef _MSC_VER
-#pragma warning ( disable : 4200 ) //nonstandard extension used : zero-sized array in struct/union
-#endif
-extern "C"
-{
-#include <py/objfun.h>
-#include <py/objint.h>
-#include <py/objmodule.h>
-#include <py/objtype.h>
-#include <py/runtime.h>
-}
-#ifdef _MSC_VER
-#pragma warning ( default : 4200 )
-#endif
-
+#include "micropythonc.h"
 #include <cmath>
 #include <cstdint>
 #include <cstring>

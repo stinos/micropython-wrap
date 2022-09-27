@@ -51,7 +51,7 @@ UPYFLAGS = MICROPY_PY_BTREE=0 MICROPY_PY_FFI=0 MICROPY_PY_USSL=0 MICROPY_PY_AXTL
 # Extra features we need; note that for the ports tested so far this is already enabled or else
 # defined conditionally so we can just define it here again. Otherwise make this conditional
 # with e.g. `ifneq (,$(filter %ports/windows, $(MICROPYTHON_PORT_DIR)))`.
-CFLAGS_EXTRA = -DMICROPY_MODULE_BUILTIN_INIT=1
+CFLAGS_EXTRA = -DMICROPY_MODULE_BUILTIN_INIT=1 -DMICROPY_MODULE_ATTR_DELEGATION=1
 
 # Flags instructing MicroPython to build the 'user C module'.
 UPYFLAGSUSERMOD = $(UPYFLAGS) USER_C_MODULES=$(CUR_DIR) CFLAGS_EXTRA="$(CFLAGS_EXTRA)"
