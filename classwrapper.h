@@ -254,7 +254,9 @@ namespace upywrap
       auto o = m_new_obj_with_finaliser( this_type );
       o->base.type = (const mp_obj_type_t*) & type;
       o->cookie = defCookie;
+#if UPYWRAP_FULLTYPECHECK
       o->typeId = &typeid( T );
+#endif
 #if UPYWRAP_SHAREDPTROBJ
       new( &o->obj ) native_obj_t( std::move( p ) );
 #else
@@ -583,7 +585,12 @@ namespace upywrap
     {
       if( type.base.type == nullptr )
       {
-        RaiseTypeException( (std::string( "Native type " ) + typeid( T ).name() + " has not been registered").data() );
+#if UPYWRAP_HAS_TYPEID
+        std::string errorMessage( std::string( "Native type " ) + typeid( T ).name() + " has not been registered" );
+#else
+        std::string errorMessage( "Native type has not been registered" );
+#endif
+        RaiseTypeException( errorMessage.c_str() );
       }
     }
 

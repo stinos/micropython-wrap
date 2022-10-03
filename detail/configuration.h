@@ -21,6 +21,18 @@
 #endif
 #endif
 
+//Whether typeid can be used to get compile-time type information.
+//Also see UPYWRAP_FULLTYPECHECK.
+#ifndef UPYWRAP_HAS_TYPEID
+#ifdef _MSC_VER
+#define UPYWRAP_HAS_TYPEID (1)
+#elif __GXX_RTTI
+#define UPYWRAP_HAS_TYPEID (1)
+#else
+#define UPYWRAP_HAS_TYPEID (0)
+#endif
+#endif
+
 //Backwards compatibility.
 #ifdef UPYWRAP_NOEXCEPTIONS
 #undef UPYWRAP_USE_EXCEPTIONS
@@ -89,11 +101,23 @@
 #endif
 
 //Require exact type matches when converting uPy objects into native ones.
-//By default this is on in order to get proper error messages when passing mismatching types.
+//By default this is on in order to get proper error messages when passing mismatching types,
+//instead of possibly invoking undefined behavior by casting unrelated types.
 //However when your application wants to passs pointers to derived classes to functions
 //taking base class pointers this has to be turned off.
+//Note: this requires C++ type information. For gcc (and possibly others) this means that it
+//doesn't work with -fno-rtti because that makes typeid() unavailable; which striclty speaking
+//shouldn't be because typeid() could work fine on types known at compile-time, as we use it.
+//Following that reasoning as well, msvc has no problems with it.
+//Not turned off automatically in case of !UPYWRAP_HAS_TYPEID because we want users to
+//be explicit about disabling this option.
 #ifndef UPYWRAP_FULLTYPECHECK
 #define UPYWRAP_FULLTYPECHECK (1)
+#endif
+#if defined( __cplusplus ) && !defined(NO_QSTR)
+#if UPYWRAP_FULLTYPECHECK && !UPYWRAP_HAS_TYPEID
+#error "UPYWRAP_FULLTYPECHECK requires RTTI. Build with -frtti or -DUPYWRAP_FULLTYPECHECK=0 (not advisable)"
+#endif
 #endif
 
 #endif
