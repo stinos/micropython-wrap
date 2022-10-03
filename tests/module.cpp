@@ -23,6 +23,12 @@ using namespace upywrap;
 
 struct F
 {
+  func_name_def( HasExceptions )
+  func_name_def( HasCharString )
+  func_name_def( HasErrorCode )
+  func_name_def( HasStringView )
+  func_name_def( HasOptional )
+
   func_name_def( __eq__ )
   func_name_def( __ne__ )
 
@@ -74,14 +80,11 @@ struct F
   func_name_def( ReturnValue )
   func_name_def( Get )
   func_name_def( Address )
-  func_name_def( HasExceptions )
   func_name_def( FullTypeCheck )
   func_name_def( Throw )
   func_name_def( StdString )
   func_name_def( StdStringView )
-  func_name_def( HasCharString )
   func_name_def( CharString )
-  func_name_def( HasFinaliser )
   func_name_def( Three )
   func_name_def( Four )
   func_name_def( Eight )
@@ -181,6 +184,11 @@ extern "C"
     nargs.Def< F::Four >( &NargsTest::Four );
 
     upywrap::FunctionWrapper fn( mod );
+    fn.Def< F::HasExceptions >( HasExceptions );
+    fn.Def< F::HasCharString >( HasCharString );
+    fn.Def< F::HasErrorCode >( HasErrorCode );
+    fn.Def< F::HasOptional >( HasOptional );
+    fn.Def< F::HasStringView >( HasStringView );
     fn.Def< F::Pair >( Pair );
     fn.Def< F::Tuple1 >( Tuple1 );
     fn.Def< F::Tuple2 >( Tuple2 );
@@ -220,7 +228,6 @@ extern "C"
     fn.Def< F::ReturnReference >( ReturnReference );
     fn.Def< F::ReturnSharedPointer >( ReturnSharedPointer );
     fn.Def< F::ReturnNullPtr >( ReturnNullPtr );
-    fn.Def< F::HasExceptions >( HasExceptions );
     fn.Def< F::FullTypeCheck >( FullTypeCheck );
 #if UPYWRAP_USE_EXCEPTIONS
     fn.Def< F::Throw >( Throw );
@@ -229,7 +236,6 @@ extern "C"
 #if UPYWRAP_HAS_CPP17
     fn.Def< F::StdStringView >( StdStringView );
 #endif
-    fn.Def< F::HasCharString >( HasCharString );
 #if UPYWRAP_USE_CHARSTRING
     fn.Def< F::CharString >( CharString );
 #endif

@@ -214,6 +214,16 @@ namespace upywrap
       return mp_const_none;
     }
   };
+
+  inline bool HasErrorCode()
+  {
+    return true;
+  }
+  #else
+  inline bool HasErrorCode()
+  {
+    return false;
+  }
   #endif
 
   //Generic conversion of pair of iterators to uPy list, so external code

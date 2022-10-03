@@ -268,6 +268,16 @@ namespace upywrap
       return std::string_view( chars, len );
     }
   };
+
+  inline bool HasStringView()
+  {
+    return true;
+  }
+#else
+  inline bool HasStringView()
+  {
+    return false;
+  }
 #endif
 
   template<>
@@ -292,6 +302,16 @@ namespace upywrap
       return SelectFromPyObj< T >::type::Convert( arg );
     }
   };
+
+  inline bool HasOptional()
+  {
+    return true;
+  }
+  #else
+  inline bool HasOptional()
+  {
+    return false;
+  }
   #endif
 
   template< class T >

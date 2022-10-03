@@ -1,8 +1,6 @@
 import upywraptest
 
-try:
-  upywraptest.NullOpt
-except:
+if not upywraptest.HasOptional():
   print('SKIP')
   raise SystemExit()
 

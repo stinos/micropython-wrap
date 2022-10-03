@@ -1,8 +1,6 @@
 import upywraptest
 
-try:
-  upywraptest.NoErrorCode
-except AttributeError:
+if not upywraptest.HasErrorCode():
   print('SKIP')
   raise SystemExit()
 
