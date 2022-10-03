@@ -48,7 +48,7 @@
 //Whether to support std::error_code conversion.
 //If error_code is zero it is converted to None, otherwise an exception is thrown with the code's message.
 #ifndef UPYWRAP_THROW_ERROR_CODE
-#define UPYWRAP_THROW_ERROR_CODE (1)
+#define UPYWRAP_THROW_ERROR_CODE (UPYWRAP_USE_EXCEPTIONS)
 #endif
 #endif
 

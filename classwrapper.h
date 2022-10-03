@@ -372,7 +372,7 @@ namespace upywrap
       }
       else if( type.flags != flags )
       {
-        throw std::runtime_error( "ClassWrapper's type flags can only be set once" );
+        RaiseTypeException( "ClassWrapper's type flags can only be set once" );
       }
     }
 
