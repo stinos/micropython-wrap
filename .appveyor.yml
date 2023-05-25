@@ -4,12 +4,10 @@ environment:
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
       MICROPY_CPYTHON3: c:/python34/python.exe
-      MICROPYPATH: c:/projects/micropython/ports/windows
       FullTypeCheck: 0
       BuildMsys2Version: 1
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       MICROPY_CPYTHON3: c:/python34/python.exe
-      MICROPYPATH: c:/projects/micropython/ports/windows
       FullTypeCheck: 1
       BuildMsys2Version: 0
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
@@ -83,6 +81,14 @@ for:
 
   test_script:
   - ps: |
+      $env:MICROPY_MICROPYTHON = (msbuild ../micropython/ports/windows/micropython.vcxproj /nologo /v:m "/p:platform=$env:platform;configuration=$env:configuration" /t:ShowTargetPath).Trim()
+      # Some versions of msbuild output 2 lines, one with only whitespace, in which case we assigned an array
+      # of strings to $env:MICROPY_MICROPYTHON. And because environment variables must be strings, PS does
+      # that by concatenating the array elements. So: trim again to leave only the path.
+      $env:MICROPY_MICROPYTHON = $env:MICROPY_MICROPYTHON.Trim()
+      # The .pyd is in this directory as well.
+      $env:MICROPYPATH = Split-Path -Parent $env:MICROPY_MICROPYTHON
+
       & $env:MICROPY_CPYTHON3 ../micropython/tests/run-tests.py --keep-path -d tests/py
 
       if ($env:BuildMsys2Version -eq 1 -and $env:platform -eq 'x64' -and $env:configuration -eq 'Release') {
