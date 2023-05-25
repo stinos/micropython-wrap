@@ -626,10 +626,10 @@ namespace upywrap
       MP_OBJ_TYPE_SET_SLOT( &type, locals_dict, mp_obj_new_dict( 0 ), 1 );
       MP_OBJ_TYPE_SET_SLOT( &type, attr, attr, 2 );
       MP_OBJ_TYPE_SET_SLOT( &type, binary_op, binary_op, 3 );
-      MP_OBJ_TYPE_SET_SLOT( &type, unary_op, mp_generic_unary_op, 4 );
       MP_OBJ_TYPE_SET_SLOT( &type, call, nullptr, 5 );
       MP_OBJ_TYPE_SET_SLOT( &type, print, instance_print, 6 );
       //The ones we don't use, for completeness.
+      type.slot_index_unary_op = 0;
       type.slot_index_subscr = 0;
       type.slot_index_iter = 0;
       type.slot_index_buffer = 0;
