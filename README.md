@@ -168,6 +168,6 @@ is built and create your own modules in the same way. Also see the [Makefile](Ma
   vfs,      data, fat,     0x210000, 0x1F0000,
   ```
 - for Windows with Visual Studio (2013 or up) some extra work has already been done in [this MicroPython fork](https://github.com/stinos/micropython/tree/windows-pyd).
-  Create an empty C++ dll project, import [extmodule.props](https://github.com/stinos/micropython/blob/windows-pyd/windows/msvc/extmodule.props)
+  Create an empty C++ dll project, import [extmodule.props](https://github.com/stinos/micropython/blob/windows-pyd/ports/windows/msvc/extmodule.props)
   and all code is built into a dll with a .pyd extension which is discovered automatically by the fork's micropython.exe when using
   an import statement.
