@@ -10,7 +10,7 @@ namespace upywrap
     return mp_print_t{ &dest, [] ( void* data, const char* str, mp_uint_t len ) { ( (std::string*) data )->append( str, len ); } };
   }
 
-#if MICROPY_PY_UJSON_SEPARATORS
+#if MICROPY_PY_JSON_SEPARATORS
   inline mp_print_ext_t PrintToJSonString( std::string& dest, const char* itemSeparator, const char* keySeparator )
   {
     mp_print_ext_t printExt;
@@ -39,7 +39,7 @@ namespace upywrap
     return var;
   }
 
-#if MICROPY_PY_UJSON_SEPARATORS
+#if MICROPY_PY_JSON_SEPARATORS
   inline std::string VariableValueToJSonString( mp_obj_t obj, const char* itemSeparator, const char* keySeparator )
   {
     std::string var;
