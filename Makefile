@@ -72,12 +72,14 @@ $(MPY_CROSS):
 staticlib: submodules
 	$(MAKEUPY) $(UPYFLAGSUSERMOD) BUILD=build-static build-static/genhdr/qstrdefs.generated.h
 	$(MAKEUPY) $(UPYFLAGSUSERMOD) BUILD=build-static build-static/genhdr/root_pointers.h
+	$(MAKEUPY) $(UPYFLAGSUSERMOD) BUILD=build-static build-static/genhdr/moduledefs.h
 	$(CXX) $(CPPFLAGS) -I$(MICROPYTHON_PORT_DIR)/build-static -c tests/module.cpp -o tests/module_static.o
 	$(AR) rcs tests/libupywraptest.a tests/module_static.o
 
 sharedlib: submodules
 	$(MAKEUPY) $(UPYFLAGS) BUILD=build-shared build-shared/genhdr/qstrdefs.generated.h
 	$(MAKEUPY) $(UPYFLAGS) BUILD=build-shared build-shared/genhdr/root_pointers.h
+	$(MAKEUPY) $(UPYFLAGS) BUILD=build-shared build-shared/genhdr/moduledefs.h
 	$(CXX) -fPIC $(CPPFLAGS) -I$(MICROPYTHON_PORT_DIR)/build-shared -c tests/module.cpp -o tests/module_shared.o
 	$(MKDIR) -p ~/.micropython/lib
 ifneq (,$(filter %ports/windows, $(MICROPYTHON_PORT_DIR)))

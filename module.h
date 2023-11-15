@@ -123,7 +123,7 @@ static inline void dict_lookup(mp_obj_dict_t *src, qstr attr, mp_obj_t *dest) {
   * MP_REGISTER_MODULE(MP_QSTR_mymodule, mymodule_module);
   */
 #define UPYWRAP_DEFINE_INIT_MODULE(name, initter) \
-  extern mp_obj_module_t name##_module; \
+  extern const struct _mp_obj_module_t name##_module; \
   STATIC mp_obj_t init_##name##_module() { \
       init_module_globals(name##_module.globals, MP_QSTR_##name, initter); \
       return mp_const_none; \
@@ -143,7 +143,7 @@ static inline void dict_lookup(mp_obj_dict_t *src, qstr attr, mp_obj_t *dest) {
           .table = (mp_map_elem_t*)(mp_rom_map_elem_t*) name##_module_globals_table, \
       } \
   }; \
-  mp_obj_module_t name##_module = { \
+  const mp_obj_module_t name##_module = { \
       .base = { &mp_type_module }, \
       .globals = (mp_obj_dict_t *)&name##_module_globals, \
   }; \
