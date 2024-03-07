@@ -23,14 +23,38 @@ namespace upywrap
     }
   };
 
+  //Default arguments should under no circumstances be garbage collected so use
+  //this class as such argument; we could use any other 'real' object (so not
+  //something like an int which gets encoded into the object representation,
+  //and also not a string because that might get interned as qstr) but this one
+  //is going to make it clear if things go wrong.
+  class NativeThing
+  {
+  public:
+    NativeThing( size_t content ) :
+      content( content )
+    {
+    }
+
+    ~NativeThing()
+    {
+      if( content == 0 )
+      {
+        std::cout << "NativeThing destructor" << std::endl;
+      }
+    }
+
+    size_t content;
+  };
+
   class KwargsTest
   {
   public:
     //Note this is just for testing keyword behavior; actual argument conversion uses
     //the same calls as 'normal' functions so no need to test all of that again.
-    KwargsTest( int a, std::string b, int c )
+    KwargsTest( int a, const NativeThing& b, int c )
     {
-      std::cout << a << b << c << std::endl;
+      std::cout << a << b.content << c << std::endl;
     }
 
     void Two( int a, int b )

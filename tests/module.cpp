@@ -212,8 +212,11 @@ extern "C"
     nargs.Def< F::Three >( &NargsTest::Three );
     nargs.Def< F::Four >( &NargsTest::Four );
 
+    upywrap::ClassWrapper< NativeThing > nativeThing( "NativeThing", mod );
+    nativeThing.DefInit< size_t >();
+
     upywrap::ClassWrapper< KwargsTest > kwargs( "KwargsTest", mod );
-    kwargs.DefInit< int, std::string, int >( Kwargs( "a", 1 )( "b", "b" )( "c", 2 ) );
+    kwargs.DefInit< int, const NativeThing&, int >( Kwargs( "a", 1 )( "b", std::make_shared< NativeThing >( 0 ) )( "c", 2 ) );
     kwargs.Def< F::TwoKw1 >( &KwargsTest::Two, Kwargs( "a" )( "b", 2 ) );
     kwargs.Def< F::TwoKw2 >( &KwargsTest::Two, Kwargs( "a", 1 )( "b", 2 ) );
 

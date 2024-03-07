@@ -74,6 +74,16 @@ namespace upywrap
         }
         arg.flags |= MP_ARG_REQUIRED;
       }
+      else if( !(
+          defaultValue == mp_const_none ||
+          mp_obj_is_bool( defaultValue ) ||
+          mp_obj_is_small_int( defaultValue ) ||
+          mp_obj_is_qstr( defaultValue )
+        ) )
+      {
+        //An actual object; this should not be garbage collected so pin it.
+        pinnedDefaults.emplace_back( defaultValue );
+      }
       arg.defval.u_obj = defaultValue;
       args.emplace_back( arg );
       return *this;
@@ -153,13 +163,14 @@ namespace upywrap
     }
 
     std::vector< mp_arg_t > args;
+    std::vector< PinPyObj > pinnedDefaults;
   };
 
   //Shorthand for not having to write Arguments()(...) but instead Kwargs(...).
   template< class T = mp_obj_t >
   inline Arguments Kwargs( const char* name, T&& defaultValue = MP_OBJ_NULL )
   {
-    return Arguments().Add( name, std::forward< T >( defaultValue ) );
+    return std::move( Arguments().Add( name, std::forward< T >( defaultValue ) ) );
   }
 
   //Base function object for instance function calls
@@ -185,7 +196,7 @@ namespace upywrap
     using convert_retval_type = typename DefineRetvalConverter< Ret >::type;
     convert_retval_type convert_retval;
 
-    //Optional/keyworad arguments.
+    //Optional/keyword arguments.
     Arguments arguments;
   };
 
@@ -251,7 +262,7 @@ namespace upywrap
     using convert_retval_type = typename DefineRetvalConverter< Ret >::type;
     convert_retval_type convert_retval;
 
-    //Optional/keyworad arguments.
+    //Optional/keyword arguments.
     Arguments arguments;
   };
 }

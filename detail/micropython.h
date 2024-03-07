@@ -313,8 +313,8 @@ namespace upywrap
     * Used to prevent uPy objects from being GC'd when they are kept where the GC mark phase
     * cannot find them, for instance as a member of a C++ class when allocated on the standard heap.
     * Probably usage should be restricted to upywrap internals, or in any case avoided unless really needed:
-    * - no conversions between uPy and C++ objects in upywrap, except functions, needs it because they
-    *   essentially create new objects which are unrelated copies and do not store any state
+    * - no conversions between uPy and C++ objects in upywrap, except functions and optional arguments, need
+    *   it because they essentially create new objects which are unrelated copies and do not store any state
     * - we don't know yet if this is the best solution; suppose the list ends up containing hundreds of
     *   items then adding/removing might become too slow for the application and it's an extra load
     *   on the GC as well.
@@ -335,7 +335,7 @@ namespace upywrap
       mp_obj_list_append( list, obj );
 
       static const size_t maxLen = 50;
-      if( (*List())->len > maxLen )
+      if( list->len > maxLen )
       {
         RaiseRuntimeException( "StaticPyObjectStore: list is full" );
       }
