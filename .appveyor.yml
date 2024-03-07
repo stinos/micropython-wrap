@@ -3,11 +3,11 @@ environment:
   # be combined so need to spell out the image/env combinations manually.
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
-      MICROPY_CPYTHON3: c:/python34/python.exe
+      MICROPY_CPYTHON3: c:/python39/python.exe
       FullTypeCheck: 0
       BuildMsys2Version: 1
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-      MICROPY_CPYTHON3: c:/python34/python.exe
+      MICROPY_CPYTHON3: c:/python39/python.exe
       FullTypeCheck: 1
       BuildMsys2Version: 0
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
