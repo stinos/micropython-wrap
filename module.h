@@ -71,19 +71,19 @@ static inline void dict_lookup(mp_obj_dict_t *src, qstr attr, mp_obj_t *dest) {
   * MP_REGISTER_ROOT_POINTER(mp_obj_dict_t mymodule_globals);
   */
 #define UPYWRAP_DEFINE_ATTR_INIT_MODULE(name, initter) \
-  STATIC void name##_module_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) { \
+  static void name##_module_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) { \
       dict_lookup(&MP_STATE_VM(name##_globals), attr, dest); \
   }\
-  STATIC mp_obj_t init_##name##_module() { \
+  static mp_obj_t init_##name##_module() { \
       init_module_globals(&MP_STATE_VM(name##_globals), MP_QSTR_##name, initter); \
       return mp_const_none; \
   } \
-  STATIC MP_DEFINE_CONST_FUN_OBJ_0(init_##name##_module_obj, init_##name##_module); \
-  STATIC const mp_rom_map_elem_t name##_module_globals_table[] = { \
+  static MP_DEFINE_CONST_FUN_OBJ_0(init_##name##_module_obj, init_##name##_module); \
+  static const mp_rom_map_elem_t name##_module_globals_table[] = { \
       { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&init_##name##_module_obj) }, \
       MP_MODULE_ATTR_DELEGATION_ENTRY(&name##_module_attr), \
   }; \
-  STATIC MP_DEFINE_CONST_DICT(name##_module_globals, name##_module_globals_table); \
+  static MP_DEFINE_CONST_DICT(name##_module_globals, name##_module_globals_table); \
   const mp_obj_module_t name##_module = { \
       .base = { &mp_type_module }, \
       .globals = (mp_obj_dict_t *)&name##_module_globals, \
@@ -99,16 +99,16 @@ static inline void dict_lookup(mp_obj_dict_t *src, qstr attr, mp_obj_t *dest) {
   * MP_REGISTER_ROOT_POINTER(mp_obj_dict_t mymodule_globals);
   */
 #define UPYWRAP_DEFINE_ATTR_MODULE(name, initter) \
-  STATIC void name##_module_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) { \
+  static void name##_module_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) { \
       if (MP_STATE_VM(name##_globals).map.table == NULL) { \
         init_module_globals(&MP_STATE_VM(name##_globals), MP_QSTR_##name, initter); \
       } \
       dict_lookup(&MP_STATE_VM(name##_globals), attr, dest); \
   }\
-  STATIC const mp_rom_map_elem_t name##_module_globals_table[] = { \
+  static const mp_rom_map_elem_t name##_module_globals_table[] = { \
       MP_MODULE_ATTR_DELEGATION_ENTRY(&name##_module_attr), \
   }; \
-  STATIC MP_DEFINE_CONST_DICT(name##_module_globals, name##_module_globals_table); \
+  static MP_DEFINE_CONST_DICT(name##_module_globals, name##_module_globals_table); \
   const mp_obj_module_t name##_module = { \
       .base = { &mp_type_module }, \
       .globals = (mp_obj_dict_t *)&name##_module_globals, \
@@ -124,12 +124,12 @@ static inline void dict_lookup(mp_obj_dict_t *src, qstr attr, mp_obj_t *dest) {
   */
 #define UPYWRAP_DEFINE_INIT_MODULE(name, initter) \
   extern const struct _mp_obj_module_t name##_module; \
-  STATIC mp_obj_t init_##name##_module() { \
+  static mp_obj_t init_##name##_module() { \
       init_module_globals(name##_module.globals, MP_QSTR_##name, initter); \
       return mp_const_none; \
   } \
-  STATIC MP_DEFINE_CONST_FUN_OBJ_0(init_##name##_module_obj, init_##name##_module); \
-  STATIC mp_rom_map_elem_t name##_module_globals_table[] = { \
+  static MP_DEFINE_CONST_FUN_OBJ_0(init_##name##_module_obj, init_##name##_module); \
+  static mp_rom_map_elem_t name##_module_globals_table[] = { \
       { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&init_##name##_module_obj) } \
   }; \
   mp_obj_dict_t name##_module_globals = { \
