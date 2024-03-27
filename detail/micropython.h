@@ -112,7 +112,7 @@ namespace upywrap
     */
   inline mp_obj_t RaiseException( const mp_obj_type_t* exc_type, const char* msg )
   {
-    mp_obj_exception_t* o = mp_obj_malloc_var( mp_obj_exception_t, mp_obj_t, 0, exc_type );
+    mp_obj_exception_t* o = mp_obj_malloc_var( mp_obj_exception_t, args, mp_obj_tuple_t, 0, exc_type );
     o->traceback_data = nullptr;
     o->args = reinterpret_cast< mp_obj_tuple_t* >( MP_OBJ_TO_PTR( mp_obj_new_tuple( 1, nullptr ) ) );
     o->args->items[ 0 ] = mp_obj_new_str( msg, std::strlen( msg ) );

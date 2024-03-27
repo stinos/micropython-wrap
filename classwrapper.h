@@ -312,7 +312,7 @@ namespace upywrap
     {
       assert( p );
       CheckTypeIsRegistered();
-      auto o = m_new_obj_with_finaliser( this_type );
+      auto o = (this_type*) m_malloc_with_finaliser( sizeof( this_type ) );
       o->base.type = (const mp_obj_type_t*) & type;
       o->cookie = defCookie;
 #if UPYWRAP_FULLTYPECHECK
