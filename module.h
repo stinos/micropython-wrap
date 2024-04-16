@@ -30,9 +30,7 @@
   * 1. Use MICROPY_MODULE_ATTR_DELEGATION to forward all module attribute loading to a function
   *    which looks up attributes in a map (defined as root pointer), that map having been populated by
   *    the upywrap function/class registration functions. That registration has to be triggered
-  *    somehow, which can either be done once in the function which loads the attributes, or in
-  *    a separate initialization function called when the module is first imported, via
-  *    the MICROPY_MODULE_BUILTIN_INIT feature.
+  *    somehow, which can be done once in the function which loads attributes.
   * 2. Use MICROPY_MODULE_BUILTIN_INIT and point it to a function which replaces the module's
   *    global dict with a new one, populated by the upywrap function/class registration functions.
   *    That's a bit of a hack but should work without issues.
@@ -62,36 +60,8 @@ static inline void dict_lookup(mp_obj_dict_t *src, qstr attr, mp_obj_t *dest) {
 }
 
 /**
-  * Define a module which initializes a dict with its __init__ function, and finds attributes in that dict.
-  * This is option 1 mentioned above, requiring MICROPY_MODULE_BUILTIN_INIT and MICROPY_MODULE_ATTR_DELEGATION.
-  * Usage:
-  * extern void init_mymodule(mp_obj_dict_t *); //Actual function/class registration with upywrap.
-  * UPYWRAP_DEFINE_ATTR_INIT_MODULE(mymodule, init_mymodule);
-  * MP_REGISTER_MODULE(MP_QSTR_mymodule, mymodule_module);
-  * MP_REGISTER_ROOT_POINTER(mp_obj_dict_t mymodule_globals);
-  */
-#define UPYWRAP_DEFINE_ATTR_INIT_MODULE(name, initter) \
-  static void name##_module_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) { \
-      dict_lookup(&MP_STATE_VM(name##_globals), attr, dest); \
-  }\
-  static mp_obj_t init_##name##_module() { \
-      init_module_globals(&MP_STATE_VM(name##_globals), MP_QSTR_##name, initter); \
-      return mp_const_none; \
-  } \
-  static MP_DEFINE_CONST_FUN_OBJ_0(init_##name##_module_obj, init_##name##_module); \
-  static const mp_rom_map_elem_t name##_module_globals_table[] = { \
-      { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&init_##name##_module_obj) }, \
-      MP_MODULE_ATTR_DELEGATION_ENTRY(&name##_module_attr), \
-  }; \
-  static MP_DEFINE_CONST_DICT(name##_module_globals, name##_module_globals_table); \
-  const mp_obj_module_t name##_module = { \
-      .base = { &mp_type_module }, \
-      .globals = (mp_obj_dict_t *)&name##_module_globals, \
-  };
-
-/**
   * Define a module which finds attributes in a dict which is initialized once in the same function.
-  * This is option 1 mentioned above, requiring MICROPY_MODULE_ATTR_DELEGATION only.
+  * This is option 1 mentioned above, so requires MICROPY_MODULE_ATTR_DELEGATION.
   * Usage:
   * extern void init_mymodule(mp_obj_dict_t *); //Actual function/class registration with upywrap.
   * UPYWRAP_DEFINE_ATTR_MODULE(mymodule, init_mymodule);
@@ -105,10 +75,10 @@ static inline void dict_lookup(mp_obj_dict_t *src, qstr attr, mp_obj_t *dest) {
       } \
       dict_lookup(&MP_STATE_VM(name##_globals), attr, dest); \
   }\
-  static const mp_rom_map_elem_t name##_module_globals_table[] = { \
-      MP_MODULE_ATTR_DELEGATION_ENTRY(&name##_module_attr), \
-  }; \
-  static MP_DEFINE_CONST_DICT(name##_module_globals, name##_module_globals_table); \
+  MP_REGISTER_MODULE_DELEGATION(name##_module, name##_module_attr); \
+  static mp_obj_dict_t name##_module_globals = { \
+    .base = { &mp_type_dict },  \
+  };\
   const mp_obj_module_t name##_module = { \
       .base = { &mp_type_module }, \
       .globals = (mp_obj_dict_t *)&name##_module_globals, \
