@@ -42,18 +42,23 @@
 /**
   * Initialize a dict and populate again via another function.
   * This is for use with a module's globals dict, so __name__ gets set for consistency.
+  * Additionally the dict's table gets registered as root pointer, i.e. the rootptr argument is
+  * supposed to point to a pointer reachable by the GC, and gets set to the table so that all
+  * its entries are reachable; this is required for micropython-wrap as it might store micropython
+  * heap-allocated objects in this table which should never be GC'd.
   */
-static inline void init_module_globals(mp_obj_dict_t *globals, qstr name, void (*initter)(mp_obj_dict_t *)) {
+static inline void init_module_globals(mp_obj_dict_t *globals, const mp_map_elem_t** rootptr, qstr name, void (*initter)(mp_obj_dict_t *)) {
     mp_map_init(&globals->map, 1);
     mp_obj_dict_store(MP_OBJ_FROM_PTR(globals), MP_ROM_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(name));
     initter(globals);
+    *rootptr = globals->map.table;
 }
 
 /**
   * Lookup attr in dict and store in dest if found.
   */
-static inline void dict_lookup(mp_obj_dict_t *src, qstr attr, mp_obj_t *dest) {
-    mp_map_elem_t *el = mp_map_lookup(&src->map, MP_OBJ_NEW_QSTR(attr), MP_MAP_LOOKUP);
+static inline void dict_lookup(mp_map_t *src, qstr attr, mp_obj_t *dest) {
+    mp_map_elem_t *el = mp_map_lookup(src, MP_OBJ_NEW_QSTR(attr), MP_MAP_LOOKUP);
     if (el != NULL) {
         *dest = el->value;
     }
@@ -66,14 +71,14 @@ static inline void dict_lookup(mp_obj_dict_t *src, qstr attr, mp_obj_t *dest) {
   * extern void init_mymodule(mp_obj_dict_t *); //Actual function/class registration with upywrap.
   * UPYWRAP_DEFINE_ATTR_MODULE(mymodule, init_mymodule);
   * MP_REGISTER_MODULE(MP_QSTR_mymodule, mymodule_module);
-  * MP_REGISTER_ROOT_POINTER(mp_obj_dict_t mymodule_globals);
+  * MP_REGISTER_ROOT_POINTER(const mp_map_elem_t* mymodule_globals_table);
   */
 #define UPYWRAP_DEFINE_ATTR_MODULE(name, initter) \
-  static void name##_module_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) { \
-      if (MP_STATE_VM(name##_globals).map.table == NULL) { \
-        init_module_globals(&MP_STATE_VM(name##_globals), MP_QSTR_##name, initter); \
+  void name##_module_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) { \
+      if (name##_module.globals->map.table == NULL) { \
+        init_module_globals(name##_module.globals, &MP_STATE_VM(name##_module_globals_table), MP_QSTR_##name, initter); \
       } \
-      dict_lookup(&MP_STATE_VM(name##_globals), attr, dest); \
+      dict_lookup(&name##_module.globals->map, attr, dest); \
   }\
   MP_REGISTER_MODULE_DELEGATION(name##_module, name##_module_attr); \
   static mp_obj_dict_t name##_module_globals = { \
@@ -91,11 +96,12 @@ static inline void dict_lookup(mp_obj_dict_t *src, qstr attr, mp_obj_t *dest) {
   * extern void init_mymodule(mp_obj_dict_t *); //Actual function/class registration with upywrap.
   * UPYWRAP_DEFINE_INIT_MODULE(mymodule, init_mymodule);
   * MP_REGISTER_MODULE(MP_QSTR_mymodule, mymodule_module);
+  * MP_REGISTER_ROOT_POINTER(const mp_map_elem_t* mymodule_globals_table);
   */
 #define UPYWRAP_DEFINE_INIT_MODULE(name, initter) \
   extern const struct _mp_obj_module_t name##_module; \
-  static mp_obj_t init_##name##_module() { \
-      init_module_globals(name##_module.globals, MP_QSTR_##name, initter); \
+  static mp_obj_t init_##name##_module(void) { \
+      init_module_globals(name##_module.globals, &MP_STATE_VM(name##_module_globals_table), MP_QSTR_##name, initter); \
       return mp_const_none; \
   } \
   static MP_DEFINE_CONST_FUN_OBJ_0(init_##name##_module_obj, init_##name##_module); \
