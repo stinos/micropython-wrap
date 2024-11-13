@@ -109,9 +109,9 @@ namespace upywrap
     * Add an object to the given module's global dict.
     */
   template< class T >
-  void StoreGlobal( mp_obj_module_t* mod, const char* name, const T& obj )
+  void StoreGlobal( mp_obj_dict_t* mod, const char* name, const T& obj )
   {
-    mp_obj_dict_store( MP_OBJ_FROM_PTR( mod->globals ), new_qstr( name ), ToPy( obj ) );
+    mp_obj_dict_store( MP_OBJ_FROM_PTR( mod ), new_qstr( name ), ToPy( obj ) );
   }
 }
 

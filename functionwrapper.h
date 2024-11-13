@@ -2,6 +2,8 @@
 #define MICROPYTHON_WRAP_FUNCTIONWRAPPER
 
 #include "classwrapper.h"
+#include "detail/index.h"
+#include "detail/mpmap.h"
 
 namespace upywrap
 {
@@ -43,9 +45,23 @@ namespace upywrap
     {
     }
 
+    static void init_function_pointers_map() {
+      upywrap::init_mpy_wrap_global_map();
+      MPyMapView<qstr, mp_map_t*> mpy_wrap_map { MP_STATE_VM(micropython_wrap_types_map_table) };
+
+      qstr fnct_ptrs_qstr = qstr_from_str( "__function_ptrs__" );
+      if( !mpy_wrap_map.contains( fnct_ptrs_qstr ) )
+      {
+        mp_map_t* new_function_ptrs = m_new0(mp_map_t, 1);
+        mpy_wrap_map[fnct_ptrs_qstr] = new_function_ptrs;
+        FunctionWrapper::functionPointers = MPyMapView<void*, void*>( new_function_ptrs );
+      }
+    }
+
     template< index_type name, class Ret, class... A >
     void Def( Ret( *f ) ( A... ), Arguments arguments, typename SelectRetvalConverter< Ret >::type conv = nullptr )
     {
+      init_function_pointers_map();
       typedef NativeCall< name, Ret, A... > call_type;
 
       auto callerObject = call_type::CreateCaller( f );
@@ -126,7 +142,7 @@ namespace upywrap
   //we want a header only library but that yields multiply defined symbols when including this file more then once
   //so as a simple hack: define MMICROPYTHON_WRAP_FUNCTIONWRAPPER_DEFINED in all but one include location
 #ifndef MICROPYTHON_WRAP_FUNCTIONWRAPPER_DEFINED
-  function_ptrs FunctionWrapper::functionPointers;
+  function_ptrs FunctionWrapper::functionPointers { nullptr };
 #endif
 
 }

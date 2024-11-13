@@ -1,6 +1,7 @@
 #ifndef MICROPYTHON_WRAP_DETAIL_MICROPYTHON_H
 #define MICROPYTHON_WRAP_DETAIL_MICROPYTHON_H
 
+#include "detail/mpmap.h"
 #include "micropythonc.h"
 #include <cmath>
 #include <cstdint>
@@ -11,6 +12,20 @@
 
 namespace upywrap
 {
+  /**
+  * @brief This is the global map in the micropython state which is used to store the class types and function pointers.
+  *
+  * All objects that micropython-wrap allocates are referenced by this map, or by maps in this map.
+  * It needs to be initialized only once, but can be reset by assigning a new empty map to it.
+  */
+  inline void init_mpy_wrap_global_map() {
+    static bool init = false;
+    if (!init) {
+      init = true;
+      MP_STATE_VM(micropython_wrap_types_map_table) = m_new0(mp_map_t, 1);
+    }
+  }
+
   inline mp_obj_t new_qstr( qstr what )
   {
     return MP_OBJ_NEW_QSTR( what );
@@ -367,6 +382,12 @@ namespace upywrap
       return *List();
     }
 
+    static void ResetBackEnd()
+    {
+      // Other function like InitBackEnd will check if it's already initialized
+      *List() = nullptr;
+    }
+
     static bool Initialized()
     {
       return !!*List();
@@ -479,21 +500,21 @@ namespace upywrap
       * so that if this dict is a root pointer or similar, anything in the list will not be sweeped by the GC.
       * Doesn't do anything if called already, so all translation units in the binary use the same instance.
       */
-  inline void InitializePyObjectStore( mp_obj_dict_t& dict )
+  inline void InitializePyObjectStore( )
   {
-    if( !StaticPyObjectStore::Initialized() )
+    // Changed from upstream: use map in root pointers instead of any random dict. This actually hides it from the mpy runtime.
+    upywrap::init_mpy_wrap_global_map();
+    MPyMapView<qstr, mp_obj_list_t*> mpy_wrap_map { MP_STATE_VM(micropython_wrap_types_map_table) };
+
+    qstr static_py_obj_store_key = qstr_from_str( "_StaticPyObjectStore" );
+    if( !mpy_wrap_map.contains( static_py_obj_store_key ) )
     {
-      mp_obj_dict_store( &dict, new_qstr( "_StaticPyObjectStore" ), StaticPyObjectStore::InitBackEnd() );
+      // If we can't find it in the map, the mpy state was probably reset. Reinit from scratch.
+      StaticPyObjectStore::ResetBackEnd();
+      mpy_wrap_map[static_py_obj_store_key] = StaticPyObjectStore::InitBackEnd();
     }
   }
 
-    /**
-      * Initialize PinPyObj with the module's globals dict.
-      */
-  inline void InitializePyObjectStore( mp_obj_module_t& mod )
-  {
-    InitializePyObjectStore( *mod.globals );
-  }
 
     /**
       * Wrapper around mp_obj_new_module.
@@ -503,7 +524,7 @@ namespace upywrap
   {
     const qstr qname = qstr_from_str( name );
     auto mod = (mp_obj_module_t*) mp_obj_new_module( qname );
-    InitializePyObjectStore( *mod );
+    InitializePyObjectStore( );
     return mod;
   }
 

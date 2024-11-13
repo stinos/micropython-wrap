@@ -4,9 +4,11 @@
 #include "detail/callreturn.h"
 #include "detail/functioncall.h"
 #include "detail/index.h"
+#include "detail/micropython.h"
+#include "detail/mpmap.h"
 #include "detail/util.h"
 #include <cstdint>
-#include <vector>
+#include <cstdio>
 #if UPYWRAP_SHAREDPTROBJ
 #include <memory>
 #endif
@@ -61,7 +63,7 @@ namespace upywrap
     //Just to make it clear what the intent is.
     enum class ConstructorOptions
     {
-      RegisterInStaticPyObjectStore
+      RegisterInGlobalTypeMap
     };
 
     //Initialize the type and store it in the module's globals dict so it's accessible as <mod>.<name>.
@@ -77,26 +79,42 @@ namespace upywrap
     ClassWrapper( const char* name, mp_obj_dict_t* dict, decltype( mp_obj_type_t::flags ) flags = 0 ) :
       ClassWrapper( name, flags )
     {
-      mp_obj_dict_store( dict, new_qstr( name ), &type );
-      mp_obj_dict_store( dict, new_qstr( ( std::string( name ) + "_locals" ).data() ), MP_OBJ_FROM_PTR( MP_OBJ_TYPE_GET_SLOT( &type, locals_dict ) ) );
+      mp_obj_dict_store( dict, new_qstr( name ), type_ptr );
+      // locals_dict saving no longer required; the type is correctly placed on the heap now.
     }
 
-    //Initialize the type, storing the locals in StaticPyObjectStore to prevent GC collection.
+    //Initialize the type, storing the locals in the root pointer types map to prevent GC collection.
     ClassWrapper( const char* name, ConstructorOptions, decltype( mp_obj_type_t::flags ) flags = 0 ) :
       ClassWrapper( name, flags )
     {
-      StaticPyObjectStore::Store( MP_OBJ_FROM_PTR( MP_OBJ_TYPE_GET_SLOT( &type, locals_dict ) ) );
+      // Changed from upstream: To be able to properly reset this entry, we do not want to store the locals_dict in the static py object store,
+      // but rather in the root pointer type map so it's not visible to the mpy runtime.
+      auto* type_key = ClassWrapper::ClassHash();
+      init_mpy_wrap_global_map();
+      MPyMapView<void*, mp_map_t*> types_map { MP_STATE_VM(micropython_wrap_types_map_table) };
+      auto* mpy_type_map = types_map[type_key];
+      mp_map_elem_t* elem = mp_map_lookup(mpy_type_map, MP_OBJ_NEW_QSTR(qstr_from_str("locals_dict")), MP_MAP_LOOKUP_ADD_IF_NOT_FOUND);
+      elem->value = MP_OBJ_FROM_PTR( MP_OBJ_TYPE_GET_SLOT( type_ptr, locals_dict ) );
+    }
+
+    /**
+     * @brief Replacement for typeid without RTTI. This uniquely identifies the classwrapper type within an executable.
+     * @warning The hashes will change when recompiling or on other targets. Do not use cross-device or cross-executable.
+     */
+    static void* ClassHash() {
+      static int static_hash_marker = 0;  // The address of this object is the unique hash of this classwrapper.
+      return &static_hash_marker;
     }
 
     static const mp_obj_type_t& Type()
     {
-      return *((const mp_obj_type_t*) &type);
+      return *((const mp_obj_type_t*) type_ptr);
     }
 
     template< class A >
     void StoreClassVariable( const char* name, const A& value )
     {
-      mp_obj_dict_store( MP_OBJ_FROM_PTR( MP_OBJ_TYPE_GET_SLOT( &type, locals_dict ) ), new_qstr( name ), ToPy( value ) );
+      mp_obj_dict_store( MP_OBJ_FROM_PTR( MP_OBJ_TYPE_GET_SLOT( type_ptr, locals_dict ) ), new_qstr( name ), ToPy( value ) );
     }
 
     template< index_type name, class Ret, class... A >
@@ -297,7 +315,8 @@ namespace upywrap
     {
       if( own )
       {
-        return AsPyObj( native_obj_t( p ) );
+        // Changed from upstream: owned objects must be placed on the micropython heap. We need to call the destructor ourselfes
+        return AsPyObj( native_obj_t( p, [](T* del_p) { del_p->~T(); m_free(del_p); } ) );
       }
       return AsPyObj( native_obj_t( p, NoDelete ) );
     }
@@ -313,7 +332,7 @@ namespace upywrap
       assert( p );
       CheckTypeIsRegistered();
       auto o = (this_type*) m_malloc_with_finaliser( sizeof( this_type ) );
-      o->base.type = (const mp_obj_type_t*) & type;
+      o->base.type = (const mp_obj_type_t*) type_ptr;
       o->cookie = defCookie;
 #if UPYWRAP_FULLTYPECHECK
       o->typeId = &typeid( T );
@@ -329,7 +348,7 @@ namespace upywrap
     static ClassWrapper< T >* AsNativeObjCheckedImpl( mp_obj_t arg )
     {
       auto native = (this_type*) MP_OBJ_TO_PTR( arg );
-      if( !mp_obj_is_exact_type( arg, (const mp_obj_type_t*) &type ) )
+      if( !mp_obj_is_exact_type( arg, (const mp_obj_type_t*) type_ptr ) )
       {
         //If whatever gets passed in doesn't remotely look like an object bail out.
         //Otherwise it's possible we're being passed an arbitrary 'opaque' ClassWrapper (so the cookie mathches)
@@ -389,7 +408,7 @@ namespace upywrap
         }
       }
       CheckTypeIsRegistered(); //since we want to access type.name
-      RaiseTypeException( arg, qstr_str( type.name ) );
+      RaiseTypeException( arg, qstr_str( type_ptr->name ) );
 #if !defined( _MSC_VER ) || defined( _DEBUG )
       return nullptr;
 #endif
@@ -418,6 +437,46 @@ namespace upywrap
 #endif
 
   private:
+    /**
+     * @brief Initialize all maps used by micropython-wrap to store functions for this type.
+     * 
+     * Initializes the functionPointers, setters and getters map and stores their views
+     * In the static variables used by micropython-wrap (for ease of rebasing and changing little).
+     * All maps are stored on the micropython heap and referenced by the global types map.
+     * Must be done only once. (And again when resetting the micropython state)
+     */
+    static bool init_classwrapper_type_dict_and_function_maps() {
+      auto* type_key = ClassHash();
+      bool is_initialized = true;
+      init_mpy_wrap_global_map();
+      MPyMapView<void*, mp_map_t*> types_map { MP_STATE_VM(micropython_wrap_types_map_table) };
+      if (!types_map.contains(type_key)) {
+        is_initialized = false;
+      }
+      if( !is_initialized )
+      {
+        mp_map_t* type_map_ptr = m_new0(mp_map_t, 1);
+        types_map[type_key] = type_map_ptr;
+        MPyMapView<qstr, mp_map_t*> type_map { type_map_ptr };
+
+        mp_map_t* fnct_pointers_map = m_new0(mp_map_t, 1);
+        type_map[qstr_from_str("functionPointers")] = fnct_pointers_map;
+        functionPointers = function_ptrs { fnct_pointers_map };
+
+        mp_map_t* setters_map = m_new0(mp_map_t, 1);
+        type_map[qstr_from_str("setters")] = setters_map;
+        setters = store_attr_map { setters_map };
+
+        mp_map_t* getters_map = m_new0(mp_map_t, 1);
+        type_map[qstr_from_str("getters")] = getters_map;
+        getters = load_attr_map { getters_map };
+
+        type_ptr = m_new0( mp_obj_full_type_t, 1 );
+        type_map[qstr_from_str("full_type")] = (mp_map_t*)type_ptr;
+      }
+      return is_initialized;
+    }
+
     ClassWrapper( const char* name, decltype( mp_obj_type_t::flags ) flags )
     {
       //Initialize the static parts; note this will set the type's name, once, so while it's
@@ -426,14 +485,14 @@ namespace upywrap
       //making it possible to store the same type with different names in another dict for instance.
       //Explicitly disable calling this with different flags though since that yields
       //a type which is actually different.
-      static bool init = false;
-      if( !init )
+      bool is_inited = ClassWrapper::init_classwrapper_type_dict_and_function_maps();
+
+      if( !is_inited )
       {
         OneTimeInit( name );
-        type.flags = flags;
-        init = true;
+        type_ptr->flags = flags;
       }
-      else if( type.flags != flags )
+      else if( type_ptr->flags != flags )
       {
         RaiseTypeException( "ClassWrapper's type flags can only be set once" );
       }
@@ -476,13 +535,27 @@ namespace upywrap
     //native attribute store interface
     struct NativeSetterCallBase
     {
-      virtual void Call( mp_obj_t self_in, mp_obj_t value ) = 0;
+      virtual mp_obj_t Call( mp_obj_t self_in, mp_obj_t value ) = 0;
+
+      /**
+       * @brief micropython-wrap allocates these objects using new. We want them on the micropython-heap
+       */
+      static void* operator new(size_t size) {
+        return m_malloc(size);
+      }
     };
 
     //native attribute load interface
     struct NativeGetterCallBase
     {
       virtual mp_obj_t Call( mp_obj_t self_in ) = 0;
+
+      /**
+       * @brief micropython-wrap allocates these objects using new. We want them on the micropython-heap
+       */
+      static void* operator new(size_t size) {
+        return m_malloc(size);
+      }
     };
 
     template< class Map >
@@ -502,14 +575,14 @@ namespace upywrap
       const auto attrValue = FindAttrMaybe( map, attr );
       if( !attrValue )
       {
-        RaiseAttributeException( type.name, attr );
+        RaiseAttributeException( type_ptr->name, attr );
       }
       return attrValue;
     }
 
     static mp_map_elem_t* LookupLocal( qstr attr )
     {
-      auto locals_map = &( (mp_obj_dict_t*) MP_OBJ_TYPE_GET_SLOT( &type, locals_dict ) )->map;
+      auto locals_map = &( (mp_obj_dict_t*) MP_OBJ_TYPE_GET_SLOT( type_ptr, locals_dict ) )->map;
       return mp_map_lookup( locals_map, new_qstr( attr ), MP_MAP_LOOKUP );
     }
 
@@ -619,14 +692,16 @@ namespace upywrap
 
     void OneTimeInit( const char* name )
     {
+      mp_obj_full_type_t& type = *type_ptr;
+
       type.base.type = &mp_type_type;
       type.name = static_cast< decltype( type.name ) >( qstr_from_str( name ) );
       //The ones we use here (so make sure the other locations stay in sync!).
-      MP_OBJ_TYPE_SET_SLOT( &type, make_new, nullptr, 0 );
+      //MP_OBJ_TYPE_SET_SLOT( &type, make_new, nullptr, 0 ); // Do not set without using, it will actually try to call this nullptr
       MP_OBJ_TYPE_SET_SLOT( &type, locals_dict, mp_obj_new_dict( 0 ), 1 );
       MP_OBJ_TYPE_SET_SLOT( &type, attr, attr, 2 );
       MP_OBJ_TYPE_SET_SLOT( &type, binary_op, binary_op, 3 );
-      MP_OBJ_TYPE_SET_SLOT( &type, call, nullptr, 5 );
+      //MP_OBJ_TYPE_SET_SLOT( &type, call, nullptr, 5 ); // Do not set without using, it will actually try to call this nullptr
       MP_OBJ_TYPE_SET_SLOT( &type, print, instance_print, 6 );
       //The ones we don't use, for completeness.
       type.slot_index_unary_op = 0;
@@ -644,7 +719,7 @@ namespace upywrap
 
     static void CheckTypeIsRegistered()
     {
-      if( type.base.type == nullptr )
+      if( type_ptr->base.type == nullptr )
       {
 #if UPYWRAP_HAS_TYPEID
         std::string errorMessage( std::string( "Native type " ) + typeid( T ).name() + " has not been registered" );
@@ -657,7 +732,7 @@ namespace upywrap
 
     void AddFunctionToTable( const qstr name, mp_obj_t fun )
     {
-      mp_obj_dict_store( MP_OBJ_TYPE_GET_SLOT( &type, locals_dict ), new_qstr( name ), fun );
+      mp_obj_dict_store( MP_OBJ_TYPE_GET_SLOT( type_ptr, locals_dict ), new_qstr( name ), fun );
     }
 
     void AddFunctionToTable( const char* name, mp_obj_t fun )
@@ -676,7 +751,7 @@ namespace upywrap
       AddFunctionToTable( name(), call_type::CreateUPyFunction( *callerObject ) );
       if( std::string( name() ) == "__call__" )
       {
-        MP_OBJ_TYPE_SET_SLOT( &type, call, instance_call, 5 );
+        MP_OBJ_TYPE_SET_SLOT( type_ptr, call, instance_call, 5 );
       }
     }
 
@@ -705,7 +780,7 @@ namespace upywrap
       auto caller = call_type::CreateCaller( f );
       caller->arguments = std::move( arguments );
       functionPointers[ (void*) name ] = caller;
-      MP_OBJ_TYPE_SET_SLOT( &type, make_new, call_type::MakeNew, 0 );
+      MP_OBJ_TYPE_SET_SLOT( type_ptr, make_new, call_type::MakeNew, 0 );
     }
 
     template< index_type name, class Fun, class Ret, class... A >
@@ -852,7 +927,7 @@ namespace upywrap
           Arguments::parsed_obj_t parsedArgs{};
           f->arguments.Parse( n_args, n_kw, args, parsedArgs );
           UPYWRAP_TRY
-          return AsPyObj( native_obj_t( Apply( f, parsedArgs.data(), make_index_sequence< sizeof...( A ) >() ) ) );
+          return AsPyObj( Apply( f, parsedArgs.data(), make_index_sequence< sizeof...( A ) >() ) ); // Changed from upstream: do not auto-convert to shared_ptr
           UPYWRAP_CATCH
         }
         else if( n_args != sizeof...( A ) || n_kw )
@@ -860,7 +935,7 @@ namespace upywrap
           RaiseTypeException( ( std::string( "Wrong number of arguments in definition of " ) + index() ).data() );
         }
         UPYWRAP_TRY
-        return AsPyObj( native_obj_t( Apply( f, args, make_index_sequence< sizeof...( A ) >() ) ) );
+        return AsPyObj( Apply( f, args, make_index_sequence< sizeof...( A ) >() ) ); // Changed from upstream: do not auto-convert to shared_ptr
         UPYWRAP_CATCH
       }
 
@@ -914,14 +989,14 @@ namespace upywrap
     };
 
     typedef ClassWrapper< T > this_type;
-    using store_attr_map = std::map< qstr, NativeSetterCallBase* >;
-    using load_attr_map = std::map< qstr, NativeGetterCallBase* >;
+    using store_attr_map = MPyMapView<qstr, NativeSetterCallBase*>;
+    using load_attr_map = MPyMapView<qstr, NativeGetterCallBase*>;
 
     mp_obj_base_t base; //must always be the first member!
     std::int64_t cookie; //we'll use this to check if a pointer really points to a ClassWrapper
     const std::type_info* typeId; //and this will be used to check if types aren't being mixed
     native_obj_t obj;
-    static mp_obj_full_type_t type;
+    static mp_obj_full_type_t* type_ptr;
     static function_ptrs functionPointers;
     static store_attr_map setters;
     static load_attr_map getters;
@@ -929,21 +1004,16 @@ namespace upywrap
   };
 
   template< class T >
-  mp_obj_full_type_t ClassWrapper< T >::type =
-#ifdef __GNUC__
-    { { nullptr } }; //GCC bug 53119
-#else
-    { nullptr };
-#endif
+  mp_obj_full_type_t* ClassWrapper< T >::type_ptr = nullptr;
 
   template< class T >
-  function_ptrs ClassWrapper< T >::functionPointers;
+  function_ptrs ClassWrapper< T >::functionPointers { nullptr };
 
   template< class T >
-  typename ClassWrapper< T >::store_attr_map ClassWrapper< T >::setters;
+  typename ClassWrapper< T >::store_attr_map ClassWrapper< T >::setters { nullptr };
 
   template< class T >
-  typename ClassWrapper< T >::load_attr_map ClassWrapper< T >::getters;
+  typename ClassWrapper< T >::load_attr_map ClassWrapper< T >::getters { nullptr };
 
   template< class T >
   const std::int64_t ClassWrapper< T >::defCookie = 0x12345678908765;
@@ -1030,10 +1100,17 @@ namespace upywrap
   template< class T >
   struct ClassToPyObj
   {
-    static mp_obj_t Convert( T )
+    static mp_obj_t Convert( T obj )
     {
+#if UPYWRAP_SHAREDPTROBJ
+      T* raw = (T*)m_malloc(sizeof(T));
+      new (raw) T(obj);
+      std::shared_ptr<T> ptr {raw, [](T* p) { p->~T(); m_free(p); }}; // Copy, own, destruct and free
+      return ClassToPyObj<std::shared_ptr<T>>::Convert(ptr);
+#else
       static_assert( False< T >::value, "Conversion from value to ClassWrapper is not allowed, pass a reference or shared_ptr instead" );
       return mp_const_none;
+#endif
     }
   };
 
@@ -1111,14 +1188,12 @@ namespace upywrap
 
     static void InitWrapper()
     {
-      //Note: registered once, stays forever. Alternative would be to have a finalizer
-      //but then when a new function is needed it again has to go through initialization.
-      static wrapper_t reg( typeid( funct_t ).name(), wrapper_t::ConstructorOptions::RegisterInStaticPyObjectStore );
-      static bool init = false;
-      if( !init )
+      // Changed from upstream: We check init status using the root pointer types map, and register our callable type if it's not there
+      bool was_initialized = wrapper_t::init_classwrapper_type_dict_and_function_maps();
+      if( !was_initialized )
       {
+        wrapper_t reg( typeid( funct_t ).name(), wrapper_t::ConstructorOptions::RegisterInGlobalTypeMap );
         reg.template Def< special_methods::__call__ >( &funct_t::operator () );
-        init = true;
       }
     }
   };

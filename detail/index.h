@@ -1,7 +1,7 @@
 #ifndef MICROPYTHON_WRAP_DETAIL_INDEX_H
 #define MICROPYTHON_WRAP_DETAIL_INDEX_H
 
-#include <map>
+#include "detail/mpmap.h"
 
 namespace upywrap
 {
@@ -17,7 +17,7 @@ namespace upywrap
   #define func_name_def( n ) static const char* n(){ return #n; }
 
   //Map type used to store functions
-  typedef std::map< void*, void* > function_ptrs;
+  typedef MPyMapView<void*, void*> function_ptrs;
 }
 
 #endif //#ifndef MICROPYTHON_WRAP_DETAIL_INDEX_H

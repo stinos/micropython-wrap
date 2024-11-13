@@ -198,6 +198,13 @@ namespace upywrap
 
     //Optional/keyword arguments.
     Arguments arguments;
+
+    /**
+     * @brief micropython-wrap allocates these objects using new. We want them on the micropython-heap
+     */
+    static void* operator new(size_t size) {
+      return m_malloc(size);
+    }
   };
 
   //Normal member function call
@@ -264,6 +271,13 @@ namespace upywrap
 
     //Optional/keyword arguments.
     Arguments arguments;
+
+    /**
+     * @brief micropython-wrap allocates these objects using new. We want them on the micropython-heap
+     */
+    static void* operator new(size_t size) {
+      return m_malloc(size);
+    }
   };
 }
 

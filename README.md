@@ -29,6 +29,18 @@ Consequently when running the [python test code](tests/py) using the standard Mi
 
 Just to get an idea here is a short sample of C++ code registration; code achieving the same using just the MicroPython API is not shown here but would likely be around 50 lines:
 
+The micropython-wrap type table needs to be registered as root pointer. Safe this as a `.c` file and add it to micropythons
+`MICROPY_SOURCE_QSTR` sources in cmake or `SRC_QSTR` in make. This is to make sure it is added to the global states root pointers
+and thus not collected by micropythons garbage-collector.
+
+```c
+#include "py/obj.h"
+
+//micropythons type table needs to be registered as root pointer to avoid garbage collection
+//the user needs to do this at least once to be able to compile micropython-wrap
+MP_REGISTER_ROOT_POINTER(mp_map_t* micropython_wrap_types_map_table);
+```
+
 ```c++
 #include <micropython-wrap/functionwrapper.h>
 
