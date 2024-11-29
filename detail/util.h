@@ -125,6 +125,25 @@ namespace upywrap
   struct is_shared_ptr< std::shared_ptr< T > > : std::true_type
   {
   };
+
+  /**
+    * @brief Replacement for typeid without RTTI. This uniquely identifies the classwrapper type within an executable.
+    * @warning The hashes will change when recompiling or on other targets. Do not use cross-device or cross-executable.
+    *
+    * The functionality is based around the One Definition Rule (ODR), there must be exactly one definition of this function
+    * per class, even across translation units.
+    */
+  template< class T >
+  inline void* ClassHashImpl() {
+    static int static_hash_marker = 0;  // The address of this object is the unique hash of this classwrapper.
+    return &static_hash_marker;
+  }
+
+  template< class T >
+  inline void* ClassHash() {
+    // This assumes we do not make differences between differently qualified types.
+    return ClassHashImpl<typename std::remove_cv<typename std::remove_reference<T>::type>::type>();
+  }
 }
 
 #endif //#ifndef MICROPYTHON_WRAP_DETAIL_UTIL_H

@@ -16,6 +16,10 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
       MICROPY_CPYTHON3: python3
       FullTypeCheck: 1
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      MICROPY_CPYTHON3: python3
+      FullTypeCheck: 1
+      ExtraCppFlags: -fno-rtti
 
 configuration:
 - Debug
@@ -112,7 +116,7 @@ for:
 
   build_script:
   - ps: |
-      make test CC=gcc-9 CXX=g++-9 CPPFLAGS_EXTRA="-DUPYWRAP_FULLTYPECHECK=$env:FullTypeCheck"
+      make test CC=gcc-9 CXX=g++-9 CPPFLAGS_EXTRA="-DUPYWRAP_FULLTYPECHECK=$env:FullTypeCheck $env:ExtraCppFlags"
 
 on_failure:
 - ps: |

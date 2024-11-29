@@ -316,7 +316,7 @@ namespace upywrap
       o->base.type = (const mp_obj_type_t*) & type;
       o->cookie = defCookie;
 #if UPYWRAP_FULLTYPECHECK
-      o->typeId = &typeid( T );
+      o->typeId = ClassHash< T >();
 #endif
 #if UPYWRAP_SHAREDPTROBJ
       new( &o->obj ) native_obj_t( std::move( p ) );
@@ -354,7 +354,7 @@ namespace upywrap
         //preferrably using dynamic_cast or dynamic_pointer_cast to double-check errors.
         if( !mp_obj_is_obj( arg ) || native->cookie != defCookie
 #if UPYWRAP_FULLTYPECHECK
-            || typeid( T ) != *native->typeId
+            || ClassHash< T >() != native->typeId
 #endif
             )
         {
@@ -919,7 +919,7 @@ namespace upywrap
 
     mp_obj_base_t base; //must always be the first member!
     std::int64_t cookie; //we'll use this to check if a pointer really points to a ClassWrapper
-    const std::type_info* typeId; //and this will be used to check if types aren't being mixed
+    const void* typeId; //and this will be used to check if types aren't being mixed
     native_obj_t obj;
     static mp_obj_full_type_t type;
     static function_ptrs functionPointers;
@@ -1113,7 +1113,11 @@ namespace upywrap
     {
       //Note: registered once, stays forever. Alternative would be to have a finalizer
       //but then when a new function is needed it again has to go through initialization.
+#if UPYWRAP_HAS_TYPEID
       static wrapper_t reg( typeid( funct_t ).name(), wrapper_t::ConstructorOptions::RegisterInStaticPyObjectStore );
+#else
+      static wrapper_t reg( "AnonymousClasswrapper", wrapper_t::ConstructorOptions::RegisterInStaticPyObjectStore );
+#endif
       static bool init = false;
       if( !init )
       {
