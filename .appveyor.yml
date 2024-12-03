@@ -5,17 +5,30 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
       MICROPY_CPYTHON3: c:/python39/python.exe
       FullTypeCheck: 0
+      StaticPyObjRootPtr: 0
+      BuildMsys2Version: 1
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+      MICROPY_CPYTHON3: c:/python39/python.exe
+      FullTypeCheck: 0
+      StaticPyObjRootPtr: 1
       BuildMsys2Version: 1
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       MICROPY_CPYTHON3: c:/python38/python.exe
       FullTypeCheck: 1
+      StaticPyObjRootPtr: 0
       BuildMsys2Version: 0
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
       MICROPY_CPYTHON3: python3
       FullTypeCheck: 0
+      StaticPyObjRootPtr: 0
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
       MICROPY_CPYTHON3: python3
       FullTypeCheck: 1
+      StaticPyObjRootPtr: 0
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      MICROPY_CPYTHON3: python3
+      FullTypeCheck: 1
+      StaticPyObjRootPtr: 1
 
 configuration:
 - Debug
@@ -99,7 +112,7 @@ for:
         C:\msys64\usr\bin\bash.exe -l -c "make V=1 MICROPYTHON_PORT_DIR=../micropython/ports/windows clean"
         # The redirection is because 'make submodules' might get called, which in turn calls git commands which write to stderr
         # and that is considered an error on Appveyor. And GIT_REDIRECT_STDERR seems to have no effect on the git version used in this msys2.
-        &{C:\msys64\usr\bin\bash.exe -l -c "make V=1 PYTHON=/usr/bin/python3 MICROPYTHON_PORT_DIR=../micropython/ports/windows test"} 2>&1
+        &{C:\msys64\usr\bin\bash.exe -l -c "make V=1 CPPFLAGS_EXTRA='-DUPYWRAP_FULLTYPECHECK=$env:FullTypeCheck -DUPYWRAP_STATICPYOBJ_USE_ROOTPTR=$env:StaticPyObjRootPtr' PYTHON=/usr/bin/python3 MICROPYTHON_PORT_DIR=../micropython/ports/windows test"} 2>&1
         if ($LASTEXITCODE -ne 0) {
           throw "MSYS2 build exited with code $LASTEXITCODE"
         }
@@ -112,7 +125,7 @@ for:
 
   build_script:
   - ps: |
-      make test CC=gcc-9 CXX=g++-9 CPPFLAGS_EXTRA="-DUPYWRAP_FULLTYPECHECK=$env:FullTypeCheck"
+      make test CC=gcc-9 CXX=g++-9 CPPFLAGS_EXTRA="-DUPYWRAP_FULLTYPECHECK=$env:FullTypeCheck -DUPYWRAP_STATICPYOBJ_USE_ROOTPTR=$env:StaticPyObjRootPtr"
 
 on_failure:
 - ps: |

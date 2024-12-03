@@ -46,7 +46,7 @@ endif
 V ?= 0
 MAKEOPTS ?= -j4 V=$(V) VARIANT=$(VARIANT) VARIANT_DIR=$(VARIANT_DIR)
 MAKEUPY = make -C $(MICROPYTHON_PORT_DIR) $(MAKEOPTS)
-UPYFLAGS = MICROPY_PY_BTREE=0 MICROPY_PY_FFI=0 MICROPY_PY_USSL=0 MICROPY_PY_AXTLS=0 MICROPY_FATFS=0 MICROPY_PY_THREAD=0
+UPYFLAGS = QSTR_GLOBAL_DEPENDENCIES=$(CURDIR)/mpy_wrap_root_pointer.c MICROPY_PY_BTREE=0 MICROPY_PY_FFI=0 MICROPY_PY_USSL=0 MICROPY_PY_AXTLS=0 MICROPY_FATFS=0 MICROPY_PY_THREAD=0
 
 # Extra features we need; note that for the ports tested so far this is already enabled or else
 # defined conditionally so we can just define it here again. Otherwise make this conditional

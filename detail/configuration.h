@@ -127,4 +127,15 @@
 #define UPYWRAP_MAXNUMKWARGS (8)
 #endif
 
+//Store the StaticPyObjectStore in a root pointer map instead of a random module's globals dict.
+//Enabling this requires the user to add the micropython root pointer in one micropython source file:
+//
+//  MP_REGISTER_ROOT_POINTER(mp_map_t* micropython_wrap_global_storage);
+//
+//The benefit of this is that the StaticPyObjectStore is now hidden from the mpy runtime.
+//This is disabled by default for backwards compatibility.
+#ifndef UPYWRAP_STATICPYOBJ_USE_ROOTPTR
+#define UPYWRAP_STATICPYOBJ_USE_ROOTPTR (0)
+#endif
+
 #endif

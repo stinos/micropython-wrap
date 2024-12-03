@@ -71,6 +71,21 @@ import foo
 print(foo.TransformList(['a', 'b']))  # Prints ['aTRANSFORM', 'bTRANSFORM']
 ```
 
+When using the `UPYWRAP_STATICPYOBJ_USE_ROOTPTR` configuration option (opt-in):
+
+The micropython-wrap type table needs to be registered as root pointer. Safe this as a `.c` file and add it to micropythons
+`MICROPY_SOURCE_QSTR` sources in cmake or `SRC_QSTR` in make. This is to make sure it is added to the global states root pointers
+and thus not collected by micropythons garbage-collector.
+
+```c
+#include "py/obj.h"
+
+//micropythons global storage needs to be registered as root pointer to avoid garbage collection
+//the user needs to do this at least once to be able to compile micropython-wrap
+MP_REGISTER_ROOT_POINTER(mp_map_t* micropython_wrap_global_storage);
+```
+
+
 Type Conversion
 ---------------
 Conversion between standard native types and `mp_obj_t`, the MicroPython opaque object type
