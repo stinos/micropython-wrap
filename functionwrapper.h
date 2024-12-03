@@ -80,7 +80,7 @@ namespace upywrap
         {
           if( caller.arguments.NumberOfArguments() != sizeof...( A ) )
           {
-            RaiseTypeException( ( std::string( "Wrong number of arguments in definition of " ) + index() ).data()  );
+            RaiseTypeExceptionFmt( "Wrong number of arguments in definition of %s", index() );
           }
           return MakeFunction( caller.arguments.MimimumNumberOfArguments(), CallKw );
         }

@@ -78,7 +78,7 @@ namespace upywrap
       ClassWrapper( name, flags )
     {
       mp_obj_dict_store( dict, new_qstr( name ), &type );
-      mp_obj_dict_store( dict, new_qstr( ( std::string( name ) + "_locals" ).data() ), MP_OBJ_FROM_PTR( MP_OBJ_TYPE_GET_SLOT( &type, locals_dict ) ) );
+      mp_obj_dict_store( dict, new_qstr_from_concat_str( name, "_locals" ), MP_OBJ_FROM_PTR( MP_OBJ_TYPE_GET_SLOT( &type, locals_dict ) ) );
     }
 
     //Initialize the type, storing the locals in StaticPyObjectStore to prevent GC collection.
@@ -647,11 +647,10 @@ namespace upywrap
       if( type.base.type == nullptr )
       {
 #if UPYWRAP_HAS_TYPEID
-        std::string errorMessage( std::string( "Native type " ) + typeid( T ).name() + " has not been registered" );
+        RaiseTypeExceptionFmt( "Native type %s has not been registered", typeid( T ).name() );
 #else
-        std::string errorMessage( "Native type has not been registered" );
+        RaiseTypeException( "Native type has not been registered" );
 #endif
-        RaiseTypeException( errorMessage.c_str() );
       }
     }
 
@@ -674,7 +673,7 @@ namespace upywrap
       callerObject->arguments = std::move( arguments );
       functionPointers[ (void*) name ] = callerObject;
       AddFunctionToTable( name(), call_type::CreateUPyFunction( *callerObject ) );
-      if( std::string( name() ) == "__call__" )
+      if( std::string_view( name() ) == "__call__" )
       {
         MP_OBJ_TYPE_SET_SLOT( &type, call, instance_call, 5 );
       }
@@ -824,7 +823,7 @@ namespace upywrap
         {
           if( caller.arguments.NumberOfArguments() != sizeof...( A ) )
           {
-            RaiseTypeException( ( std::string( "Wrong number of arguments in definition of " ) + index() ).data() );
+            RaiseTypeExceptionFmt(  "Wrong number of arguments in definition of %s", index() );
           }
           return MakeFunction( caller.arguments.MimimumNumberOfArguments(), CallKw );
         }
@@ -847,7 +846,7 @@ namespace upywrap
         {
           if( f->arguments.NumberOfArguments() != sizeof...( A ) )
           {
-            RaiseTypeException( ( std::string( "Wrong number of arguments in definition of " ) + index() ).data() );
+            RaiseTypeExceptionFmt(  "Wrong number of arguments in definition of %s", index() );
           }
           Arguments::parsed_obj_t parsedArgs{};
           f->arguments.Parse( n_args, n_kw, args, parsedArgs );
@@ -857,7 +856,7 @@ namespace upywrap
         }
         else if( n_args != sizeof...( A ) || n_kw )
         {
-          RaiseTypeException( ( std::string( "Wrong number of arguments in definition of " ) + index() ).data() );
+          RaiseTypeExceptionFmt(  "Wrong number of arguments in definition of %s", index() );
         }
         UPYWRAP_TRY
         return AsPyObj( native_obj_t( Apply( f, args, make_index_sequence< sizeof...( A ) >() ) ) );

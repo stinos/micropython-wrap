@@ -3,6 +3,7 @@
 
 #include "micropythonc.h"
 #include <cmath>
+#include <cstdarg>
 #include <cstdint>
 #include <cstring>
 #include <limits>
@@ -19,6 +20,17 @@ namespace upywrap
   inline mp_obj_t new_qstr( const char* what )
   {
     return new_qstr( qstr_from_str( what ) );
+  }
+
+  inline mp_obj_t new_qstr_from_concat_str( const char* str1, const char* str2 )
+  {
+      vstr_t concat_str {};
+      vstr_init_len( &concat_str, strlen( str1 ) + strlen( str2 ) );
+      vstr_add_str( &concat_str, str1 );
+      vstr_add_str( &concat_str, str2 );
+      mp_obj_t concat_qstr = new_qstr(qstr_from_str( concat_str.buf ));
+      vstr_clear( &concat_str );
+      return concat_qstr;
   }
 
   inline mp_obj_t MakeFunction( mp_obj_t (*fun) ( void ) )
@@ -110,14 +122,16 @@ namespace upywrap
     * Use in place of mp_obj_new_exception_msg if the message string needs to be copied
     * (mp_obj_new_exception_msg assumes the message passed to it is in ROM so just stores the char pointer)
     */
-  inline mp_obj_t RaiseException( const mp_obj_type_t* exc_type, const char* msg )
+  inline mp_obj_t RaiseException( const mp_obj_type_t* exc_type, const char* fmt, ... )
   {
-    mp_obj_exception_t* o = mp_obj_malloc_var( mp_obj_exception_t, args, mp_obj_tuple_t, 0, exc_type );
-    o->traceback_data = nullptr;
-    o->args = reinterpret_cast< mp_obj_tuple_t* >( MP_OBJ_TO_PTR( mp_obj_new_tuple( 1, nullptr ) ) );
-    o->args->items[ 0 ] = mp_obj_new_str( msg, std::strlen( msg ) );
-    nlr_raise( MP_OBJ_FROM_PTR( o ) );
+    va_list args;
+    va_start(args, fmt);
+    mp_obj_t exc = mp_obj_new_exception_msg_varg(exc_type, MP_ERROR_TEXT ( fmt ), args);
+    va_end(args);
+    nlr_raise( exc );
   }
+
+#define RaiseTypeExceptionFmt( msg, ... ) RaiseException( &mp_type_TypeError, msg, ##__VA_ARGS__ )
 
   inline void RaiseTypeException( const char* msg )
   {
